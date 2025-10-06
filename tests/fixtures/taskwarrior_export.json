@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "uuid": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "description": "Buy groceries",
+    "status": "pending",
+    "project": "home",
+    "due": "20251007T000000Z",
+    "priority": "M",
+    "tags": ["shopping", "errands"],
+    "entry": "20251006T120000Z",
+    "modified": "20251006T120000Z",
+    "urgency": 8.2
+  },
+  {
+    "id": 2,
+    "uuid": "b2c3d4e5-f6a7-8901-2345-678901bcdefg",
+    "description": "Call dentist",
+    "status": "pending",
+    "project": "health",
+    "due": "20251005T000000Z",
+    "priority": "H",
+    "tags": ["health"],
+    "entry": "20251001T100000Z",
+    "modified": "20251001T100000Z",
+    "urgency": 12.5
+  },
+  {
+    "id": 3,
+    "uuid": "c3d4e5f6-a7b8-9012-3456-789012cdefgh",
+    "description": "Morning meditation",
+    "status": "pending",
+    "recur": "daily",
+    "due": "20251007T080000Z",
+    "project": "personal",
+    "entry": "20250101T000000Z",
+    "modified": "20251006T000000Z",
+    "urgency": 5.0
+  }
+]

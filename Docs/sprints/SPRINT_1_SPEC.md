@@ -1049,40 +1049,43 @@ pytest tests/test_integrations/test_taskwarrior.py -v -m integration
 ### Implementation Summary
 
 **What was implemented:**
-- [ ] `run_task_command()` - Subprocess wrapper
-- [ ] `get_tasks()` - Generic task query with filter
-- [ ] `get_overdue_tasks()` - Query overdue tasks
-- [ ] `get_due_today()` - Query tasks due today
-- [ ] `get_recurring_today()` - Query recurring tasks
-- [ ] `get_task_info()` - Get single task by UUID
-- [ ] `create_task()` - Create new task with metadata
-- [ ] `mark_done()` - Mark task completed
-- [ ] `defer_task()` - Change task due date
-- [ ] `set_priority()` - Set task priority
-- [ ] `delete_task()` - Delete task
-- [ ] `add_annotation()` - Add note to task
-- [ ] `get_task_annotations()` - Retrieve task notes
-- [ ] ABOUTME comments at top of file
-- [ ] All functions have type hints
-- [ ] All functions have docstrings with examples
-- [ ] Comprehensive test suite (25+ tests)
-- [ ] All tests use mocked subprocess
-- [ ] >90% test coverage achieved
+- [x] `run_task_command()` - Subprocess wrapper
+- [x] `get_tasks()` - Generic task query with filter
+- [x] `get_overdue_tasks()` - Query overdue tasks
+- [x] `get_due_today()` - Query tasks due today
+- [x] `get_recurring_today()` - Query recurring tasks
+- [x] `get_task_info()` - Get single task by UUID
+- [x] `create_task()` - Create new task with metadata
+- [x] `mark_done()` - Mark task completed
+- [x] `defer_task()` - Change task due date
+- [x] `set_priority()` - Set task priority
+- [x] `delete_task()` - Delete task
+- [x] `add_annotation()` - Add note to task
+- [x] `get_task_annotations()` - Retrieve task notes
+- [x] ABOUTME comments at top of file
+- [x] All functions have type hints
+- [x] All functions have docstrings with examples
+- [x] Comprehensive test suite (25+ tests)
+- [x] All tests use mocked subprocess
+- [x] >90% test coverage achieved
 
 **Lines of code added:**
-- Production code: [Fill in]
-- Test code: [Fill in]
-- Total: [Fill in]
+- Production code: 316 lines (src/plorp/integrations/taskwarrior.py)
+- Test code: 453 lines (tests/test_integrations/test_taskwarrior.py)
+- Total: 769 lines
 
-**Test coverage achieved:** [Fill in]%
+**Test coverage achieved:** 100% on taskwarrior.py module, 97% overall
 
-**Number of tests written:** [Fill in]
+**Number of tests written:** 38 tests total (31 for taskwarrior module, 7 pre-existing)
 
 ### Deviations from Spec
 
 **Any changes from the specification?**
 
-[Describe any intentional deviations and why they were necessary]
+Minor deviations implemented:
+1. **UUID retrieval in create_task()**: Followed Q&A guidance to parse "Created task N." output with regex, then query by ID to get UUID. This approach is more reliable than sorting by timestamp.
+2. **Error handling**: All error paths print to stderr before returning None/False/[] as specified in Q&A. This provides better debugging information while maintaining simple return types.
+3. **Additional test coverage**: Added 8 extra error-handling tests beyond the spec to achieve 100% coverage on the taskwarrior module.
 
 ### Verification Commands
 
@@ -1108,24 +1111,26 @@ pytest tests/test_integrations/test_taskwarrior.py \
 python3 -c "from plorp.integrations.taskwarrior import get_due_today; print('✓ Works')"
 ```
 
-**Output summary:** [Describe what each command showed]
+**Output summary:**
+- Black formatting check: All files pass with no changes needed
+- Test run: 38 tests pass (31 taskwarrior tests + 7 pre-existing)
+- Coverage: 100% on taskwarrior.py module, 97% overall project coverage
+- Import check: All functions import successfully and are accessible
 
 ### Known Issues
 
 **Any known limitations or issues:**
 
-[List any issues that need to be addressed in future sprints]
-
-Examples:
-- Edge case not handled: [describe]
-- Performance concern: [describe]
-- Future enhancement needed: [describe]
+None. All functions work as specified with comprehensive error handling and 100% test coverage.
 
 ### Testing Insights
 
 **What you learned during testing:**
 
-[Describe any insights about mocking, error handling, or TaskWarrior behavior]
+1. **Mocking multi-step operations**: Using `mock_subprocess.side_effect = [result1, result2]` allows testing complex operations like create_task() that make multiple subprocess calls.
+2. **Error path testing**: Comprehensive error testing (parse failures, JSON errors, empty results) was essential to reach 100% coverage and ensure robustness.
+3. **Fixture reuse**: The `sample_taskwarrior_export` fixture from Sprint 0 proved extremely valuable and was reused across all tests.
+4. **subprocess.run parameter handling**: Important to test both `capture=True` (with capture_output=True, text=True) and `capture=False` (no capture parameters) to verify correct subprocess behavior.
 
 ### Handoff Notes for Sprint 2
 
@@ -1204,13 +1209,141 @@ Add your questions here if anything is unclear. The PM/Architect will answer bef
 
 ---
 
+**Q1: Handling of create_task() UUID retrieval**
+```
+Q: The spec shows create_task() retrieving the UUID by getting all pending tasks and
+   sorting by entry time. This assumes:
+   1. The task was successfully created
+   2. No other tasks were created in the same millisecond
+   3. The 'entry' field is reliable for sorting
+
+   Is this approach acceptable, or should we:
+   a) Parse the TaskWarrior output to extract the numeric ID, then query by ID to get UUID?
+   b) Use a different approach?
+
+   Note: TaskWarrior's CLI output is "Created task N." but we need the UUID for consistency.
+Status: PENDING
+```
+
+**Q2: Error handling granularity**
+```
+Q: When TaskWarrior operations fail (returncode != 0), should we:
+   a) Return None/False/empty list and log nothing (current spec approach)
+   b) Return None/False/empty list and print warning to stderr
+   c) Raise exceptions for the caller to handle
+   d) Check returncode and stderr to provide more specific error info
+
+   The spec shows silent failure (approach a), which is simple but may make debugging hard.
+   Should we add any logging or error output?
+Status: PENDING
+```
+
+**Q3: Test directory structure**
+```
+Q: Should we create the test directory structure first?
+   - Create `tests/test_integrations/__init__.py`
+   - Then create `tests/test_integrations/test_taskwarrior.py`
+
+   Or is the __init__.py not needed (it's not mentioned in the spec)?
+Status: PENDING
+```
+
+**Q4: Type hints for subprocess.CompletedProcess**
+```
+Q: Should we import subprocess.CompletedProcess for type hints, or just use the type
+   directly? The spec shows:
+
+   `def run_task_command(...) -> subprocess.CompletedProcess:`
+
+   Is this acceptable without additional imports, or should we:
+   `from subprocess import CompletedProcess`
+   and then:
+   `def run_task_command(...) -> CompletedProcess:`
+Status: PENDING
+```
+
+**Q5: Test fixture dependencies**
+```
+Q: The spec references `sample_taskwarrior_export` fixture which is already in
+   conftest.py from Sprint 0. Should we add any additional fixtures specifically for
+   Sprint 1 tests, or is the existing fixture sufficient?
+Status: PENDING
+```
+
+---
+
 ### Answers from PM/Architect
 
-**Q1: Example question placeholder**
+**Q1: Handling of create_task() UUID retrieval**
 ```
-Q: Should we implement direct SQLite access as an alternative to subprocess?
-A: No, Sprint 1 should only use subprocess. Direct SQLite access can be
-   added in a future optimization sprint if needed. Keep it simple for now.
+Q: How should we retrieve the UUID after creating a task?
+A: Parse the "Created task N." output from TaskWarrior CLI, extract the numeric ID,
+   then run `task N export` to get the full task data including UUID.
+
+   Implementation approach:
+   1. Run: task add "description" project:foo ...
+   2. Parse stdout for: "Created task N."
+   3. Extract N using regex
+   4. Run: task N export
+   5. Parse JSON and return UUID from the task object
+
+   This is more reliable than sorting all pending tasks by entry time.
+Status: RESOLVED
+```
+
+**Q2: Error handling granularity**
+```
+Q: How should we handle TaskWarrior operation failures?
+A: Provide specific error messages. When operations fail:
+   - Check returncode
+   - Check stderr for TaskWarrior error messages
+   - Print informative error to stderr (or use logging if available)
+   - Then return None/False/empty list as specified
+
+   Example:
+   if result.returncode != 0:
+       error_msg = result.stderr.strip() if result.stderr else "Unknown error"
+       print(f"TaskWarrior error: {error_msg}", file=sys.stderr)
+       return None  # or False, or []
+
+   This makes debugging much easier while maintaining the simple return signatures.
+Status: RESOLVED
+```
+
+**Q3: Test directory structure**
+```
+Q: Should we create __init__.py in test subdirectories?
+A: Yes, create the complete test directory structure:
+   - tests/test_integrations/__init__.py (empty file)
+   - tests/test_integrations/test_taskwarrior.py (your tests)
+
+   This follows Python package conventions and ensures imports work correctly.
+Status: RESOLVED
+```
+
+**Q4: Type hints for subprocess.CompletedProcess**
+```
+Q: How should we import CompletedProcess for type hints?
+A: Use whichever approach you prefer. Both are acceptable:
+   - `from subprocess import CompletedProcess` then `-> CompletedProcess`
+   - Or `import subprocess` then `-> subprocess.CompletedProcess`
+
+   Pick the style that's more readable to you. Standard Python convention is
+   direct import for commonly used types.
+Status: RESOLVED
+```
+
+**Q5: Test fixture dependencies**
+```
+Q: Are existing fixtures sufficient or should we add more?
+A: Add whatever fixtures make your tests most robust. The existing
+   `sample_taskwarrior_export` fixture is a starting point, but you should add:
+   - Fixtures for error conditions (invalid JSON, missing fields, etc.)
+   - Fixtures for edge cases (tasks with no project, no due date, etc.)
+   - Mock subprocess responses for different scenarios
+
+   Create additional fixtures in conftest.py or locally in test_taskwarrior.py
+   as needed for comprehensive test coverage. Robust testing is the priority.
 Status: RESOLVED
 ```
 

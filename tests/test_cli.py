@@ -26,14 +26,45 @@ def test_cli_version():
     assert "1.0.0" in result.output
 
 
-def test_start_stub():
-    """Test that start command shows not implemented message."""
-    runner = CliRunner()
-    result = runner.invoke(cli, ["start"])
+def test_start_command():
+    """Test start command calls daily workflow."""
+    from unittest.mock import patch
 
-    assert result.exit_code == 0
-    assert "not yet implemented" in result.output
-    assert "future sprint" in result.output
+    runner = CliRunner()
+
+    with patch("plorp.cli.load_config") as mock_load_config:
+        with patch("plorp.workflows.daily.start") as mock_daily_start:
+            with runner.isolated_filesystem() as temp_dir:
+                from pathlib import Path
+
+                vault_path = Path(temp_dir) / "vault"
+                vault_path.mkdir()
+
+                mock_load_config.return_value = {"vault_path": str(vault_path)}
+                mock_daily_start.return_value = vault_path / "daily" / "2025-10-06.md"
+
+                result = runner.invoke(cli, ["start"])
+
+                assert result.exit_code == 0
+                mock_daily_start.assert_called_once()
+
+
+def test_start_command_file_exists_error():
+    """Test start command handles existing file error."""
+    from unittest.mock import patch
+
+    runner = CliRunner()
+
+    with patch("plorp.cli.load_config") as mock_load_config:
+        with patch("plorp.workflows.daily.start") as mock_daily_start:
+            mock_load_config.return_value = {"vault_path": "/tmp/vault"}
+            mock_daily_start.side_effect = FileExistsError("❌ Daily note already exists")
+
+            result = runner.invoke(cli, ["start"])
+
+            # Should exit with error
+            assert result.exit_code != 0
+            assert "already exists" in result.output.lower()
 
 
 def test_review_stub():

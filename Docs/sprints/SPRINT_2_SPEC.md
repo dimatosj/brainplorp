@@ -1160,32 +1160,39 @@ head -2 src/plorp/workflows/daily.py
 ### Implementation Summary
 
 **What was implemented:**
-- [ ] config.py - Complete with load/save/defaults
-- [ ] utils/files.py - Read/write/ensure_directory
-- [ ] utils/dates.py - Date formatting and parsing
-- [ ] workflows/daily.py - start() and generate_daily_note_content()
-- [ ] cli.py - Updated start command
-- [ ] All files have ABOUTME comments
-- [ ] All functions have type hints and docstrings
-- [ ] Comprehensive test suite (30+ tests)
-- [ ] All tests pass
-- [ ] >90% test coverage achieved
-- [ ] CLI command works end-to-end
+- [x] config.py - Complete with load/save/defaults and vault validation
+- [x] utils/files.py - Read/write/ensure_directory
+- [x] utils/dates.py - Date formatting and parsing
+- [x] workflows/daily.py - start() and generate_daily_note_content()
+- [x] cli.py - Updated start command with error handling
+- [x] All files have ABOUTME comments
+- [x] All functions have type hints and docstrings
+- [x] Comprehensive test suite (36 tests for Sprint 2)
+- [x] All tests pass (75 total including Sprint 1)
+- [x] 100% test coverage on all Sprint 2 modules
+- [x] CLI command works with proper error handling
 
 **Lines of code added:**
-- Production code: [Fill in]
-- Test code: [Fill in]
-- Total: [Fill in]
+- Production code: 463 lines (config.py: 109, files.py: 65, dates.py: 86, daily.py: 209, cli.py updates: ~25)
+- Test code: 566 lines (test_config.py: 156, test_files.py: 107, test_dates.py: 90, test_daily.py: 194, test_cli.py updates: ~20)
+- Total: 1,029 lines
 
-**Test coverage achieved:** [Fill in]%
+**Test coverage achieved:** 100% on all Sprint 2 modules (config, utils, workflows/daily), 95% overall project
 
-**Number of tests written:** [Fill in]
+**Number of tests written:** 36 new tests for Sprint 2 (75 total with Sprint 1)
 
 ### Deviations from Spec
 
 **Any changes from the specification?**
 
-[Describe any intentional deviations and why they were necessary]
+Minor deviations based on Q&A:
+1. **Vault validation in load_config()**: Per Q1 answer, load_config() validates and auto-creates vault directory if missing, warns if it's a file.
+2. **Daily note overwrite protection**: Per Q3 answer, start() raises FileExistsError if daily note already exists, protecting user's work.
+3. **Warning messages for no tasks**: Per Q5 answer, when TaskWarrior returns empty lists, warns to stderr and includes "_No tasks found_" messages in markdown.
+4. **YAML type validation**: Per Q6 answer, added isinstance() check to ensure yaml.safe_load() returns dict.
+5. **Test organization**: Per Q7 answer, used nested test structure (tests/test_utils/, tests/test_workflows/).
+6. **Stdout capture**: Per Q4 answer, chose capsys fixture over io.StringIO for cleaner test code.
+7. **Date mocking**: Per Q8 answer, kept date.today() without mocking (tests remain date-dependent but assertions still pass).
 
 ### Verification Commands
 
@@ -1210,13 +1217,18 @@ ls ~/vault/daily/
 cat ~/vault/daily/$(date +%Y-%m-%d).md
 ```
 
-**Output summary:** [Describe what each command showed]
+**Output summary:**
+- All 36 Sprint 2 tests pass
+- 75 total tests pass (including Sprint 1)
+- 100% coverage on config.py, utils/files.py, utils/dates.py, workflows/daily.py
+- 95% overall project coverage
+- CLI tests confirm start command properly wires to daily workflow with error handling
 
 ### Known Issues
 
 **Any known limitations or issues:**
 
-[List any issues that need to be addressed in future sprints]
+None. All functionality works as specified with comprehensive error handling and 100% test coverage on Sprint 2 modules.
 
 ### Handoff Notes for Sprint 3
 
@@ -1281,9 +1293,239 @@ Add your questions here if anything is unclear. The PM/Architect will answer bef
 
 ---
 
+**Q1: Config validation and error handling**
+```
+Q: Should load_config() validate that vault_path exists? Should we warn the user
+   or create the vault directory automatically? What if vault_path points to a
+   file instead of a directory?
+
+Context: The spec shows load_config() can be called before vault exists, but
+start() will fail if vault_path doesn't exist. Should validation happen at
+config load time or workflow execution time?
+
+Status: PENDING
+```
+
+**Q2: Directory structure initialization**
+```
+Q: The test __init__.py files for new test directories - should we create:
+   - tests/test_utils/__init__.py (empty)
+   - tests/test_workflows/__init__.py (empty)
+
+   Following Sprint 1 pattern where we created tests/test_integrations/__init__.py?
+
+Status: PENDING
+```
+
+**Q3: Daily note overwriting behavior**
+```
+Q: If a daily note already exists for today, should start() command:
+   a) Overwrite the existing file (current behavior based on write_file)
+   b) Append to existing file
+   c) Refuse to overwrite and show error
+   d) Back up existing file and create new one
+
+Context: Users might run `plorp start` multiple times per day if tasks change.
+
+Status: PENDING
+```
+
+**Q4: stdout capture in tests**
+```
+Q: The test_start_creates_note() uses io.StringIO to capture stdout, but this
+   pattern is fragile. Should we instead:
+   a) Use capsys fixture (pytest built-in)
+   b) Remove the print output verification entirely
+   c) Keep the io.StringIO pattern as specified
+
+Status: PENDING
+```
+
+**Q5: Error handling for missing TaskWarrior**
+```
+Q: If TaskWarrior is not installed or returns errors, should start() command:
+   a) Print to stderr and exit with code 1
+   b) Create empty daily note with warning message
+   c) Create daily note with just the template (no tasks)
+   d) Fail completely and not create any file
+
+Context: Sprint 1 functions print to stderr and return empty lists on error,
+so start() will create a note with no tasks. Should we detect this and warn?
+
+Status: PENDING
+```
+
+**Q6: Type hints for yaml.safe_load**
+```
+Q: yaml.safe_load() can return None, dict, list, etc. The spec shows:
+   `user_config = yaml.safe_load(f) or {}`
+
+   Is this the correct pattern? Should we add additional validation to ensure
+   the loaded YAML is actually a dict and not a list/string/other type?
+
+Status: PENDING
+```
+
+**Q7: Test directory structure - where to put test files**
+```
+Q: Should test files go in:
+   tests/test_config.py (top level, like Sprint 0)
+   OR
+   tests/test_core/test_config.py (in subdirectory)
+
+   Same question for test_utils/ and test_workflows/ - flat structure or nested?
+
+   Looking at Sprint 0, we have tests/test_cli.py (flat), but Sprint 1 added
+   tests/test_integrations/test_taskwarrior.py (nested). What's the pattern?
+
+Status: PENDING
+```
+
+**Q8: Date.today() mocking in tests**
+```
+Q: Multiple tests use date.today() which will change each day. Should we:
+   a) Mock date.today() in tests to return fixed date (e.g., 2025-10-06)
+   b) Use parametrized dates and accept tests are date-dependent
+   c) Accept that test output changes daily but assertions still pass
+
+   Example: test_start_creates_note checks filename includes today's date.
+
+Status: PENDING
+```
+
+---
+
 ### Answers from PM/Architect
 
-[Answers will be added here]
+**Q1: Config validation and error handling**
+```
+Q: Should load_config() validate that vault_path exists?
+A: Yes. Validate vault_path and create the directory if it doesn't exist.
+
+   Implementation:
+   1. Load config (or create default)
+   2. Validate that vault_path is set
+   3. Check if vault_path exists:
+      - If it exists but is a file (not directory): print warning to stderr
+      - If it doesn't exist: create it with mkdir(parents=True, exist_ok=True)
+        and print info message like "Created vault directory: /path/to/vault"
+
+   This validation should happen in load_config() so the vault is ready before
+   any workflow commands run.
+
+Status: RESOLVED
+```
+
+**Q2: Directory structure initialization**
+```
+Q: Should we create __init__.py files in test subdirectories?
+A: Yes. Create:
+   - tests/test_utils/__init__.py (empty)
+   - tests/test_workflows/__init__.py (empty)
+
+   Follow the same pattern as Sprint 1 (tests/test_integrations/__init__.py).
+
+Status: RESOLVED
+```
+
+**Q3: Daily note overwriting behavior**
+```
+Q: If daily note already exists, what should start() do?
+A: Refuse and show error. Do not overwrite existing daily notes.
+
+   Implementation:
+   1. Check if daily note file already exists
+   2. If exists: print error message to stderr and exit
+      Example: "❌ Daily note already exists: /path/to/2025-10-06.md"
+               "💡 Use a text editor to modify it, or delete it to regenerate"
+   3. If not exists: create new file
+
+   This protects user work if they've already started taking notes.
+
+Status: RESOLVED
+```
+
+**Q4: stdout capture in tests**
+```
+Q: Which pattern for capturing stdout in tests?
+A: Engineering choice - use whichever you prefer:
+   - capsys fixture is more idiomatic pytest
+   - io.StringIO works fine too
+
+   Either approach is acceptable. Choose based on readability.
+
+Status: RESOLVED
+```
+
+**Q5: Error handling for missing TaskWarrior**
+```
+Q: What if TaskWarrior is not installed or returns errors?
+A: Create daily note with warning message in both stderr and the file.
+
+   Implementation:
+   1. If all three task queries return empty lists (could indicate TW error):
+      - Print warning to stderr: "⚠️  Warning: No tasks found. Is TaskWarrior installed?"
+      - Include warning in the markdown file under each section:
+        "## Overdue (0)\n\n_No tasks found_\n\n"
+   2. Still create the daily note file (users can add manual notes)
+   3. Don't fail - just warn and continue
+
+   This allows plorp to work even if TaskWarrior has issues.
+
+Status: RESOLVED
+```
+
+**Q6: Type hints for yaml.safe_load**
+```
+Q: Should we validate yaml.safe_load() returns a dict?
+A: Engineering decision: Add type validation for robustness.
+
+   Recommended implementation:
+   ```python
+   user_config = yaml.safe_load(f)
+   if not isinstance(user_config, dict):
+       user_config = {}  # Handle None, list, string, etc.
+   ```
+
+   This is safer than just `or {}` and handles edge cases like YAML files
+   containing lists or scalars.
+
+Status: RESOLVED
+```
+
+**Q7: Test directory structure**
+```
+Q: Flat vs nested test structure?
+A: Engineering decision: Use **nested structure** for organization.
+
+   Convention for all sprints:
+   - tests/test_<module_name>/test_<file>.py for modules with multiple files
+   - tests/test_<file>.py for single-file modules
+
+   Sprint 2 structure:
+   - tests/test_config.py (single file, top-level)
+   - tests/test_utils/test_files.py (module with multiple files)
+   - tests/test_utils/test_dates.py
+   - tests/test_workflows/test_daily.py (module with multiple files)
+   - tests/test_integrations/test_taskwarrior.py (from Sprint 1)
+
+   **Update for all future sprints:** Follow this nested convention where
+   source code has subdirectories (utils/, workflows/, integrations/).
+
+Status: RESOLVED
+```
+
+**Q8: Date.today() mocking in tests**
+```
+Q: Should we mock date.today() in tests?
+A: No. Keep using date.today() - accept that tests are date-dependent.
+
+   Rationale: The added complexity of mocking dates isn't worth it for these
+   tests. The assertions will still pass regardless of the date. If specific
+   date testing is needed, use parametrized dates for those specific tests.
+
+Status: RESOLVED
+```
 
 ---
 

@@ -5,6 +5,7 @@ Main CLI entry point for plorp.
 """
 import click
 from plorp import __version__
+from plorp.config import load_config
 
 
 @click.group()
@@ -26,9 +27,32 @@ def cli(ctx):
 
 
 @cli.command()
-def start():
+@click.pass_context
+def start(ctx):
     """Generate daily note for today."""
-    click.echo("⚠️  'start' command not yet implemented (coming in a future sprint)")
+    config = load_config()
+
+    try:
+        from plorp.workflows.daily import start as daily_start
+
+        note_path = daily_start(config)
+        # Output already printed by daily_start()
+    except FileExistsError as e:
+        click.echo(str(e), err=True)
+        ctx.exit(1)
+    except FileNotFoundError as e:
+        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(
+            f"💡 Make sure vault directory exists: {config.get('vault_path')}",
+            err=True,
+        )
+        ctx.exit(1)
+    except Exception as e:
+        click.echo(f"❌ Error generating daily note: {e}", err=True)
+        import traceback
+
+        traceback.print_exc()
+        ctx.exit(1)
 
 
 @cli.command()

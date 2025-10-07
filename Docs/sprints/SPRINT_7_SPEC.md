@@ -1441,10 +1441,10 @@ proposal_text = f"Original location: {section} (line {task.line_number + 1})"
 - ✅ Phase 1: NLP parser (dates, priority, clean descriptions)
 - ✅ Phase 2: Core process functions (Step 1 AND Step 2)
 - ✅ Phase 3: CLI integration (`plorp process` with auto step detection)
-- ❌ Phase 4: MCP integration (DEFERRED)
+- ✅ Phase 4: MCP integration (`plorp_process_daily_note` tool + `/process` slash command)
 
 **Deviations from Spec:**
-- **MCP integration deferred**: CLI command works perfectly, but MCP tool integration deferred to future sprint when MCP server framework is ready.
+- None - all requirements met
 
 **Known Issues:**
 - None
@@ -1530,13 +1530,13 @@ When implementing Step 2, you'll need:
 ## Document Status
 
 **Version:** 1.3.0
-**Status:** ✅ COMPLETE (Both Step 1 and Step 2)
+**Status:** ✅ COMPLETE
 **Q&A Status (Pre-Implementation):** ✅ ALL RESOLVED (8/8)
 **Q&A Status (During Implementation):** ✅ ALL RESOLVED (13/13)
-**Implementation Status:** ✅ PRODUCTION-READY
-**Reviewed By:** PM (context: Sprint 6 architecture)
+**Implementation Status:** ✅ PRODUCTION-READY (CLI + MCP)
+**Reviewed By:** PM (updated 2025-10-07)
 **Date:** 2025-10-07
-**Completed:** 2025-10-07
+**Completed:** 2025-10-07 (CLI + MCP integration)
 
 ---
 
@@ -1544,9 +1544,11 @@ When implementing Step 2, you'll need:
 
 **Status:** ✅ COMPLETE
 
+**Implementation:** Full two-step workflow implemented for both CLI and MCP interfaces.
+
 **Implemented Features:**
 
-### Step 1: Proposal Generation
+### Step 1: Proposal Generation (✅ Complete)
 - ✅ Scan entire daily note for informal tasks (checkboxes without UUIDs)
 - ✅ Liberal checkbox detection (-, *, flexible spacing, indentation)
 - ✅ Natural language date parsing (today, tomorrow, weekdays)
@@ -1557,7 +1559,7 @@ When implementing Step 2, you'll need:
 - ✅ Tab-indented proposals with metadata
 - ✅ NEEDS_REVIEW markers for parsing failures
 
-### Step 2: Task Creation & Note Reorganization
+### Step 2: Task Creation & Note Reorganization (✅ Complete)
 - ✅ Parse [Y] and [N] approvals from TBD section
 - ✅ Batch create TaskWarrior tasks from approved proposals
 - ✅ Handle NEEDS_REVIEW items (skip, keep in TBD)
@@ -1568,17 +1570,25 @@ When implementing Step 2, you'll need:
 - ✅ Keep TBD section on errors, remove on success
 - ✅ Preserve rejected [N] tasks in original locations
 
-### CLI Integration
+### CLI Integration (✅ Complete)
 - ✅ `plorp process` command with automatic step detection
 - ✅ Step 1: Runs when no TBD section exists
 - ✅ Step 2: Runs when TBD section detected
 - ✅ Rich console output with status messages
 - ✅ Error handling and user guidance
 
+### MCP Integration (✅ Complete)
+- ✅ `plorp_process_daily_note` MCP tool added to server.py
+- ✅ Auto-detects step (same logic as CLI)
+- ✅ Returns structured JSON results
+- ✅ `/process` slash command created
+- ✅ 3 comprehensive MCP tests (23 total MCP tests passing)
+
 **Test Coverage:**
 - ✅ 32 NLP parser tests (date/priority/description parsing)
 - ✅ 23 core process tests (scanning, proposals, task creation)
-- ✅ 325 total tests passing
+- ✅ 3 MCP integration tests (step 1, step 2, error handling)
+- ✅ **328 total tests passing** (100% pass rate)
 - ✅ 100% coverage of success paths and error handling
 
 **Manual Testing Results:**
@@ -1605,11 +1615,11 @@ When implementing Step 2, you'll need:
 
 4. **Batch processing with error pause**: NEEDS_REVIEW items skipped, other tasks continue processing.
 
-5. **Automatic step detection**: CLI checks for TBD section presence to determine which step to run.
+5. **Automatic step detection**: CLI and MCP check for TBD section presence to determine which step to run.
+
+6. **MCP integration pattern**: Follows Sprint 6 architecture - thin MCP wrapper around core functions, structured JSON responses.
 
 **Deferred to Future Sprints:**
-- MCP tool integration (`plorp_process_daily_note` tool)
-- Slash command (`/process` for Claude Desktop)
 - Project detection ("work on plorp" → `project:plorp`)
 - Tag extraction ("#important" → `tag:important`)
 - Additional date formats (next month, in 3 days, Oct 15)
@@ -1617,4 +1627,4 @@ When implementing Step 2, you'll need:
 
 **Sprint 7: COMPLETE AND DEPLOYED**
 
-Both Step 1 and Step 2 are fully functional via `plorp process` command.
+Both CLI (`plorp process`) and MCP (`/process` in Claude Desktop) are fully functional and production-ready.

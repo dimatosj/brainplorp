@@ -64,3 +64,101 @@ For tests, use the `tmp_vault` fixture from `conftest.py` which creates a tempor
 
 **Document Version:** 1.0
 **Last Updated:** October 6, 2025
+
+## Project Management (Sprint 8)
+
+### Obsidian Bases Plugin
+
+Install the Bases plugin from Community Plugins to enable dynamic project dashboards.
+
+### Project Dashboard Setup
+
+Create `vault/_bases/projects.base` with this content:
+
+```yaml
+---
+title: Projects Dashboard
+description: All projects organized by domain
+---
+
+# Projects Dashboard
+
+## Active Projects
+
+```query
+path:projects/ state:active
+```
+
+## By Domain
+
+### Work Projects
+```query
+path:projects/ domain:work state:active
+```
+
+### Home Projects
+```query
+path:projects/ domain:home state:active
+```
+
+### Personal Projects
+```query
+path:projects/ domain:personal state:active
+```
+
+## Planning
+```query
+path:projects/ state:planning
+```
+
+## Completed
+```query
+path:projects/ state:completed
+```
+```
+
+### Project Note Structure
+
+Projects are created in `vault/projects/` with YAML frontmatter:
+
+```markdown
+---
+domain: work
+workstream: marketing
+project_name: website-redesign
+full_path: work.marketing.website-redesign
+state: active
+created_at: '2025-10-07T14:30:00'
+description: Company website redesign project
+task_uuids:
+  - abc-123-def
+  - ghi-456-jkl
+needs_review: false
+tags:
+  - project
+  - work
+  - marketing
+---
+
+# Website Redesign
+
+## Overview
+Company website redesign project
+
+## Tasks
+<!-- Linked TaskWarrior tasks -->
+
+## Notes
+<!-- Project documentation -->
+```
+
+### Project Hierarchy
+
+- **Domain**: `work` / `home` / `personal` (top-level)
+- **Workstream**: Area of responsibility (e.g., `marketing`, `engineering`)
+- **Project**: Specific initiative (e.g., `website-redesign`)
+
+Full path example: `work.marketing.website-redesign`
+
+2-segment projects (no workstream) are flagged with `needs_review: true`.
+

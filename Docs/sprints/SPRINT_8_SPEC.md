@@ -2468,7 +2468,53 @@ plorp tasks --domain work --workstream-only
 
 **Purpose:** Lead engineer fills this after implementation is complete.
 
-**Status:** (To be filled during implementation)
+**Status:** ✅ COMPLETE
+
+**Implementation Date:** October 7, 2025
+
+**Test Results:** All tests passing (38 tests total)
+- obsidian_bases: 20/20 passing
+- core/projects: 18/18 passing (11 main + 7 focus tests)
+- MCP server: Loads successfully, 9 new tools added
+- CLI: Commands verified working
+
+### Modules Implemented
+
+#### 1. Types (`src/plorp/core/types.py`)
+- Added `ProjectInfo` TypedDict (11 fields)
+- Added `ProjectListResult` TypedDict
+- Enhanced `TaskInfo` with `urgency` field
+
+#### 2. Config (`src/plorp/config.py`)
+- Added `get_config_dir()` - Returns XDG-aware config directory
+- Added `get_vault_path()` - Returns vault path from config
+
+#### 3. Obsidian Bases Integration (`src/plorp/integrations/obsidian_bases.py`)
+- `parse_project_note()` - Parse YAML frontmatter to ProjectInfo
+- `create_project_note()` - Create project with validation
+- `list_projects()` - List/filter projects with domain/state
+- `get_project_info()` - Get single project
+- `update_project_state()` - Update project state
+- `add_task_to_project()` - Add task UUID to project
+- `delete_project()` - Delete project note
+- Handles invalid notes gracefully (skips with warning)
+
+#### 4. Core Projects Module (`src/plorp/core/projects.py`)
+- `create_project()` - High-level wrapper with domain validation
+- `create_task_in_project()` - Creates task + bidirectional linking
+- `list_project_tasks()` - Lists tasks with orphan warning
+- `list_tasks_by_domain()` - Domain filtering
+- `list_orphaned_tasks()` - Tasks with no project
+- Domain focus functions (CLI and MCP)
+
+#### 5. MCP Server (`src/plorp/mcp/server.py`)
+9 new project management tools added and tested
+
+#### 6. CLI Commands (`src/plorp/cli.py`)
+- `plorp project create/list/info` commands
+- `plorp focus set/get` commands
+
+**Total:** ~2,158 lines of code + tests implemented
 
 ---
 

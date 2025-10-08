@@ -172,20 +172,26 @@ plorp link <uuid> <note-path>
 
 **Default config**:
 ```yaml
-vault_path: ~/vault
+vault_path: /Users/jsd/vault
 taskwarrior_data: ~/.task
 inbox_email: null
 default_editor: vim
 ```
 
+**Note**: Configure vault location in `~/.config/plorp/config.yaml`.
+
 ## Implementation Status
 
-This is a **planning repository** - implementation has not started. The specification files in `Docs/` are:
+**Sprint 0**: ✅ Complete - Project structure and test infrastructure in place
+
+The specification files in `Docs/` are:
 - `plorp_SPEC.md` - Complete specification
 - `plorp_ARCHITECTURE.md` - Technical implementation details
 - `plorp_IMPLEMENTATION_PLAN.md` - Phase-by-phase build plan
 - `plorp_TASKWARRIOR_INTEGRATION.md` - TaskWarrior 3.x integration guide
 - `plorp_PRIOR_VERSION_NOTES.md` - Reference notes from previous iteration (for context only)
+- `VAULT_SETUP.md` - Obsidian vault configuration for development
+- `sprints/` - Individual sprint specifications (SPRINT_0 through SPRINT_5)
 
 When implementing, follow the phase plan in `plorp_IMPLEMENTATION_PLAN.md`:
 - Phase 0: Setup (project structure)
@@ -203,3 +209,24 @@ When implementing, follow the phase plan in `plorp_IMPLEMENTATION_PLAN.md`:
 - Never write directly to TaskWarrior's SQLite database
 - Parse markdown defensively (users may edit files manually)
 - Handle missing tasks/files gracefully
+
+## Context Management
+
+Claude Code instances have a 200,000 token context budget per session. Monitor usage via system warnings.
+
+**Alert Protocol:**
+- Alert user when remaining context drops below 120,000 tokens (~60% used)
+- Proactively suggest checkpointing work or starting fresh session if needed
+- User can request context status at any time
+
+**When Low on Context:**
+1. Complete current task if nearly done
+2. Update PM_HANDOFF.md with session notes
+3. Suggest user start new session to continue work
+4. Avoid starting new complex tasks
+
+**Context-Efficient Practices:**
+- Use targeted file reads (offset/limit) for large files
+- Prefer Grep over reading entire files when searching
+- Use Task agent for multi-step searches
+- Avoid unnecessary re-reads of large files

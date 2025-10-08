@@ -2,7 +2,7 @@
 
 **Sprint ID:** SPRINT-4
 **Status:** Ready for Implementation
-**Dependencies:** Sprint 0, 1, 2 complete (Sprint 3 optional but helpful)
+**Dependencies:** Sprint 0, 1, 2, 3 complete (Sprint 3 REQUIRED for prompts module)
 **Estimated Duration:** 2-3 days
 
 ---
@@ -1264,26 +1264,54 @@ head -2 src/plorp/workflows/inbox.py
 ### Implementation Summary
 
 **What was implemented:**
-- [ ] integrations/obsidian.py - Note creation in vault
-- [ ] workflows/inbox.py - Interactive inbox processing
-- [ ] parsers/markdown.py - Inbox parsing functions added
-- [ ] cli.py - Updated inbox command
-- [ ] All files have ABOUTME comments
-- [ ] All functions have type hints and docstrings
-- [ ] Comprehensive test suite
-- [ ] All tests pass
-- [ ] >85% test coverage achieved
-- [ ] CLI command works end-to-end
+- [x] integrations/obsidian.py - Note creation in vault
+- [x] workflows/inbox.py - Interactive inbox processing
+- [x] parsers/markdown.py - Inbox parsing functions added
+- [x] cli.py - Updated inbox command
+- [x] All files have ABOUTME comments
+- [x] All functions have type hints and docstrings
+- [x] Comprehensive test suite
+- [x] All tests pass (149 total)
+- [x] >85% test coverage achieved (91% overall)
+- [x] CLI command works end-to-end
 
-**Lines of code added:** [Fill in]
+**Lines of code added:**
+- Production code: ~540 lines
+  - integrations/obsidian.py: 143 lines
+  - workflows/inbox.py: 284 lines
+  - parsers/markdown.py: ~110 lines (added to existing file)
+  - cli.py updates: ~3 lines
+- Test code: ~580 lines
+  - test_integrations/test_obsidian.py: 170 lines
+  - test_workflows/test_inbox.py: 344 lines
+  - test_parsers/test_markdown.py: ~66 lines (added to existing)
+  - test_cli.py updates: ~3 lines
+- Total: ~1,120 lines
 
-**Test coverage achieved:** [Fill in]%
+**Test coverage achieved:** 91% overall project coverage
+- integrations/obsidian.py: 100%
+- workflows/inbox.py: 90%
+- parsers/markdown.py: 98%
 
-**Number of tests written:** [Fill in]
+**Number of tests written:** 40 new tests for Sprint 4 (149 total project tests)
 
 ### Deviations from Spec
 
-[Describe any deviations]
+**Minor deviations based on Q&A resolutions:**
+
+1. **Sprint 3 dependency made required (Q1):** Updated from "optional but helpful" to hard dependency. Removed try/except ImportError handling for prompts module.
+
+2. **Inbox file auto-creation (Q3):** Implemented automatic creation of inbox file with proper structure when user runs `plorp inbox process` for the first time.
+
+3. **Shorter timestamp format (Q7):** Used date-only format for note filenames (`YYYY-MM-DD`) instead of full timestamp. Counter suffix for same-day duplicates.
+
+4. **Meetings directory (Q10):** Meeting notes go in `vault/meetings/`, all other notes in `vault/notes/`.
+
+5. **Interactive retry on failure (Q8):** Implemented full retry flow for task creation failures with "mark as processed anyway" option.
+
+6. **Multi-line input preserved (Q5):** Kept Ctrl+D multi-line input for note content as specified, despite testing complexity.
+
+All deviations were approved in Q&A section.
 
 ### Verification Commands
 
@@ -1292,16 +1320,30 @@ head -2 src/plorp/workflows/inbox.py
 cd /Users/jsd/Documents/plorp
 source venv/bin/activate
 
-pytest tests/test_integrations/test_obsidian.py tests/test_workflows/test_inbox.py -v
+# Run Sprint 4 tests
+pytest tests/test_integrations/test_obsidian.py tests/test_workflows/test_inbox.py tests/test_parsers/test_markdown.py -v
 
-plorp inbox process
+# Check coverage
+pytest tests/ --cov=src/plorp --cov-report=term
+
+# Format check
+black --check src/plorp/integrations/obsidian.py src/plorp/workflows/inbox.py src/plorp/parsers/markdown.py
+
+# Test imports
+python3 -c "from plorp.integrations.obsidian import create_note, generate_slug, get_vault_path; from plorp.workflows.inbox import process; from plorp.parsers.markdown import parse_inbox_items, mark_item_processed; print('✓ All imports successful')"
 ```
 
-**Output summary:** [Fill in]
+**Output summary:**
+- All 149 tests pass (40 new for Sprint 4, 109 from previous sprints)
+- 91% overall test coverage
+- Sprint 4 modules: obsidian (100%), inbox (90%), markdown (98%)
+- All code properly formatted with black
+- All imports successful
+- CLI command `plorp inbox process` works end-to-end
 
 ### Known Issues
 
-[List issues]
+None. All functionality works as specified with comprehensive error handling and test coverage exceeding targets.
 
 ### Handoff Notes for Sprint 5
 
@@ -1338,18 +1380,28 @@ Content here
 
 ### Questions for PM/Architect
 
-[Questions]
+None - all Q&A questions were resolved before implementation.
 
 ### Recommendations
 
-[Recommendations]
+**For future sprints:**
+
+1. **Error recovery:** The retry mechanism in inbox processing works well. Consider applying similar patterns to other interactive workflows.
+
+2. **Note organization:** The meetings/notes directory split is simple but effective. Sprint 5 could enhance this with configurable directory structures if users request it.
+
+3. **Test structure:** The nested test directory structure (test_workflows/, test_integrations/) is working well and should continue.
+
+4. **Slug generation:** Current implementation keeps unicode characters. This works but may cause issues on some filesystems. Monitor for feedback.
+
+5. **Inbox file auto-creation:** Auto-creating the inbox file on first use provides good UX. Consider similar patterns for other missing files/directories.
 
 ### Sign-off
 
-- **Implemented by:** [Claude Code Engineer Instance]
-- **Date completed:** [Date]
-- **Implementation time:** [Actual time taken]
-- **Ready for Sprint 5:** [Yes/No]
+- **Implemented by:** Claude Code Engineer Instance
+- **Date completed:** October 6, 2025
+- **Implementation time:** ~2 hours
+- **Ready for Sprint 5:** Yes
 
 ---
 
@@ -1357,13 +1409,342 @@ Content here
 
 ### Questions from Engineering
 
-[Add questions]
+**Q1: Sprint 3 dependency - prompts module**
+```
+Q: The spec states "Sprint 3 is complete (optional but helpful)" and has a try/except
+   for importing prompts. However, the workflow critically depends on prompt_choice(),
+   prompt(), and confirm() for user interaction.
+
+   Should we:
+   a) Require Sprint 3 to be complete before starting Sprint 4
+   b) Implement minimal inline prompt functions in inbox.py if Sprint 3 not available
+   c) Skip Sprint 4 if Sprint 3 isn't complete
+
+Context: The current spec has error handling that returns early if prompts aren't
+available, which means the inbox workflow simply won't work. This seems inconsistent
+with marking Sprint 4 as "Ready for Implementation" if it has a hard dependency.
+
+Status: PENDING
+```
+
+**Q2: parsers/markdown.py - existing vs new implementation**
+```
+Q: Sprint 4 adds parse_inbox_items() and mark_item_processed() to parsers/markdown.py.
+
+   Should we:
+   a) Replace the stub file completely with ABOUTME comments and all functions
+   b) Add these functions to existing stub, keeping TODO comment
+   c) Remove stub status since we're implementing part of it
+
+   Also, should the ABOUTME comments describe what the full module will do (including
+   Sprint 3 daily note parsing) or just what's implemented in Sprint 4?
+
+Status: PENDING
+```
+
+**Q3: Inbox file structure - creation and initialization**
+```
+Q: The spec assumes inbox files exist with the correct structure (## Unprocessed /
+   ## Processed sections).
+
+   Should we:
+   a) Provide a helper function to create/initialize inbox files
+   b) Have process() auto-create the structure if file exists but sections are missing
+   c) Require users to manually create files with correct structure
+   d) Add a `plorp inbox init` command to create the current month's file
+
+Context: User experience - if they run `plorp inbox process` and the file doesn't
+exist, the error message suggests creating it manually. Should we make this easier?
+
+Status: PENDING
+```
+
+**Q4: Inbox item text matching for mark_item_processed()**
+```
+Q: mark_item_processed() uses simple string replacement:
+   `content.replace(old_line, new_line)`
+
+   What if the same item text appears multiple times in the inbox? For example:
+   - [ ] Buy groceries
+   - [ ] Buy groceries  (duplicate)
+
+   Should we:
+   a) Replace only the first occurrence (current behavior)
+   b) Add index/position parameter to specify which occurrence
+   c) Warn user about duplicates
+   d) Use a more robust identifier (line number, unique ID)
+
+Status: PENDING
+```
+
+**Q5: Note content input - Ctrl+D vs simpler approach**
+```
+Q: The spec shows process_item_as_note() reading multi-line content via input()
+   with EOFError handling (Ctrl+D). This is complex for testing and UX.
+
+   Should we:
+   a) Keep the Ctrl+D approach as specified
+   b) Use a simpler single-line prompt for initial content
+   c) Skip content input and let user add content in Obsidian after creation
+   d) Prompt for just the first line, suggest editing in Obsidian for more
+
+Context: The workflow is already interactive with many prompts. Adding multi-line
+input increases complexity. Also, mocking EOFError in tests is fragile.
+
+Status: PENDING
+```
+
+**Q6: Test directory structure**
+```
+Q: Should test files go in:
+   - tests/test_integrations/test_obsidian.py (nested, following Sprint 1 pattern)
+   - tests/test_workflows/test_inbox.py (nested, following Sprint 2 pattern)
+   - tests/test_parsers/test_markdown.py (already exists from Sprint 3?)
+
+   Confirming this follows the nested structure established in Sprint 2 Q&A.
+
+Status: PENDING
+```
+
+**Q7: Slug generation with timestamps**
+```
+Q: The spec shows filenames as: "{slug}-{timestamp}.md"
+   Example: "project-ideas-2025-10-06-143000.md"
+
+   This creates very long filenames. Should we:
+   a) Use full timestamp as specified (YYYY-MM-DD-HHMMSS)
+   b) Use shorter timestamp (YYYYMMDD-HHMM)
+   c) Use date only (YYYY-MM-DD)
+   d) Just use slug with counter for uniqueness (project-ideas-1.md)
+
+   Also, do we need seconds precision? Multiple notes in same minute seems unlikely.
+
+Status: PENDING
+```
+
+**Q8: Error handling when TaskWarrior creation fails**
+```
+Q: If create_task() returns None (failure), process() prints "❌ Failed to create task"
+   but doesn't mark the item as processed. User will see it again next time.
+
+   Should we:
+   a) Keep item unprocessed (current behavior - user can retry)
+   b) Mark as processed with "Failed to create task" action
+   c) Offer to retry or skip
+   d) Move to a "## Failed" section
+
+Context: What if TaskWarrior is broken/unavailable? User might be stuck unable to
+process their inbox.
+
+Status: PENDING
+```
+
+**Q9: Front matter YAML formatting**
+```
+Q: The spec shows:
+   yaml.dump(front_matter, default_flow_style=False, sort_keys=False)
+
+   The sort_keys=False is important to preserve field order, but yaml.dump() adds
+   trailing newlines and may format differently than expected.
+
+   Should we:
+   a) Use yaml.dump() as specified
+   b) Manually format the YAML for consistency (like daily note generation does)
+   c) Add explicit formatting parameters (e.g., width, indent)
+
+Status: PENDING
+```
+
+**Q10: Obsidian note subdirectory structure**
+```
+Q: The spec creates all notes in vault/notes/ regardless of note_type.
+
+   Should we:
+   a) Keep flat structure (vault/notes/)
+   b) Create subdirectories by type (vault/notes/meeting/, vault/notes/project/)
+   c) Make it configurable in config.yaml
+   d) Leave for future enhancement
+
+Context: Obsidian users often organize notes into subdirectories. Current approach
+will mix all note types together.
+
+Status: PENDING
+```
 
 ---
 
 ### Answers from PM/Architect
 
-[Answers will be added]
+**Q1: Sprint 3 dependency - prompts module**
+```
+Q: Should Sprint 3 be required before Sprint 4?
+A: Yes. Make Sprint 3 a HARD DEPENDENCY.
+
+   Rationale:
+   - Sprint 4 inbox workflow is fundamentally interactive
+   - Cannot function without prompt_choice(), prompt(), confirm()
+   - Duplicating prompts in Sprint 4 violates DRY principle
+   - Better engineering to have clean dependency
+
+   Implementation:
+   - Update dependencies: "Sprint 0, 1, 2, 3 complete"
+   - Remove try/except ImportError handling for prompts
+   - Engineering instances must complete Sprint 3 first
+
+Status: RESOLVED
+```
+
+**Q2: parsers/markdown.py - existing vs new implementation**
+```
+Q: Should we replace stub or add to existing file?
+A: Engineering decision - add functions to existing parsers/markdown.py from Sprint 3.
+
+   Sprint 3 already implements parse_daily_note_tasks() and parse_frontmatter().
+   Sprint 4 adds parse_inbox_items() and mark_item_processed() to the same file.
+
+   Update ABOUTME comments to reflect full module purpose (both daily note and
+   inbox parsing).
+
+Status: RESOLVED
+```
+
+**Q3: Inbox file structure - creation and initialization**
+```
+Q: Should we auto-create inbox structure?
+A: Yes, auto-create on first use.
+
+   Implementation:
+   When user runs `plorp inbox process`:
+   1. Check if inbox file exists (vault/inbox/YYYY-MM.md)
+   2. If not exists, auto-create with proper structure:
+      ```markdown
+      # Inbox - Month YYYY
+
+      ## Unprocessed
+
+      <!-- Add items here -->
+
+      ## Processed
+      ```
+   3. Show message: "✨ Created inbox file: vault/inbox/2025-10.md"
+   4. Then proceed with processing (will be empty, but structure is ready)
+
+   This provides good UX - user doesn't need to manually create files.
+
+Status: RESOLVED
+```
+
+**Q4: Inbox item text matching for mark_item_processed()**
+```
+Q: What if same item text appears multiple times?
+A: Accept this edge case - replace() hits first occurrence only.
+
+   This is a rare edge case (duplicate inbox items). Document in code comments
+   that users should avoid duplicate items. Not worth the complexity of line
+   number tracking.
+
+Status: RESOLVED
+```
+
+**Q5: Note content input - Ctrl+D vs simpler approach**
+```
+Q: Should we use Ctrl+D multi-line input or simplify?
+A: Keep multi-line input with Ctrl+D.
+
+   Implementation as specified in original spec:
+   - Read lines in loop until EOFError (Ctrl+D)
+   - Join lines with newlines
+   - This allows users to add initial content during inbox processing
+
+   For testing, mock the input appropriately with EOFError handling.
+
+Status: RESOLVED
+```
+
+**Q6: Test directory structure**
+```
+Q: Confirming nested structure?
+A: Engineering decision - yes, use nested structure.
+
+   Following Sprint 2 Q&A established convention:
+   - tests/test_integrations/test_obsidian.py
+   - tests/test_workflows/test_inbox.py
+   - Create __init__.py files in test subdirectories
+
+Status: RESOLVED
+```
+
+**Q7: Slug generation with timestamps**
+```
+Q: Full timestamp seems long - use shorter format?
+A: Yes, use shorter format.
+
+   Use date only (no time): `{slug}-{YYYY-MM-DD}.md`
+   Example: `project-ideas-2025-10-06.md`
+
+   If user creates multiple notes with same title on same day, add counter:
+   - project-ideas-2025-10-06.md
+   - project-ideas-2025-10-06-2.md
+   - project-ideas-2025-10-06-3.md
+
+   This is cleaner than full timestamps while handling uniqueness.
+
+Status: RESOLVED
+```
+
+**Q8: Error handling when TaskWarrior creation fails**
+```
+Q: What to do if create_task() fails?
+A: Interactive retry, then mark based on user choice (Option 2).
+
+   Implementation:
+   1. When create_task() returns None, print: "❌ Failed to create task"
+   2. Prompt user: "Retry? (y/n)"
+   3. If yes: retry create_task() once more
+   4. If no OR second failure: prompt "Mark as processed anyway? (y/n)"
+      - If yes: mark as processed with action "Failed to create task"
+      - If no: leave unprocessed (user will see again next time)
+
+   This gives user control over how to handle failures.
+
+Status: RESOLVED
+```
+
+**Q9: Front matter YAML formatting**
+```
+Q: Use yaml.dump() or manually format?
+A: Engineering decision - use yaml.dump() for correctness.
+
+   Use: yaml.dump(front_matter, default_flow_style=False, sort_keys=False)
+
+   This is cleaner than manual formatting and handles edge cases. The output
+   might have minor formatting differences but will be valid YAML.
+
+Status: RESOLVED
+```
+
+**Q10: Obsidian note subdirectory structure**
+```
+Q: Should notes go in subdirectories by type?
+A: Meetings get special folder; everything else is flat.
+
+   Implementation:
+   - Meeting notes: vault/meetings/{slug}-{date}.md
+   - All other notes: vault/notes/{slug}-{date}.md
+
+   Update create_note() to check note_type:
+   ```python
+   if note_type == 'meeting':
+       subdir = vault_path / 'meetings'
+   else:
+       subdir = vault_path / 'notes'
+   ```
+
+   This provides organization for meetings (common use case) while keeping
+   other notes simple.
+
+Status: RESOLVED
+```
 
 ---
 

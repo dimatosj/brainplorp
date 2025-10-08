@@ -198,9 +198,188 @@ def review(config: Dict[str, Any]) -> None:
     """
     Interactive end-of-day review.
 
-    Status: STUB - To be implemented in Sprint 3
+    Reads today's daily note, finds uncompleted tasks, and prompts user
+    for action on each task. Updates TaskWarrior and appends decisions
+    to the daily note.
 
     Args:
         config: Configuration dictionary
+
+    Example:
+        >>> config = load_config()
+        >>> review(config)
+        # Interactive prompts follow...
     """
-    print("⚠️  'review' functionality not yet implemented (coming in Sprint 3)")
+    from plorp.parsers.markdown import parse_daily_note_tasks
+    from plorp.utils.prompts import prompt_choice, prompt, confirm
+    from plorp.integrations.taskwarrior import (
+        get_task_info,
+        mark_done,
+        defer_task,
+        set_priority,
+        delete_task,
+    )
+
+    today = date.today()
+    vault_path = Path(config["vault_path"])
+    daily_path = vault_path / "daily" / f"{format_date_iso(today)}.md"
+
+    if not daily_path.exists():
+        print(f"❌ No daily note found for {format_date_long(today)}")
+        print(f"💡 Run: plorp start")
+        return
+
+    # Parse uncompleted tasks
+    uncompleted = parse_daily_note_tasks(daily_path)
+
+    if not uncompleted:
+        print(f"\n✅ All tasks completed! Great work on {format_date_long(today)}")
+        return
+
+    print(f"\n📋 {len(uncompleted)} tasks remaining from {format_date_long(today)}\n")
+
+    decisions = []
+
+    for task_desc, task_uuid in uncompleted:
+        # Get full task details from TaskWarrior
+        task = get_task_info(task_uuid)
+
+        if not task:
+            # Per Q3 answer: print warning, add to decisions, add inline comment to note
+            print(f"\n⚠️  Task not found in TaskWarrior: {task_desc}")
+            print(f"    UUID: {task_uuid}")
+            print("    (Task may have been deleted or modified outside plorp)")
+            decisions.append(
+                f"⚠️ {task_desc} - task not found in TaskWarrior (may have been deleted)"
+            )
+            continue
+
+        # Show task details
+        print(f"\n{'=' * 60}")
+        print(f"📌 Task: {task['description']}")
+        if "project" in task:
+            print(f"   Project: {task['project']}")
+        if "due" in task:
+            due_str = format_taskwarrior_date_short(task["due"])
+            print(f"   Due: {due_str}")
+        if "priority" in task:
+            print(f"   Priority: {task['priority']}")
+        print(f"{'=' * 60}")
+
+        # Prompt for action
+        choice = prompt_choice(
+            options=[
+                "✅ Mark done",
+                "📅 Defer to tomorrow",
+                "📆 Defer to specific date",
+                "⚡ Change priority",
+                "⏭️  Skip (keep as-is)",
+                "🗑️  Delete task",
+                "🚪 Quit review",
+            ],
+            prompt_text="What would you like to do with this task?",
+        )
+
+        if choice == 0:  # Mark done
+            if mark_done(task_uuid):
+                decisions.append(f"✅ {task_desc}")
+                print("✅ Marked done\n")
+            else:
+                print("❌ Failed to mark done\n")
+
+        elif choice == 1:  # Defer to tomorrow
+            if defer_task(task_uuid, "tomorrow"):
+                decisions.append(f"📅 {task_desc} → tomorrow")
+                print("📅 Deferred to tomorrow\n")
+            else:
+                print("❌ Failed to defer\n")
+
+        elif choice == 2:  # Defer to specific date
+            # Per Q6: Trust TaskWarrior date parsing
+            new_due = prompt("New due date (YYYY-MM-DD or 'friday', etc)")
+            if new_due and defer_task(task_uuid, new_due):
+                decisions.append(f"📅 {task_desc} → {new_due}")
+                print(f"📅 Deferred to {new_due}\n")
+            else:
+                print("❌ Failed to defer\n")
+
+        elif choice == 3:  # Change priority
+            # Per Q5: Validate priority input with loop
+            while True:
+                priority = prompt("Priority (H/M/L or blank to remove)", default="").upper()
+                if priority in ("H", "M", "L", ""):
+                    break
+                print("❌ Invalid priority. Use H, M, L, or blank")
+
+            if set_priority(task_uuid, priority):
+                priority_display = priority if priority else "none"
+                decisions.append(f"⚡ {task_desc} → priority {priority_display}")
+                print(f"⚡ Priority set to {priority_display}\n")
+            else:
+                print("❌ Failed to set priority\n")
+
+        elif choice == 4:  # Skip
+            print("⏭️  Skipped (no changes)\n")
+            # No action, just continue
+
+        elif choice == 5:  # Delete
+            if confirm(f"Really delete '{task_desc}'?", default=False):
+                if delete_task(task_uuid):
+                    decisions.append(f"🗑️  {task_desc} (deleted)")
+                    print("🗑️  Deleted\n")
+                else:
+                    print("❌ Failed to delete\n")
+            else:
+                print("❌ Delete cancelled\n")
+
+        elif choice == 6:  # Quit
+            print("\n⚠️  Review interrupted. Progress saved so far.")
+            break
+
+    # Append decisions to daily note
+    if decisions:
+        append_review_section(daily_path, decisions)
+
+    print(f"\n{'=' * 60}")
+    print(f"✅ Review complete - processed {len(decisions)} tasks")
+    print(f"{'=' * 60}\n")
+
+
+def append_review_section(daily_path: Path, decisions: List[str]) -> None:
+    """
+    Append review decisions to daily note.
+
+    Per Q4 answer: Appends to existing review section with new timestamp.
+    Never replaces or deletes previous review content.
+
+    Args:
+        daily_path: Path to daily note
+        decisions: List of decision strings to append
+
+    Example:
+        >>> decisions = ["✅ Task completed", "📅 Task deferred"]
+        >>> append_review_section(Path('daily/2025-10-06.md'), decisions)
+    """
+    from datetime import datetime
+    from plorp.utils.files import read_file, write_file
+
+    content = read_file(daily_path)
+
+    # Build review entry
+    review_entry = f"\n**Review completed:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+    for decision in decisions:
+        review_entry += f"- {decision}\n"
+
+    # Per Q4: APPEND to review section, don't replace
+    if "## Review Section" in content:
+        # Find the review section and append after it
+        # Insert review entry after the "## Review Section" header
+        parts = content.split("## Review Section", 1)
+        if len(parts) == 2:
+            # Keep everything before, add header, add old content + new entry
+            content = parts[0] + "## Review Section" + parts[1].rstrip() + "\n" + review_entry
+    else:
+        # No review section exists, add it
+        content += f"\n\n## Review Section\n{review_entry}"
+
+    write_file(daily_path, content)

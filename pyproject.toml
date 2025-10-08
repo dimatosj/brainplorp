@@ -4,31 +4,34 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "plorp"
-version = "1.0.0"
+version = "1.1.0"
 description = "Workflow automation for TaskWarrior + Obsidian"
 authors = [{name = "plorp contributors"}]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "PyYAML>=6.0",
     "click>=8.0",
     "rich>=13.0",
+    "mcp>=0.1.0",
 ]
 
 [project.scripts]
 plorp = "plorp.cli:cli"
+plorp-mcp = "plorp.mcp.server:main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21.0",
     "black>=23.0",
     "mypy>=1.0",
 ]
 
 [tool.black]
 line-length = 100
-target-version = ['py38', 'py39', 'py310', 'py311']
+target-version = ['py310', 'py311']
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -38,8 +41,11 @@ markers = [
     "integration: marks tests as integration tests (may require external tools)",
 ]
 
+[tool.setuptools.package-data]
+plorp = ["slash_commands/*.md"]
+
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false  # Relaxed for initial development

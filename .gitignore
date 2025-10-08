@@ -46,3 +46,6 @@ Thumbs.db
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Side projects
+plorp_obsidian/

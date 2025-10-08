@@ -512,5 +512,6 @@ def process(ctx, date_str):
         ctx.exit(1)
 
 
+
 if __name__ == "__main__":
     cli()

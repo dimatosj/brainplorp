@@ -42,17 +42,8 @@ from plorp.core.process import process_daily_note_step1, process_daily_note_step
 from plorp.integrations.taskwarrior import get_task_info as tw_get_task_info
 
 
-# Q25: Setup logging to file
-log_path = Path.home() / ".config" / "plorp" / "mcp.log"
-log_path.parent.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    filename=str(log_path),
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
 logger = logging.getLogger("plorp.mcp")
+logger.addHandler(logging.NullHandler())
 
 # Initialize MCP server
 app = Server("plorp")

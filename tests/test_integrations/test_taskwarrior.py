@@ -9,6 +9,7 @@ import pytest
 from unittest.mock import patch, MagicMock, call
 import json
 import sys
+import concurrent.futures
 
 
 @pytest.fixture
@@ -268,7 +269,8 @@ def test_create_task_export_failure(mock_subprocess):
     """Test create_task handles failure to export newly created task."""
     add_result = MagicMock(returncode=0, stdout="Created task 1.\n", stderr="")
     export_result = MagicMock(returncode=1, stdout="", stderr="Export error")
-    mock_subprocess.side_effect = [add_result, export_result]
+    # With retry logic: 1 add + 3 export attempts
+    mock_subprocess.side_effect = [add_result, export_result, export_result, export_result]
 
     from plorp.integrations.taskwarrior import create_task
 
@@ -281,7 +283,8 @@ def test_create_task_export_empty(mock_subprocess):
     """Test create_task handles empty export result."""
     add_result = MagicMock(returncode=0, stdout="Created task 1.\n", stderr="")
     export_result = MagicMock(returncode=0, stdout="[]", stderr="")
-    mock_subprocess.side_effect = [add_result, export_result]
+    # With retry logic: 1 add + 3 export attempts (all return empty)
+    mock_subprocess.side_effect = [add_result, export_result, export_result, export_result]
 
     from plorp.integrations.taskwarrior import create_task
 
@@ -294,7 +297,8 @@ def test_create_task_export_json_error(mock_subprocess):
     """Test create_task handles JSON parse error in export."""
     add_result = MagicMock(returncode=0, stdout="Created task 1.\n", stderr="")
     export_result = MagicMock(returncode=0, stdout="not json", stderr="")
-    mock_subprocess.side_effect = [add_result, export_result]
+    # With retry logic: 1 add + 3 export attempts (all return invalid JSON)
+    mock_subprocess.side_effect = [add_result, export_result, export_result, export_result]
 
     from plorp.integrations.taskwarrior import create_task
 
@@ -474,3 +478,69 @@ def test_get_task_annotations_task_not_found():
         annotations = get_task_annotations("invalid-uuid")
 
         assert annotations == []
+
+
+# Regression tests for Bug #1: Race condition in task creation
+def test_create_task_returns_uuid_reliably(mock_subprocess):
+    """Ensure create_task returns UUID even with rapid calls.
+
+    Regression test for Bug #1: Race condition where task export fails
+    immediately after creation. The retry logic should handle this.
+    """
+    from plorp.integrations.taskwarrior import create_task
+
+    uuids = []
+    for i in range(10):
+        # Simulate race condition: first export fails (empty), retry succeeds
+        add_result = MagicMock(returncode=0, stdout=f"Created task {i+1}.\n", stderr="")
+        export_fail = MagicMock(returncode=0, stdout="[]", stderr="")  # Empty result (race condition)
+        export_success = MagicMock(
+            returncode=0,
+            stdout=json.dumps([{"uuid": f"uuid-{i:03d}", "description": f"Task {i}"}]),
+            stderr=""
+        )
+
+        # First call: task add, second: export (fails), third: export retry (succeeds)
+        mock_subprocess.side_effect = [add_result, export_fail, export_success]
+
+        uuid = create_task(f"Task {i}")
+        assert uuid is not None, f"Task {i} returned None"
+        uuids.append(uuid)
+
+        # Reset for next iteration
+        mock_subprocess.reset_mock()
+
+    # Verify all UUIDs are unique and valid
+    assert len(set(uuids)) == 10, "Duplicate UUIDs returned"
+    assert all(uuid.startswith("uuid-") for uuid in uuids)
+
+
+def test_concurrent_task_creation(mock_subprocess):
+    """Test creating multiple tasks concurrently.
+
+    Regression test for Bug #1: Ensures retry logic works correctly
+    under concurrent load.
+    """
+    from plorp.integrations.taskwarrior import create_task
+
+    def create_test_task(i):
+        # Each thread gets its own mock responses
+        add_result = MagicMock(returncode=0, stdout=f"Created task {i}.\n", stderr="")
+        export_result = MagicMock(
+            returncode=0,
+            stdout=json.dumps([{"uuid": f"concurrent-uuid-{i:03d}", "description": f"Concurrent task {i}"}]),
+            stderr=""
+        )
+
+        # Mock will return these in sequence for this specific call
+        mock_subprocess.side_effect = [add_result, export_result]
+
+        return create_task(f"Concurrent task {i}")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(create_test_task, i) for i in range(20)]
+        uuids = [f.result() for f in futures]
+
+    # All should succeed
+    assert all(uuid is not None for uuid in uuids), "Some tasks returned None"
+    assert len(set(uuids)) == 20, f"Expected 20 unique UUIDs, got {len(set(uuids))}"

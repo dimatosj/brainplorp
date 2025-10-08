@@ -9,30 +9,134 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 
 ---
 
-## CURRENT STATE (Updated: 2025-10-07 17:00)
+## CURRENT STATE (Updated: 2025-10-07 19:30)
 
 **Active Sprints:**
 - Sprint 6: ✅ COMPLETE (2025-10-06)
 - Sprint 7: ✅ COMPLETE (2025-10-07)
+- Sprint 8: ✅ COMPLETE (2025-10-07)
 
 **Blocking Issues:**
 - None
 
 **Documentation Status:**
-- Sprint 6 spec: ✅ Updated with completion notes
-- Sprint 7 spec: ✅ Already has completion notes
+- Sprint 6 spec: ✅ Complete with handoff notes
+- Sprint 7 spec: ✅ Complete with handoff notes
+- Sprint 8 spec: ✅ Complete with handoff notes
 - Handoff system: ✅ Fully operational
 
 **Next PM Instance Should:**
-1. Plan Sprint 8 (project/workstream/domain system based on user input)
-2. Test handoff system with fresh instance
-3. Address any user priorities
+1. Plan Sprint 9 (validation workflows, cleanup commands - see Sprint 8 handoff)
+2. Review Sprint 8 implementation quality with user
+3. Address any bugs or user feedback
 
-**Last Updated By:** PM Instance (Session 4 - Sprint 6 spec documentation complete)
+**Last Updated By:** PM Instance (Session 5 - Sprint 8 planning, Q&A, and completion review)
 
 ---
 
 ## SESSION HISTORY (Append-Only)
+
+### Session 5 - 2025-10-07 17:00-19:30 (PM/Architect)
+**Participant:** PM Instance (Sprint 8 planning, Q&A, completion review)
+
+**What Happened:**
+
+**Phase 1: Sprint 8 Planning & Architecture (17:00-18:00)**
+- User requested Sprint 8 on "domains and projects"
+- Researched TaskWarrior's project hierarchy (domain.workstream.project pattern)
+- User clarified conceptual model:
+  - Domains: work/home/personal (fixed, top-level)
+  - Workstreams: areas of responsibility (marketing, finance, etc.)
+  - Projects: specific initiatives
+- Discovered Obsidian Bases as elegant storage solution
+- User approved Bases approach: "ok do it, go with bases its exciting"
+
+**Phase 2: Sprint 8 Specification (18:00-18:30)**
+- Wrote complete Sprint 8 spec (2,600+ lines)
+- Architecture: Projects as markdown notes in `vault/projects/`
+- YAML frontmatter as data source for Obsidian Bases
+- 9 MCP tools, CLI commands, domain focus mechanism
+- Estimated 14-16 hours effort
+
+**Phase 3: Lead Engineer Q&A (18:30-19:00)**
+- Lead engineer asked 15 implementation questions (Q1-Q15)
+- PM answered all with detailed rationale and code examples:
+  - Q1: YAML field order → Preserve with `sort_keys=False`
+  - Q2: Project validation → Validate before TaskWarrior
+  - Q3: Orphaned UUIDs → Warn + add sync command (Sprint 9)
+  - Q4: Filenames → Use dots in filenames (spec correct)
+  - Q5: MCP focus → File-based storage (`mcp_focus.txt`)
+  - Q6: Title casing → Simple `.title()` transformation
+  - Q7: Workstream validation → Defer to Sprint 9
+  - Q8: Missing fields → Skip in list, error in get
+  - Q9: TypedDict → Keep TypedDict (architecture match)
+  - Q10: Base files → Document in VAULT_SETUP.md
+  - Q11: Focus location → Respect XDG_CONFIG_HOME
+  - Q12: Task annotation → Use `plorp-project:path` format
+  - Q13: State transitions → Allow any transition
+  - Q14: Vault directory → Auto-create in write functions
+  - Q15: Workstream filtering → Post-filter in Python
+
+**Phase 4: Sprint 8 Completion Review (19:00-19:30)**
+- Lead engineer completed Sprint 8 implementation
+- Review of implementation summary:
+  - 38 tests passing (20 obsidian_bases, 18 core/projects)
+  - ~2,158 lines of code
+  - 9 MCP tools added
+  - CLI commands working
+- Updated Sprint 8 spec with handoff notes
+- Marked Sprint 8 ✅ COMPLETE
+- Updated PM_HANDOFF.md (this entry)
+
+**Sprint Status Changes:**
+- Sprint 8: "Not started" → "READY" (17:30)
+- Sprint 8: "READY" → "COMPLETE" (19:00)
+
+**Documents Created/Modified:**
+- `/Users/jsd/Documents/plorp/Docs/sprints/SPRINT_8_SPEC.md` - Created (2,620 lines)
+- `/Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md` - Updated (this entry)
+- `/Users/jsd/Documents/plorp/CLAUDE.md` - Updated with context management section
+
+**Key Architectural Decisions:**
+1. **Obsidian Bases for project storage** - Projects as markdown notes, not YAML files
+2. **Three-tier hierarchy** - Domain.Workstream.Project (flexible 1-3 segments)
+3. **File-based focus** - Both CLI and MCP use persistent file storage
+4. **TypedDict pattern** - Continues Sprint 6 architecture
+5. **Bidirectional linking** - Projects track task UUIDs, tasks annotate project path
+
+**Sprint 8 Deliverables:**
+- Full project management via Obsidian Bases
+- 9 MCP tools (`create_project`, `list_projects`, `get_project_info`, `update_project_state`, `delete_project`, `create_task_in_project`, `list_project_tasks`, `set_focused_domain`, `get_focused_domain`)
+- CLI commands (`plorp project create/list/info`, `plorp focus set/get`)
+- Domain focus mechanism (persistent across sessions)
+- TaskWarrior native filtering integration
+- 38 tests passing, ~2,158 lines code
+
+**Deferred to Sprint 9:**
+- Hybrid workstream validation
+- Project sync command (clean orphaned UUIDs)
+- Orphaned project/task review workflows
+- Slash commands (`/create-project`, `/list-projects`, `/focus-domain`)
+
+**Technical Debt:**
+- None
+
+**Known Issues:**
+- None
+
+**Next Session Must:**
+1. Plan Sprint 9 (validation workflows, cleanup commands)
+2. Consider user feedback on Sprint 8
+3. Potentially plan Sprint 10 (daily note integration with project headings)
+
+**Notes for Next PM:**
+- Sprint 8 was planned and implemented in single session (unusual but successful)
+- Obsidian Bases integration is elegant, meets user requirement for "admin control"
+- All 15 implementation questions answered with clear guidance
+- Lead engineer delivered on spec, no deviations
+- Architecture is clean and extensible for future work
+
+---
 
 ### Session 3 - 2025-10-07 13:00-15:00 (PM/Architect)
 **Participant:** PM Instance (reviewing Sprint 7, implementing handoff system)

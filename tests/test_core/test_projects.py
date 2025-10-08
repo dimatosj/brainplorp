@@ -455,3 +455,37 @@ def test_focus_respects_xdg_config_home(tmp_path, monkeypatch):
     focus_file = xdg_dir / "plorp" / "cli_focus.txt"
     assert focus_file.exists()
     assert focus_file.read_text() == "work"
+
+
+# Regression test for Bug #1: Race condition in task creation
+def test_create_task_in_project_returns_uuid(tmp_path, monkeypatch):
+    """Ensure project task creation returns valid UUID.
+
+    Regression test for Bug #1: Verifies that create_task_in_project
+    returns a valid UUID even with the race condition fix.
+    """
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+
+    # Create project
+    from plorp.core.projects import create_project
+    create_project(name="test-project", domain="work", workstream="test")
+
+    # Mock TaskWarrior to return UUID
+    with patch("plorp.core.projects.create_task") as mock_create:
+        with patch("plorp.core.projects.add_annotation"):
+            # Simulate successful task creation with valid UUID
+            test_uuid = "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+            mock_create.return_value = test_uuid
+
+            from plorp.core.projects import create_task_in_project
+
+            # Create task in project
+            uuid = create_task_in_project(
+                description="Test task",
+                project_full_path="work.test.test-project"
+            )
+
+            # Verify UUID returned and valid format
+            assert uuid is not None
+            assert len(uuid) == 36  # UUID format (with dashes)
+            assert uuid == test_uuid

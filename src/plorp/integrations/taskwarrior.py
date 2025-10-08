@@ -18,6 +18,7 @@ import subprocess
 import json
 import sys
 import re
+import time
 from typing import List, Dict, Any, Optional
 from subprocess import CompletedProcess
 
@@ -174,23 +175,30 @@ def create_task(
 
     task_id = match.group(1)
 
-    # Query by ID to get UUID
-    export_result = run_task_command([task_id, "export"], capture=True)
+    # Query by ID to get UUID with retry logic to handle race conditions
+    # TaskWarrior 3.x SQLite may not have committed immediately after task creation
+    max_attempts = 3
+    delay = 0.05  # 50ms
 
-    if export_result.returncode != 0:
-        print(f"Error getting task UUID: {export_result.stderr}", file=sys.stderr)
-        return None
+    for attempt in range(max_attempts):
+        export_result = run_task_command([task_id, "export"], capture=True)
 
-    try:
-        tasks = json.loads(export_result.stdout)
-        if tasks:
-            return tasks[0]["uuid"]
-        else:
-            print(f"Error: No task found with ID {task_id}", file=sys.stderr)
-            return None
-    except json.JSONDecodeError as e:
-        print(f"Error parsing task JSON: {e}", file=sys.stderr)
-        return None
+        if export_result.returncode == 0:
+            try:
+                tasks = json.loads(export_result.stdout)
+                if tasks:
+                    return tasks[0]["uuid"]
+            except json.JSONDecodeError:
+                pass
+
+        # Retry with exponential backoff
+        if attempt < max_attempts - 1:
+            time.sleep(delay)
+            delay *= 2  # Exponential backoff: 50ms, 100ms
+
+    # Final fallback after all retries
+    print(f"Error: Could not retrieve UUID for task {task_id} after {max_attempts} attempts", file=sys.stderr)
+    return None
 
 
 def mark_done(uuid: str) -> bool:

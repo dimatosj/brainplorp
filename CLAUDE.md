@@ -149,6 +149,32 @@ plorp note "Title" --task <uuid>
 plorp link <uuid> <note-path>
 ```
 
+## Version Management
+
+**Version Numbering (Semantic Versioning):**
+- Format: `MAJOR.MINOR.PATCH` (e.g., `1.4.0`)
+- **Major sprints** (new features, workflows): Increment MINOR version (1.3.0 → 1.4.0)
+- **Minor sprints** (polish, fixes, small enhancements): Increment PATCH version (1.4.0 → 1.4.1)
+
+**Lead Engineer Responsibilities:**
+- Update version in **both** files when completing a sprint:
+  - `src/plorp/__init__.py` - `__version__` variable
+  - `pyproject.toml` - `version` field
+- Ensure both files have matching version numbers
+- Include version bump in final sprint commit
+
+**PM Instance Responsibilities:**
+- **Verify version was incremented** before signing off on sprint completion
+- Check that both `__init__.py` and `pyproject.toml` match
+- Confirm version number follows convention (MINOR for major sprint, PATCH for minor sprint)
+
+**Version History:**
+- v1.0.0 - Sprint 0-2 (Initial workflows)
+- v1.1.0 - Sprint 3-5 (Inbox processing)
+- v1.2.0 - Sprint 6 (MCP integration)
+- v1.3.0 - Sprint 7 (/process workflow)
+- v1.4.0 - Sprint 8 (Project management with Obsidian Bases)
+
 ## Design Principles
 
 ### Simplicity First

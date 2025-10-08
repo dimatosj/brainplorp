@@ -513,5 +513,116 @@ def process(ctx, date_str):
 
 
 
+# ============================================================================
+# Project Management Commands (Sprint 8)
+# ============================================================================
+
+
+@cli.group()
+@click.pass_context
+def project(ctx):
+    """Project management commands."""
+    pass
+
+
+@project.command("create")
+@click.argument("name")
+@click.option("--domain", "-d", default="work", help="Domain (work/home/personal)")
+@click.option("--workstream", "-w", help="Workstream")
+@click.option("--state", "-s", default="active", help="State")
+@click.option("--description", help="Project description")
+@click.pass_context
+def project_create(ctx, name, domain, workstream, state, description):
+    """Create a new project."""
+    from plorp.core.projects import create_project
+
+    try:
+        project = create_project(
+            name=name,
+            domain=domain,
+            workstream=workstream,
+            state=state,
+            description=description
+        )
+        click.echo(f"✓ Created project: {project['full_path']}")
+        click.echo(f"  Note: {project['note_path']}")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx.exit(1)
+
+
+@project.command("list")
+@click.option("--domain", "-d", help="Filter by domain")
+@click.option("--state", "-s", help="Filter by state")
+@click.pass_context
+def project_list(ctx, domain, state):
+    """List projects."""
+    from plorp.core.projects import list_projects
+
+    result = list_projects(domain=domain, state=state)
+
+    if not result["projects"]:
+        click.echo("No projects found.")
+        return
+
+    click.echo(f"\n{len(result['projects'])} project(s):\n")
+    for p in result["projects"]:
+        click.echo(f"  {p['full_path']} [{p['state']}]")
+        if p.get("description"):
+            click.echo(f"    {p['description']}")
+
+
+@project.command("info")
+@click.argument("full_path")
+@click.pass_context
+def project_info(ctx, full_path):
+    """Show project details."""
+    from plorp.core.projects import get_project_info
+
+    project = get_project_info(full_path)
+
+    if not project:
+        click.echo(f"Error: Project not found: {full_path}", err=True)
+        ctx.exit(1)
+
+    click.echo(f"\nProject: {project['full_path']}")
+    click.echo(f"Domain: {project['domain']}")
+    if project.get("workstream"):
+        click.echo(f"Workstream: {project['workstream']}")
+    click.echo(f"State: {project['state']}")
+    if project.get("description"):
+        click.echo(f"Description: {project['description']}")
+    click.echo(f"Tasks: {len(project['task_uuids'])}")
+    click.echo(f"Note: {project['note_path']}")
+
+
+@cli.group()
+@click.pass_context
+def focus(ctx):
+    """Domain focus management."""
+    pass
+
+
+@focus.command("set")
+@click.argument("domain", type=click.Choice(["work", "home", "personal"]))
+@click.pass_context
+def focus_set(ctx, domain):
+    """Set focused domain."""
+    from plorp.core.projects import set_focused_domain_cli
+
+    set_focused_domain_cli(domain)
+    click.echo(f"✓ Focused on domain: {domain}")
+
+
+@focus.command("get")
+@click.pass_context
+def focus_get(ctx):
+    """Get current focused domain."""
+    from plorp.core.projects import get_focused_domain_cli
+
+    domain = get_focused_domain_cli()
+    click.echo(f"Current focus: {domain}")
+
+
 if __name__ == "__main__":
     cli()

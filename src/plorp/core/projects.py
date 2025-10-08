@@ -20,6 +20,7 @@ from ..integrations.obsidian_bases import (
     get_vault_path,
 )
 from ..integrations.taskwarrior import create_task, add_annotation, get_tasks
+from ..config import get_config_dir
 from .types import ProjectInfo, ProjectListResult, TaskInfo
 
 
@@ -272,3 +273,58 @@ def list_orphaned_tasks() -> list[TaskInfo]:
         )
         for t in tasks
     ]
+
+
+# ============================================================================
+# Domain Focus Management
+# ============================================================================
+
+
+def get_focused_domain_cli() -> str:
+    """
+    Get focused domain for CLI (file-based persistence).
+
+    Returns:
+        Domain name (default: "home")
+    """
+    focus_file = get_config_dir() / "cli_focus.txt"
+    if focus_file.exists():
+        return focus_file.read_text().strip()
+    return "home"
+
+
+def set_focused_domain_cli(domain: str) -> None:
+    """
+    Set focused domain for CLI.
+
+    Args:
+        domain: Domain to focus (work/home/personal)
+    """
+    focus_file = get_config_dir() / "cli_focus.txt"
+    focus_file.parent.mkdir(parents=True, exist_ok=True)
+    focus_file.write_text(domain)
+
+
+def get_focused_domain_mcp() -> str:
+    """
+    Get focused domain for MCP (file-based persistence).
+
+    Returns:
+        Domain name (default: "home")
+    """
+    focus_file = get_config_dir() / "mcp_focus.txt"
+    if focus_file.exists():
+        return focus_file.read_text().strip()
+    return "home"
+
+
+def set_focused_domain_mcp(domain: str) -> None:
+    """
+    Set focused domain for MCP.
+
+    Args:
+        domain: Domain to focus (work/home/personal)
+    """
+    focus_file = get_config_dir() / "mcp_focus.txt"
+    focus_file.parent.mkdir(parents=True, exist_ok=True)
+    focus_file.write_text(domain)

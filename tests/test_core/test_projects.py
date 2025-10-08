@@ -321,3 +321,137 @@ def test_list_projects_wrapper(tmp_path, monkeypatch):
     result_all = create_project("test", "work", "admin", state="planning")
     planning_result = list_projects(state="planning")
     assert len(planning_result["projects"]) == 1
+
+
+# ============================================================================
+# Domain Focus Tests
+# ============================================================================
+
+
+def test_cli_focus_default(tmp_path, monkeypatch):
+    """Test CLI focus defaults to 'home'."""
+    from plorp.core.projects import get_focused_domain_cli
+
+    # Mock config dir to use tmp_path
+    monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
+
+    # No focus file exists
+    domain = get_focused_domain_cli()
+
+    # Should default to 'home'
+    assert domain == "home"
+
+
+def test_cli_focus_set_and_get(tmp_path, monkeypatch):
+    """Test setting and getting CLI focus."""
+    from plorp.core.projects import get_focused_domain_cli, set_focused_domain_cli
+
+    monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
+
+    # Set focus to 'work'
+    set_focused_domain_cli("work")
+
+    # Get focus
+    domain = get_focused_domain_cli()
+
+    assert domain == "work"
+
+    # Change focus
+    set_focused_domain_cli("personal")
+
+    domain = get_focused_domain_cli()
+    assert domain == "personal"
+
+
+def test_cli_focus_persists_across_calls(tmp_path, monkeypatch):
+    """Test CLI focus persists in file."""
+    from plorp.core.projects import set_focused_domain_cli, get_focused_domain_cli
+
+    monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
+
+    # Set focus
+    set_focused_domain_cli("work")
+
+    # Verify file created
+    focus_file = tmp_path / "cli_focus.txt"
+    assert focus_file.exists()
+    assert focus_file.read_text() == "work"
+
+    # Get focus (reads from file)
+    domain = get_focused_domain_cli()
+    assert domain == "work"
+
+
+def test_mcp_focus_default(tmp_path, monkeypatch):
+    """Test MCP focus defaults to 'home'."""
+    from plorp.core.projects import get_focused_domain_mcp
+
+    monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
+
+    # No focus file exists
+    domain = get_focused_domain_mcp()
+
+    assert domain == "home"
+
+
+def test_mcp_focus_set_and_get(tmp_path, monkeypatch):
+    """Test setting and getting MCP focus."""
+    from plorp.core.projects import get_focused_domain_mcp, set_focused_domain_mcp
+
+    monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
+
+    # Set focus to 'work'
+    set_focused_domain_mcp("work")
+
+    # Get focus
+    domain = get_focused_domain_mcp()
+
+    assert domain == "work"
+
+
+def test_cli_and_mcp_focus_independent(tmp_path, monkeypatch):
+    """Test CLI and MCP focus are stored separately."""
+    from plorp.core.projects import (
+        set_focused_domain_cli,
+        set_focused_domain_mcp,
+        get_focused_domain_cli,
+        get_focused_domain_mcp,
+    )
+
+    monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
+
+    # Set different focus for CLI and MCP
+    set_focused_domain_cli("work")
+    set_focused_domain_mcp("home")
+
+    # Verify they're independent
+    assert get_focused_domain_cli() == "work"
+    assert get_focused_domain_mcp() == "home"
+
+    # Verify separate files
+    assert (tmp_path / "cli_focus.txt").read_text() == "work"
+    assert (tmp_path / "mcp_focus.txt").read_text() == "home"
+
+
+def test_focus_respects_xdg_config_home(tmp_path, monkeypatch):
+    """Test focus files respect XDG_CONFIG_HOME."""
+    from plorp.core.projects import set_focused_domain_cli, get_focused_domain_cli
+    import os
+
+    # Set XDG_CONFIG_HOME
+    xdg_dir = tmp_path / "xdg_config"
+    xdg_dir.mkdir()
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_dir))
+
+    # get_config_dir should now use XDG_CONFIG_HOME
+    from plorp.config import get_config_dir
+    config_dir = get_config_dir()
+    assert str(xdg_dir / "plorp") == str(config_dir)
+
+    # Set focus (should use XDG path)
+    set_focused_domain_cli("work")
+
+    # Verify file in XDG location
+    focus_file = xdg_dir / "plorp" / "cli_focus.txt"
+    assert focus_file.exists()
+    assert focus_file.read_text() == "work"

@@ -1711,7 +1711,756 @@ domains:
 - PM/Architect: Add answers with rationale below each question
 - Format: `### Q[N]: [Question title]` with Context, Question, Answer, Status
 
-**Status:** (Will be updated during implementation)
+**Status:** ✅ ALL RESOLVED (15/15 questions answered)
+
+---
+
+### Q1: YAML frontmatter field order consistency
+
+**Context:** The spec shows `create_project_note()` using `yaml.dump(frontmatter, default_flow_style=False, sort_keys=False)` to preserve insertion order. However, `update_project_state()` and `add_task_to_project()` also rebuild frontmatter but don't specify whether to preserve order.
+
+**Question:** Should we:
+- A: Always preserve field order when updating (use `sort_keys=False` everywhere)
+- B: Allow alphabetical sorting when updating (simpler, but changes file on every update)
+- C: Use a canonical field order (define explicit order, enforce on all writes)
+
+If A or C, should we also preserve comments in YAML frontmatter, or strip them on updates?
+
+**Answer:** ✅ **Option A: Always preserve field order with `sort_keys=False`**
+
+**Implementation:**
+```python
+# Use this pattern in ALL functions that write frontmatter:
+yaml.dump(frontmatter, default_flow_style=False, sort_keys=False)
+```
+
+**Comments:** Strip comments on updates (PyYAML limitation). Comments are lost when parsing to dict, and preserving them requires complex round-trip parsing libraries (like `ruamel.yaml`). Not worth the complexity for Sprint 8.
+
+**Rationale:**
+- Consistent field order makes git diffs readable
+- Users can manually edit frontmatter and order is preserved on next update
+- Alphabetical sorting creates noisy diffs (fields jump around)
+- Comments are nice-to-have but not essential (user can re-add after manual edits)
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q2: TaskWarrior project field validation
+
+**Context:** The spec shows TaskWarrior integration using `project:work.marketing.website` format. TaskWarrior 3.x has specific rules for project names (e.g., no spaces, certain special chars).
+
+**Question:** Should we validate project names before creating the TaskWarrior task, or trust TaskWarrior to reject invalid names and handle the error?
+
+If validating, what regex pattern should we use? Something like `^[a-z0-9-]+(\.[a-z0-9-]+)*$`?
+
+**Answer:** ✅ **Validate project names before TaskWarrior call**
+
+**Implementation:**
+```python
+import re
+
+PROJECT_NAME_PATTERN = re.compile(r'^[a-z0-9-]+$')
+FULL_PATH_PATTERN = re.compile(r'^[a-z0-9-]+(\.[a-z0-9-]+)*$')
+
+def validate_project_name(name: str) -> None:
+    """Validate project name segment."""
+    if not PROJECT_NAME_PATTERN.match(name):
+        raise ValueError(
+            f"Invalid project name: '{name}'. "
+            f"Must contain only lowercase letters, numbers, and hyphens."
+        )
+
+def validate_full_path(full_path: str) -> None:
+    """Validate complete project path."""
+    if not FULL_PATH_PATTERN.match(full_path):
+        raise ValueError(
+            f"Invalid project path: '{full_path}'. "
+            f"Must be dot-separated segments of lowercase letters, numbers, and hyphens."
+        )
+```
+
+**Rationale:**
+- Fail fast with helpful error messages
+- Prevents cryptic TaskWarrior errors
+- Enforces consistent naming (lowercase, hyphens for spaces)
+- User sees clear validation error instead of TaskWarrior error
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q3: Handling TaskWarrior task deletion
+
+**Context:** When user deletes a task in TaskWarrior (via `task <uuid> delete`), the project note's `task_uuids` list will contain orphaned UUIDs.
+
+**Question:** Should we:
+- A: Ignore orphaned UUIDs (they just become dead references)
+- B: Periodically validate UUIDs and remove dead ones (requires periodic sync job)
+- C: Add a `plorp project sync <full-path>` command to clean up orphaned UUIDs on demand
+- D: Warn in MCP/CLI output when listing project tasks (e.g., "3 of 5 tasks found, 2 missing")
+
+**Answer:** ✅ **Option D: Warn in output** + **Option C: Add sync command (future sprint)**
+
+**Implementation for Sprint 8:**
+```python
+def list_project_tasks(project_full_path: str) -> List[TaskInfo]:
+    """List all tasks for a project with orphan detection."""
+    # Get UUIDs from project note
+    project = get_project_info(project_full_path)
+    expected_count = len(project["task_uuids"]) if project else 0
+
+    # Query TaskWarrior
+    tasks = get_tasks([f"project:{project_full_path}"])
+
+    # Warn if mismatch
+    if expected_count != len(tasks):
+        print(f"⚠️  Project has {expected_count} task references, "
+              f"but only {len(tasks)} found in TaskWarrior. "
+              f"Run 'plorp project sync {project_full_path}' to clean up.")
+
+    return tasks
+```
+
+**Defer to Sprint 9:**
+- `plorp project sync <full-path>` command
+- Validates all UUIDs, removes orphaned ones from frontmatter
+
+**Rationale:**
+- Don't break workflows (orphaned UUIDs are harmless)
+- Surface issue to user (warning visible but non-blocking)
+- Provide tool for cleanup when needed (manual, on-demand)
+- Avoids complexity of background sync jobs
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q4: Project note filename conflicts
+
+**Context:** Project notes are named `{full_path}.md`. If user creates:
+1. `work.marketing.website-redesign`
+2. `work.marketing-website.redesign`
+
+Both would try to create `work.marketing-website.redesign.md` (if we naively replace dots with hyphens).
+
+**Question:** The spec shows filenames as `work.marketing.website-redesign.md` (preserving dots). Is this correct? Should we:
+- A: Use dots in filenames: `work.marketing.website-redesign.md` (matches spec)
+- B: Escape dots: `work_marketing_website-redesign.md` (avoids confusion with file extensions)
+- C: Use folders: `work/marketing/website-redesign.md` (hierarchical filesystem structure)
+
+If A (dots in filenames), are we okay with filenames like `work.website.md` (looks like file with extension)?
+
+**Answer:** ✅ **Option A: Use dots in filenames** (matches spec, already works)
+
+**Implementation:**
+```python
+# Filename = full_path + ".md"
+note_path = projects_dir / f"{full_path}.md"
+
+# Examples:
+# work.marketing.website-redesign → work.marketing.website-redesign.md
+# work.website → work.website.md  # Valid, not confusing in practice
+```
+
+**Edge case handling:**
+The scenario in your question (`work.marketing.website-redesign` vs `work.marketing-website.redesign`) creates **different filenames** because we preserve dots:
+- `work.marketing.website-redesign` → `work.marketing.website-redesign.md`
+- `work.marketing-website.redesign` → `work.marketing-website.redesign.md`
+
+These are different files (note the dot vs hyphen in middle). No conflict.
+
+**Rationale:**
+- Spec is correct: dots in filenames work fine
+- Obsidian handles `work.website.md` correctly (doesn't treat `.website` as extension)
+- File systems support multiple dots (`.tar.gz` is common)
+- Preserving dots keeps filename matching TaskWarrior `project:` field exactly
+- Simpler than escaping (no conversion logic needed)
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q5: Domain focus MCP conversation state storage
+
+**Context:** Spec says "Store in conversation context (implementation depends on MCP framework)" for `plorp_set_focused_domain()`.
+
+**Question:** How do we actually persist domain focus across MCP tool calls within a conversation? Options:
+- A: Use module-level global variable (simple, works for single conversation)
+- B: Use file-based storage like CLI (`~/.config/plorp/mcp_focus.txt`, updated on each call)
+- C: Return focused domain in every MCP response and expect Claude to remember (no persistence)
+- D: Accept that MCP focus is ephemeral and always defaults to "home" (spec default behavior)
+
+Which approach is correct for plorp's MCP architecture?
+
+**Answer:** ✅ **Option B: File-based storage** (`~/.config/plorp/mcp_focus.txt`)
+
+**Implementation:**
+```python
+def get_focused_domain_mcp() -> str:
+    """Get focused domain for MCP (file-based, survives server restarts)."""
+    focus_file = get_config_dir() / "mcp_focus.txt"
+    if focus_file.exists():
+        return focus_file.read_text().strip()
+    return "home"  # Default
+
+def set_focused_domain_mcp(domain: str) -> None:
+    """Set focused domain for MCP."""
+    focus_file = get_config_dir() / "mcp_focus.txt"
+    focus_file.write_text(domain)
+
+@mcp.tool()
+async def plorp_set_focused_domain(domain: str) -> dict:
+    set_focused_domain_mcp(domain)
+    return {"focused_domain": domain}
+```
+
+**Rationale:**
+- **Module-level variable (A)**: Lost on MCP server restart
+- **File-based (B)**: Persists across server restarts, simple implementation
+- **Claude memory (C)**: Unreliable, Claude may forget between long conversations
+- **Always default (D)**: Poor UX, user has to set focus every conversation
+
+File-based storage is the sweet spot: simple, persistent, reliable.
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q6: Project name transformation to title
+
+**Context:** Spec shows `create_project_note()` converting `project_name` to title: `project_name.replace('-', ' ').title()`. This converts `website-redesign` → `Website Redesign`.
+
+**Question:** What about edge cases:
+- `api-v2` → `Api V2` (should be `API v2`)
+- `seo-optimization` → `Seo Optimization` (should be `SEO Optimization`)
+- `hvac-repair` → `Hvac Repair` (should be `HVAC Repair`)
+
+Should we:
+- A: Use simple `.replace('-', ' ').title()` (spec approach, predictable but naive)
+- B: Implement smart title casing (complex, requires acronym dictionary)
+- C: Keep original project_name as-is in heading (user can edit manually)
+- D: Prompt user for title during creation (interactive, breaks MCP flow)
+
+**Answer:** ✅ **Option A: Simple `.replace('-', ' ').title()`**
+
+**Implementation:**
+```python
+# In create_project_note()
+heading_title = project_name.replace('-', ' ').title()
+content = f"""# {heading_title}
+
+## Overview
+{description or "Project description goes here."}
+"""
+```
+
+**Rationale:**
+- **YAGNI**: Smart casing is complex, brings marginal value
+- **Predictable**: User knows exactly what transformation happens
+- **Editable**: User can manually fix acronyms in Obsidian (it's markdown!)
+- **Consistent**: Same transformation applied to all projects
+- **Good enough**: Most project names work fine with simple title case
+
+User can edit heading to `# API v2` or `# SEO Optimization` after creation if they care.
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q7: Workstream validation behavior
+
+**Context:** Spec says "Hybrid validation (suggest, but allow new with confirmation)" for workstreams. But the code shows no confirmation logic:
+
+```python
+# TODO: Check suggested workstreams (hybrid validation)
+# For now, accept any workstream
+```
+
+**Question:** Should we implement hybrid validation in Sprint 8, or defer to future sprint?
+
+If implementing now:
+- Where does confirmation happen? (CLI can prompt, but MCP tools can't interact)
+- Should MCP tools skip validation and allow any workstream?
+- Should MCP tools reject non-suggested workstreams with error message?
+
+**Answer:** ✅ **Defer hybrid validation to Sprint 9**
+
+**Implementation for Sprint 8:**
+```python
+# Accept any workstream (no validation)
+# TODO Sprint 9: Implement hybrid validation
+#   - CLI: Prompt for confirmation if not in suggested list
+#   - MCP: Accept any workstream (Claude decides, can suggest corrections)
+```
+
+**Rationale:**
+- **Complexity**: Hybrid validation adds significant complexity (different behavior CLI vs MCP)
+- **MCP architecture**: MCP tools shouldn't prompt/interact - they return data, Claude interprets
+- **Low friction**: Allowing any workstream for now matches user requirement ("low friction capture")
+- **Future sprint**: Can add validation workflow later when we have clearer patterns
+
+**For Sprint 9:**
+- CLI: `plorp project create website --workstream marketing-new`
+  → "Workstream 'marketing-new' not in suggested list. Create anyway? [Y/n]"
+- MCP: Claude can warn user if workstream looks unusual, suggest correction
+  → "Did you mean 'marketing' instead of 'marketing-new'?"
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q8: Parsing project notes with missing required fields
+
+**Context:** `parse_project_note()` assumes all required fields exist in frontmatter:
+```python
+frontmatter["domain"]  # KeyError if missing
+frontmatter["project_name"]
+frontmatter["full_path"]
+frontmatter["state"]
+```
+
+**Question:** How should we handle manually-edited project notes with missing fields?
+- A: Raise ValueError (strict, breaks on user edits)
+- B: Provide defaults for missing fields (e.g., `state` defaults to "active")
+- C: Skip invalid notes in `list_projects()` but raise error in `get_project_info()`
+- D: Add `is_valid` field to ProjectInfo to flag incomplete projects
+
+Spec shows option C in `list_projects()`:
+```python
+except Exception as e:
+    # Skip invalid project notes
+    print(f"Warning: Failed to parse {note_path}: {e}")
+    continue
+```
+
+Is this the correct approach for all parsing functions?
+
+**Answer:** ✅ **Option C: Skip in list, error in get** (spec approach is correct)
+
+**Implementation:**
+```python
+def parse_project_note(note_path: Path) -> ProjectInfo:
+    """Parse project note, raise ValueError if invalid."""
+    # Strict parsing - raises KeyError/ValueError on missing required fields
+    frontmatter = yaml.safe_load(...)
+    return ProjectInfo(
+        domain=frontmatter["domain"],  # Required
+        project_name=frontmatter["project_name"],  # Required
+        full_path=frontmatter["full_path"],  # Required
+        state=frontmatter["state"],  # Required
+        # Optional fields with defaults:
+        workstream=frontmatter.get("workstream"),
+        description=frontmatter.get("description"),
+        task_uuids=frontmatter.get("task_uuids", []),
+        needs_review=frontmatter.get("needs_review", False),
+        tags=frontmatter.get("tags", []),
+        created_at=frontmatter.get("created_at", datetime.now().isoformat())
+    )
+
+def list_projects(...):
+    """List projects, skip invalid notes with warning."""
+    for note_path in projects_dir.glob("*.md"):
+        try:
+            project = parse_project_note(note_path)
+            projects.append(project)
+        except Exception as e:
+            print(f"⚠️  Skipping invalid project note: {note_path.name} ({e})")
+            continue
+
+def get_project_info(full_path: str):
+    """Get single project, raise error if invalid."""
+    note_path = projects_dir / f"{full_path}.md"
+    if not note_path.exists():
+        return None
+    return parse_project_note(note_path)  # Raises on invalid
+```
+
+**Rationale:**
+- **List**: Defensive (don't break entire list because one note is corrupted)
+- **Get**: Strict (user requested specific project, should know if it's broken)
+- **Warning visible**: User sees which notes are problematic
+- **User can fix**: Manual edits that break schema are surfaced, not silently ignored
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q9: TypedDict vs dataclass for ProjectInfo
+
+**Context:** Spec uses `TypedDict` for `ProjectInfo` following Sprint 6 patterns. But TypedDict doesn't enforce types at runtime, just static checking.
+
+**Question:** Should we:
+- A: Keep TypedDict (matches architecture, lightweight)
+- B: Switch to `@dataclass` with validation (runtime checks, more robust)
+- C: Add runtime validation in functions that create ProjectInfo (hybrid)
+
+Given that `ProjectInfo` has 11 fields with specific types, is TypedDict sufficient for catching bugs?
+
+**Answer:** ✅ **Option A: Keep TypedDict** (matches architecture)
+
+**Rationale:**
+- **Architectural consistency**: Sprint 6 established TypedDict pattern for all return types
+- **Static checking is enough**: `mypy` catches type errors at dev time
+- **Performance**: TypedDict has zero runtime overhead (it's just a dict)
+- **Simplicity**: No need for `.asdict()` conversions, JSON serialization works directly
+- **MCP-first design**: TypedDicts serialize cleanly to JSON for MCP responses
+
+**Where bugs are caught:**
+1. **Static analysis**: `mypy` checks function signatures, return types
+2. **Testing**: Comprehensive tests validate data integrity
+3. **Runtime**: `parse_project_note()` validates required fields exist (KeyError if missing)
+
+**When to use dataclass:**
+- If we need methods on ProjectInfo (we don't - pure data)
+- If we need immutability (TypedDict dicts are mutable, but that's fine for our use case)
+- If runtime validation is critical (we validate at parse time instead)
+
+TypedDict is the right choice for plorp's architecture.
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q10: Base file creation timing
+
+**Context:** Phase 6 creates `.base` files. But these are vault data, not code.
+
+**Question:** Should we:
+- A: Create `.base` files programmatically in `create_project_note()` if missing
+- B: Ship `.base` files as templates in `src/plorp/templates/` and copy on first run
+- C: Document manual creation in VAULT_SETUP.md (user's responsibility)
+- D: Create `.base` files in test fixtures only (not production code)
+
+The spec shows templates but doesn't specify creation mechanism. What's the plorp pattern?
+
+**Answer:** ✅ **Option C: Document in VAULT_SETUP.md** (user's vault, user's responsibility)
+
+**Implementation:**
+
+**In `Docs/VAULT_SETUP.md`:**
+```markdown
+## Obsidian Bases Setup
+
+### Install Bases Plugin
+1. Open Obsidian Settings
+2. Go to Core Plugins
+3. Enable "Bases"
+
+### Create Project Dashboard
+
+Create `vault/_bases/projects.base` with this content:
+
+[Include full YAML template from spec]
+```
+
+**Optionally:** Provide example `.base` files in `examples/` directory for copy-paste.
+
+**Rationale:**
+- **Vault ownership**: User's vault structure is their choice
+- **Flexibility**: User may want different Base views than our defaults
+- **Simplicity**: No code complexity for file creation
+- **Documentation**: VAULT_SETUP.md is the right place for setup instructions
+- **Examples**: Providing templates for copy-paste is helpful without being invasive
+
+**Future enhancement**: Could add `plorp init-bases` command to copy templates if users request it.
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q11: CLI focus file location
+
+**Context:** Spec uses `~/.config/plorp/focus.txt` for persistent CLI focus. But existing config uses:
+- `~/.config/plorp/config.yaml` for configuration
+- What about `$XDG_CONFIG_HOME` override?
+
+**Question:** Should focus file respect `XDG_CONFIG_HOME` like config does?
+
+```python
+# Current pattern from config.py:
+config_dir = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config")) / "plorp"
+
+# Should focus be:
+focus_file = config_dir / "focus.txt"  # Respects XDG
+# or:
+focus_file = Path.home() / ".config/plorp/focus.txt"  # Spec example
+```
+
+**Answer:** ✅ **Respect `XDG_CONFIG_HOME`** (consistency with existing pattern)
+
+**Implementation:**
+```python
+from ..config import get_config_dir  # Reuse existing function
+
+def get_focus_file_cli() -> Path:
+    """Get CLI focus file path (respects XDG_CONFIG_HOME)."""
+    return get_config_dir() / "cli_focus.txt"
+
+def get_focus_file_mcp() -> Path:
+    """Get MCP focus file path (respects XDG_CONFIG_HOME)."""
+    return get_config_dir() / "mcp_focus.txt"
+
+def get_focused_domain_cli() -> str:
+    """Get focused domain for CLI."""
+    focus_file = get_focus_file_cli()
+    if focus_file.exists():
+        return focus_file.read_text().strip()
+    return "home"
+
+def set_focused_domain_cli(domain: str) -> None:
+    """Set focused domain for CLI."""
+    focus_file = get_focus_file_cli()
+    focus_file.parent.mkdir(parents=True, exist_ok=True)
+    focus_file.write_text(domain)
+```
+
+**File naming:**
+- `cli_focus.txt` (CLI persistent focus)
+- `mcp_focus.txt` (MCP persistent focus)
+
+**Rationale:**
+- Consistency with existing config pattern
+- Respects user's `$XDG_CONFIG_HOME` preference
+- Separate files for CLI vs MCP (independent focus contexts)
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q12: Task annotation format for project linking
+
+**Context:** Spec shows:
+```python
+add_annotation(task_uuid, f"Project: vault/projects/{project_full_path}.md")
+```
+
+**Question:** Should the annotation path be:
+- A: Relative to vault root: `vault/projects/work.marketing.website.md` (spec approach)
+- B: Absolute path: `/Users/jsd/vault/projects/work.marketing.website.md` (unambiguous)
+- C: Obsidian link format: `[[work.marketing.website]]` (clickable in Obsidian if task exported)
+- D: Just the full_path: `work.marketing.website` (minimal, can reconstruct path)
+
+Which format is most useful for cross-referencing?
+
+**Answer:** ✅ **Option D: Just the full_path** (minimal, portable)
+
+**Implementation:**
+```python
+def create_task_in_project(description, project_full_path, ...):
+    # Create task
+    task_uuid = create_task(description, project=project_full_path, ...)
+
+    # Add annotation (just the project path)
+    add_annotation(task_uuid, f"plorp-project:{project_full_path}")
+
+    return task_uuid
+```
+
+**Format:** `plorp-project:work.marketing.website`
+
+**Rationale:**
+- **Minimal**: Just the data needed to identify project
+- **Portable**: Works regardless of vault location
+- **Reconstructable**: Can always build full path: `{vault_path}/projects/{full_path}.md`
+- **Prefix**: `plorp-project:` makes it machine-parsable (can filter annotations)
+- **No ambiguity**: `full_path` uniquely identifies project
+
+**Usage:**
+```python
+# Later, to find project note from task annotation:
+annotations = get_task_annotations(task_uuid)
+for ann in annotations:
+    if ann.startswith("plorp-project:"):
+        project_path = ann.split(":", 1)[1]  # "work.marketing.website"
+        note_path = vault_path / "projects" / f"{project_path}.md"
+```
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q13: Handling project state transitions
+
+**Context:** Spec defines states: `active/planning/completed/blocked/archived`. But no validation on transitions (e.g., can you go from `completed` → `active`?).
+
+**Question:** Should we:
+- A: Allow any state transition (spec approach, flexible)
+- B: Validate state machine (e.g., archived → active requires "unarchive" flag)
+- C: Log state changes with timestamps (audit trail in frontmatter)
+- D: Warn on suspicious transitions (completed → active) but allow
+
+If C, should we add `state_history` field to frontmatter?
+
+**Answer:** ✅ **Option A: Allow any state transition** (flexibility over constraints)
+
+**Implementation:**
+```python
+VALID_STATES = ["active", "planning", "completed", "blocked", "archived"]
+
+def update_project_state(full_path: str, state: str) -> ProjectInfo:
+    """Update project state (no transition validation)."""
+    if state not in VALID_STATES:
+        raise ValueError(f"Invalid state: {state}. Must be one of {VALID_STATES}")
+
+    # Update frontmatter (allow any transition)
+    # ...
+```
+
+**Rationale:**
+- **User knows best**: User understands their workflow, don't constrain them
+- **Flexibility**: "Completed" → "Active" is valid (project reopened, new phase)
+- **YAGNI**: State machine validation adds complexity without clear benefit
+- **Simplicity**: Just validate state is in allowed list, no transition rules
+
+**Future enhancement (Sprint 9+):**
+- If user requests audit trail: Add `last_state_change: timestamp` field
+- If user requests warnings: CLI can warn "⚠️  Unusual transition: completed → active"
+- But for Sprint 8: Keep it simple
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q14: Error handling for vault directory missing
+
+**Context:** `get_projects_dir()` calls `get_vault_path() / "projects"`. If vault doesn't exist or is misconfigured:
+
+```python
+def get_projects_dir() -> Path:
+    from ..config import get_vault_path
+    return get_vault_path() / "projects"
+```
+
+**Question:** Should we:
+- A: Trust `get_vault_path()` to exist (assume config is valid)
+- B: Add explicit check and raise helpful error if vault missing
+- C: Auto-create `vault/projects/` directory on first use (spec shows this in Phase 0)
+- D: Return None and handle gracefully in callers
+
+Spec shows:
+```python
+projects_dir.mkdir(parents=True, exist_ok=True)  # In create_project_note()
+```
+
+Should all functions auto-create the directory, or just creation functions?
+
+**Answer:** ✅ **Option C: Auto-create in write functions only** (spec approach)
+
+**Implementation:**
+```python
+def get_projects_dir() -> Path:
+    """Get projects directory (doesn't create it)."""
+    from ..config import get_vault_path
+    return get_vault_path() / "projects"
+
+def create_project_note(...):
+    """Create project note (creates directory if missing)."""
+    projects_dir = get_projects_dir()
+    projects_dir.mkdir(parents=True, exist_ok=True)  # Auto-create
+    # ...
+
+def list_projects(...):
+    """List projects (returns empty list if directory missing)."""
+    projects_dir = get_projects_dir()
+
+    if not projects_dir.exists():
+        return ProjectListResult(projects=[], grouped_by_domain={})
+
+    # ...
+
+def get_project_info(full_path: str):
+    """Get project (returns None if directory missing)."""
+    projects_dir = get_projects_dir()
+    note_path = projects_dir / f"{full_path}.md"
+
+    if not note_path.exists():
+        return None
+    # ...
+```
+
+**Rationale:**
+- **Write functions**: Auto-create directory (good UX, defensive)
+- **Read functions**: Handle missing directory gracefully (empty results, not errors)
+- **Spec is correct**: Shows auto-create in `create_project_note()`
+- **Defensive programming**: Don't error on missing directory, handle it
+
+**Status:** ✅ RESOLVED
+
+---
+
+### Q15: Filtering tasks by workstream (2-segment projects)
+
+**Context:** Spec mentions filtering tasks by workstream:
+```bash
+plorp tasks --workstream-only
+# → task project.any: export + filter for 2-segment projects
+```
+
+**Question:** How do we actually filter for "2-segment projects" in TaskWarrior?
+
+TaskWarrior doesn't have a "count dots in project field" filter. Should we:
+- A: Export all tasks with `project.any:` and post-filter in Python (check `project.count('.') == 1`)
+- B: Maintain a separate filter for each workstream pattern (e.g., `project:work.marketing project:work.engineering`)
+- C: Use regex if TaskWarrior supports it
+- D: This feature is actually for listing projects (not tasks), and the spec is unclear
+
+Clarify the intended behavior of `--workstream-only` flag.
+
+**Answer:** ✅ **Option A: Post-filter in Python** (simple, works for all cases)
+
+**Implementation:**
+```python
+def list_tasks_with_filters(
+    domain: str = None,
+    orphaned: bool = False,
+    workstream_only: bool = False,
+    sort_by: str = "urgency"
+) -> List[TaskInfo]:
+    """List tasks with hierarchy-based filtering."""
+
+    # Build TaskWarrior filter
+    if orphaned:
+        tw_filter = ["project.none:"]
+    elif domain:
+        tw_filter = [f"project.startswith:{domain}"]
+    else:
+        tw_filter = ["project.any:"]
+
+    # Query TaskWarrior
+    tasks = get_tasks(tw_filter)
+
+    # Post-filter for segment count
+    if workstream_only:
+        # Filter for 2-segment projects (domain.workstream)
+        tasks = [t for t in tasks if t.get("project", "").count(".") == 1]
+
+    # Sort
+    if sort_by == "urgency":
+        tasks.sort(key=lambda t: t.get("urgency", 0), reverse=True)
+    elif sort_by == "due":
+        tasks.sort(key=lambda t: t.get("due", ""))
+    # ...
+
+    return tasks
+```
+
+**CLI usage:**
+```bash
+# Show all 2-segment projects (domain.workstream, no project name)
+plorp tasks --workstream-only
+
+# Show 2-segment projects in work domain
+plorp tasks --domain work --workstream-only
+```
+
+**Rationale:**
+- **Simple**: Python post-filtering is straightforward
+- **Flexible**: Can combine with other filters
+- **No TaskWarrior limitations**: Works without regex/complex queries
+- **Performance**: Acceptable for typical task counts (<10k tasks)
+
+**Status:** ✅ RESOLVED
 
 ---
 

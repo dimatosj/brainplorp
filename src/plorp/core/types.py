@@ -25,6 +25,7 @@ class TaskInfo(TypedDict):
     priority: Literal["H", "M", "L", ""] | None
     project: str | None
     tags: list[str]
+    urgency: float
 
 
 class TaskSummary(TypedDict):
@@ -211,3 +212,31 @@ class ProcessStepTwoResult(TypedDict):
     rejected_count: int
     errors: list[ProcessError]
     needs_review_remaining: bool
+
+
+# ============================================================================
+# Project Management Types (Sprint 8)
+# ============================================================================
+
+
+class ProjectInfo(TypedDict):
+    """Project metadata from Obsidian note frontmatter."""
+
+    domain: str  # work/home/personal
+    workstream: str | None  # Area of responsibility
+    project_name: str  # Project identifier
+    full_path: str  # Full TaskWarrior project path
+    state: Literal["active", "planning", "completed", "blocked", "archived"]
+    created_at: str  # ISO timestamp
+    description: str | None  # Short description
+    task_uuids: list[str]  # Linked TaskWarrior task UUIDs
+    needs_review: bool  # True if missing workstream
+    tags: list[str]  # Tags for filtering
+    note_path: str  # Path to project note
+
+
+class ProjectListResult(TypedDict):
+    """Result from list_projects()."""
+
+    projects: list[ProjectInfo]
+    grouped_by_domain: dict[str, list[ProjectInfo]]  # Grouped by domain

@@ -22,6 +22,24 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 }
 
 
+def get_config_dir() -> Path:
+    """
+    Get the plorp configuration directory.
+
+    Returns:
+        Path to config directory (e.g., ~/.config/plorp/)
+
+    Priority:
+        1. $XDG_CONFIG_HOME/plorp/
+        2. ~/.config/plorp/
+    """
+    xdg_config = os.environ.get("XDG_CONFIG_HOME")
+    if xdg_config:
+        return Path(xdg_config) / "plorp"
+
+    return Path.home() / ".config" / "plorp"
+
+
 def get_config_path() -> Path:
     """
     Get the path to the configuration file.
@@ -33,11 +51,7 @@ def get_config_path() -> Path:
         1. $XDG_CONFIG_HOME/plorp/config.yaml
         2. ~/.config/plorp/config.yaml
     """
-    xdg_config = os.environ.get("XDG_CONFIG_HOME")
-    if xdg_config:
-        return Path(xdg_config) / "plorp" / "config.yaml"
-
-    return Path.home() / ".config" / "plorp" / "config.yaml"
+    return get_config_dir() / "config.yaml"
 
 
 def load_config() -> Dict[str, Any]:
@@ -87,6 +101,21 @@ def load_config() -> Dict[str, Any]:
         print(f"✅ Created vault directory: {vault_path}")
 
     return config
+
+
+def get_vault_path() -> Path:
+    """
+    Get the vault directory path from configuration.
+
+    Returns:
+        Path to vault directory
+
+    Example:
+        >>> vault = get_vault_path()
+        >>> daily_dir = vault / "daily"
+    """
+    config = load_config()
+    return Path(config["vault_path"])
 
 
 def save_config(config: Dict[str, Any]) -> None:

@@ -39,6 +39,18 @@ from plorp.core import (
     PlorpError,
 )
 from plorp.core.process import process_daily_note_step1, process_daily_note_step2
+from plorp.core.projects import (
+    # Project management (Sprint 8)
+    create_project,
+    list_projects,
+    get_project_info,
+    update_project_state,
+    delete_project,
+    create_task_in_project,
+    list_project_tasks,
+    get_focused_domain_mcp,
+    set_focused_domain_mcp,
+)
 from plorp.integrations.taskwarrior import get_task_info as tw_get_task_info
 
 
@@ -397,6 +409,171 @@ async def list_tools() -> list[Tool]:
                 },
             },
         ),
+        # ====================================================================
+        # Project Management Tools (Sprint 8)
+        # ====================================================================
+        Tool(
+            name="plorp_create_project",
+            description="Create new project in vault/projects/ with YAML frontmatter. Projects organize tasks into domain.workstream.project hierarchy (e.g., work.marketing.website).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Project name (e.g., 'website-redesign')",
+                    },
+                    "domain": {
+                        "type": "string",
+                        "description": "Domain (work/home/personal)",
+                        "enum": ["work", "home", "personal"],
+                    },
+                    "workstream": {
+                        "type": "string",
+                        "description": "Workstream/area (e.g., 'marketing', 'engineering') - optional",
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "Project state (default: active)",
+                        "enum": ["active", "planning", "completed", "blocked", "archived"],
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Short project description - optional",
+                    },
+                },
+                "required": ["name", "domain"],
+            },
+        ),
+        Tool(
+            name="plorp_list_projects",
+            description="List all projects with optional filtering by domain or state. Returns projects with metadata and task counts.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "domain": {
+                        "type": "string",
+                        "description": "Filter by domain (optional)",
+                        "enum": ["work", "home", "personal"],
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "Filter by state (optional)",
+                        "enum": ["active", "planning", "completed", "blocked", "archived"],
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="plorp_get_project_info",
+            description="Get detailed information about a specific project including tasks, state, and metadata.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "full_path": {
+                        "type": "string",
+                        "description": "Full project path (e.g., 'work.marketing.website')",
+                    },
+                },
+                "required": ["full_path"],
+            },
+        ),
+        Tool(
+            name="plorp_update_project_state",
+            description="Update project state (e.g., mark as completed or blocked).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "full_path": {
+                        "type": "string",
+                        "description": "Full project path",
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "New state",
+                        "enum": ["active", "planning", "completed", "blocked", "archived"],
+                    },
+                },
+                "required": ["full_path", "state"],
+            },
+        ),
+        Tool(
+            name="plorp_delete_project",
+            description="Delete a project note. Note: This does NOT delete associated tasks.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "full_path": {
+                        "type": "string",
+                        "description": "Full project path to delete",
+                    },
+                },
+                "required": ["full_path"],
+            },
+        ),
+        Tool(
+            name="plorp_create_task_in_project",
+            description="Create a new task in TaskWarrior and link it to a project bidirectionally.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "description": "Task description",
+                    },
+                    "project_full_path": {
+                        "type": "string",
+                        "description": "Full project path (e.g., 'work.marketing.website')",
+                    },
+                    "due": {
+                        "type": "string",
+                        "description": "Due date (optional, TaskWarrior format like 'friday', '2025-10-10')",
+                    },
+                    "priority": {
+                        "type": "string",
+                        "description": "Priority (optional)",
+                        "enum": ["H", "M", "L"],
+                    },
+                },
+                "required": ["description", "project_full_path"],
+            },
+        ),
+        Tool(
+            name="plorp_list_project_tasks",
+            description="List all tasks for a specific project. Warns if project has orphaned task references.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_full_path": {
+                        "type": "string",
+                        "description": "Full project path",
+                    },
+                },
+                "required": ["project_full_path"],
+            },
+        ),
+        Tool(
+            name="plorp_set_focused_domain",
+            description="Set focused domain for this MCP conversation. Commands will default to this domain. Note: This is conversation-scoped and persists across MCP server restarts.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "domain": {
+                        "type": "string",
+                        "description": "Domain to focus on",
+                        "enum": ["work", "home", "personal"],
+                    },
+                },
+                "required": ["domain"],
+            },
+        ),
+        Tool(
+            name="plorp_get_focused_domain",
+            description="Get current focused domain for this conversation.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
     ]
 
 
@@ -443,6 +620,25 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent]:
             return await _plorp_get_task_info(arguments)
         elif name == "plorp_process_daily_note":
             return await _plorp_process_daily_note(arguments)
+        # Project management tools (Sprint 8)
+        elif name == "plorp_create_project":
+            return await _plorp_create_project(arguments)
+        elif name == "plorp_list_projects":
+            return await _plorp_list_projects(arguments)
+        elif name == "plorp_get_project_info":
+            return await _plorp_get_project_info(arguments)
+        elif name == "plorp_update_project_state":
+            return await _plorp_update_project_state(arguments)
+        elif name == "plorp_delete_project":
+            return await _plorp_delete_project(arguments)
+        elif name == "plorp_create_task_in_project":
+            return await _plorp_create_task_in_project(arguments)
+        elif name == "plorp_list_project_tasks":
+            return await _plorp_list_project_tasks(arguments)
+        elif name == "plorp_set_focused_domain":
+            return await _plorp_set_focused_domain(arguments)
+        elif name == "plorp_get_focused_domain":
+            return await _plorp_get_focused_domain(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -717,6 +913,135 @@ async def _plorp_process_daily_note(args: Dict[str, Any]) -> list[TextContent]:
 
     import json
     return [TextContent(type="text", text=json.dumps(response, indent=2))]
+
+
+# ============================================================================
+# Server Entry Point
+# ============================================================================
+
+
+# ============================================================================
+# Project Management Tool Implementations (Sprint 8)
+# ============================================================================
+
+
+async def _plorp_create_project(args: Dict[str, Any]) -> list[TextContent]:
+    """Create project."""
+    project = create_project(
+        name=args["name"],
+        domain=args["domain"],
+        workstream=args.get("workstream"),
+        state=args.get("state", "active"),
+        description=args.get("description")
+    )
+
+    import json
+    return [TextContent(type="text", text=json.dumps(project, indent=2))]
+
+
+async def _plorp_list_projects(args: Dict[str, Any]) -> list[TextContent]:
+    """List projects with optional filters."""
+    result = list_projects(
+        domain=args.get("domain"),
+        state=args.get("state")
+    )
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_get_project_info(args: Dict[str, Any]) -> list[TextContent]:
+    """Get project info."""
+    project = get_project_info(args["full_path"])
+
+    if not project:
+        raise ValueError(f"Project not found: {args['full_path']}")
+
+    import json
+    return [TextContent(type="text", text=json.dumps(project, indent=2))]
+
+
+async def _plorp_update_project_state(args: Dict[str, Any]) -> list[TextContent]:
+    """Update project state."""
+    project = update_project_state(
+        full_path=args["full_path"],
+        state=args["state"]
+    )
+
+    import json
+    return [TextContent(type="text", text=json.dumps(project, indent=2))]
+
+
+async def _plorp_delete_project(args: Dict[str, Any]) -> list[TextContent]:
+    """Delete project."""
+    deleted = delete_project(args["full_path"])
+
+    result = {
+        "deleted": deleted,
+        "full_path": args["full_path"]
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_create_task_in_project(args: Dict[str, Any]) -> list[TextContent]:
+    """Create task in project with bidirectional linking."""
+    task_uuid = create_task_in_project(
+        description=args["description"],
+        project_full_path=args["project_full_path"],
+        due=args.get("due"),
+        priority=args.get("priority")
+    )
+
+    result = {
+        "task_uuid": task_uuid,
+        "project": args["project_full_path"]
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_list_project_tasks(args: Dict[str, Any]) -> list[TextContent]:
+    """List tasks for a project."""
+    tasks = list_project_tasks(args["project_full_path"])
+
+    result = {
+        "tasks": tasks,
+        "count": len(tasks),
+        "project": args["project_full_path"]
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_set_focused_domain(args: Dict[str, Any]) -> list[TextContent]:
+    """Set focused domain for MCP conversation."""
+    domain = args["domain"]
+    set_focused_domain_mcp(domain)
+
+    result = {
+        "focused_domain": domain,
+        "message": f"Focused on domain: {domain}. All commands will default to this domain."
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_get_focused_domain(args: Dict[str, Any]) -> list[TextContent]:
+    """Get current focused domain."""
+    domain = get_focused_domain_mcp()
+
+    result = {
+        "focused_domain": domain,
+        "is_default": domain == "home"
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
 # ============================================================================

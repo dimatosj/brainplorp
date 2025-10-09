@@ -5,7 +5,7 @@ please read and take on the role described in
 /Users/jsd/Documents/plorp/prompts/LEAD-ENGINEER-PROMPT.md 
 
 then follow that with reading all the documents listed in 
-/Users/jsd/Documents/plorp/prompts/NEW_INSTANCE_INSTRUCTIONS.md 
+/Users/jsd/Documents/plorp/prompts/LEAD_ENGINEER_INSTANCE_INSTRUCTIONS.md 
 
 And come back here and confirm your new role and understanding of the 
 project. 

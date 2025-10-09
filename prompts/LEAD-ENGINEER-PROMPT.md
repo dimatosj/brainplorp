@@ -37,6 +37,47 @@ Your partner specifically asks "how should I approach X?" (answer the question, 
 Designing software
 YAGNI. The best code is no code. Don't add features we don't need right now.
 When it doesn't conflict with YAGNI, architect for extensibility and flexibility.
+
+State Synchronization (CRITICAL ARCHITECTURAL PATTERN)
+plorp is a BRIDGE between TaskWarrior and Obsidian. Every operation that modifies TaskWarrior MUST update all related Obsidian surfaces. This is NOT optional - it's a fundamental requirement.
+
+Core Principle: When state changes in one system, it MUST propagate to the other.
+
+The Pattern:
+✅ CORRECT - Full state sync:
+  1. Update TaskWarrior (mark task done, create task, modify task)
+  2. Update ALL related Obsidian surfaces (remove UUID from projects, update daily note checkboxes)
+
+❌ WRONG - Partial update:
+  1. Update TaskWarrior only
+  2. Project frontmatter still references deleted task
+  3. Daily note still shows outdated checkbox state
+  4. USER SEES INCONSISTENT STATE
+
+Examples of Required Sync:
+- /review marks task done → Remove UUID from project task_uuids, update daily note
+- /review deletes task → Remove UUID from ALL projects, remove from daily notes
+- create_task_in_project() → Add UUID to project frontmatter
+- Change task project → Remove from old project, add to new project
+
+Anti-Patterns YOU MUST AVOID:
+1. Orphaned UUIDs - Task deleted in TaskWarrior, UUID remains in project frontmatter
+2. Stale Checkbox State - User checks box in Obsidian, TaskWarrior not updated
+3. Missing Task References - Task created in project, project doesn't track it
+
+Implementation Rules:
+- Every TaskWarrior write operation gets a sync partner
+- mark_done() → MUST call remove_from_projects()
+- create_task() → MUST call add_to_project() if in project context
+- modify_task() → MUST call update_related_notes()
+
+Testing Requirements:
+- Test BOTH sides of every state change
+- Verify TaskWarrior updated: assert get_task_status(uuid) == "completed"
+- Verify Obsidian updated: assert uuid not in get_project_task_uuids()
+
+If you write code that modifies TaskWarrior without updating Obsidian, YOU HAVE FAILED.
+See /Users/jsd/Documents/plorp/CLAUDE.md - State Synchronization section for full details.
 Test Driven Development (TDD)
 FOR EVERY NEW FEATURE OR BUGFIX, YOU MUST follow Test Driven Development :
 Write a failing test that correctly validates the desired functionality

@@ -192,6 +192,129 @@ plorp link <uuid> <note-path>
 - Notes reference tasks via YAML front matter `tasks:` field
 - Bidirectional linking maintained by plorp helper commands
 
+### State Synchronization (Critical Pattern)
+
+**Core Principle:** Every plorp operation that modifies TaskWarrior **must** update all related Obsidian surfaces.
+
+plorp is a **bridge** between two systems (TaskWarrior and Obsidian). When state changes in one system, it must propagate to the other. This is not optional - it's a fundamental architectural requirement.
+
+**The Pattern:**
+
+```python
+# ✅ CORRECT - Full state sync
+def mark_task_done_via_review(uuid: str):
+    # 1. Update TaskWarrior
+    mark_done(uuid)
+
+    # 2. Update ALL related Obsidian surfaces
+    remove_task_from_projects(uuid)     # Update project frontmatter
+    update_daily_note_checkbox(uuid)    # Update daily note if present
+
+    # State is consistent across both systems ✅
+
+# ❌ WRONG - Partial update (creates orphaned data)
+def mark_task_done_via_review(uuid: str):
+    mark_done(uuid)  # Only TaskWarrior updated
+    # Project still references deleted task ❌
+    # Daily note still shows task as pending ❌
+```
+
+**Examples of Required Sync:**
+
+| Operation | TaskWarrior Change | Required Obsidian Updates |
+|-----------|-------------------|---------------------------|
+| `/review` marks task done | `task <uuid> done` | Remove UUID from project `task_uuids`, update daily note checkbox |
+| `/review` deletes task | `task <uuid> delete` | Remove UUID from ALL projects, remove from daily notes |
+| `create_task_in_project()` | `task add ...` | Add UUID to project frontmatter |
+| Change task project | `task <uuid> modify project:X` | Remove from old project, add to new project |
+| Task priority change | `task <uuid> modify priority:H` | Update daily note metadata display |
+
+**Anti-Patterns to Avoid:**
+
+1. **Orphaned UUIDs** - TaskWarrior task deleted, but UUID remains in project frontmatter
+   ```yaml
+   # ❌ Project frontmatter after task deleted
+   task_uuids:
+     - abc-123  # This task no longer exists!
+   ```
+
+2. **Stale Checkbox State** - User checks box in Obsidian, TaskWarrior not updated
+   ```markdown
+   # ❌ Daily note
+   - [x] Buy groceries (uuid: abc-123)
+   # TaskWarrior still shows as pending!
+   ```
+
+3. **Missing Task References** - Task created in project, but project doesn't know about it
+   ```python
+   # ❌ Created task but forgot to update project
+   uuid = create_task(description="Fix bug", project="work.api-rewrite")
+   # task_uuids not updated in project frontmatter
+   ```
+
+**Why This Matters:**
+
+- **Data Integrity** - Both systems must reflect the same truth
+- **User Trust** - Inconsistent state destroys confidence in the system
+- **Workflow Correctness** - Other operations depend on accurate state
+- **No Manual Fixes** - Users should never need to edit frontmatter by hand to fix sync issues
+
+**Implementation Guidelines:**
+
+1. **Every TaskWarrior write operation gets a sync partner:**
+   - `mark_done()` → `remove_from_projects()`
+   - `create_task()` → `add_to_project()`
+   - `modify_task()` → `update_related_notes()`
+
+2. **Use helper functions to enforce pattern:**
+   ```python
+   def create_task_with_sync(description, project=None, ...):
+       """Create task and update all related surfaces."""
+       uuid = create_task(description, project, ...)
+       if project:
+           add_task_to_project_frontmatter(project, uuid)
+       return uuid
+   ```
+
+3. **Test both sides:**
+   ```python
+   def test_review_marks_done_syncs_project():
+       # Create task in project
+       uuid = create_task_in_project(...)
+
+       # Mark done via review
+       mark_task_done_via_review(uuid)
+
+       # Verify BOTH sides updated
+       assert get_task_status(uuid) == "completed"  # TaskWarrior
+       assert uuid not in get_project_task_uuids()  # Obsidian
+   ```
+
+4. **Document sync behavior in docstrings:**
+   ```python
+   def mark_done(uuid: str):
+       """
+       Mark task as complete in TaskWarrior.
+
+       IMPORTANT: This function ONLY updates TaskWarrior.
+       Caller must also update related Obsidian surfaces:
+       - Remove UUID from project frontmatter
+       - Update daily note checkboxes
+
+       See: remove_task_from_projects()
+       """
+   ```
+
+**External Changes (Outside plorp):**
+
+When TaskWarrior is modified by external tools (CLI, mobile apps), plorp cannot automatically sync because it's not running. Future solutions:
+
+- **TaskWarrior Hooks** (Sprint 10+) - Install hooks that call plorp sync handlers
+- **Reconciliation Command** - `plorp reconcile` to detect and fix drift
+- **Server Mode** (Future) - Long-running plorp daemon that monitors TaskWarrior
+
+**For Sprint 8.5 and beyond:** Review all TaskWarrior modification points and ensure Obsidian sync is present.
+
 ## Configuration
 
 **Location**: `~/.config/plorp/config.yaml` or `$XDG_CONFIG_HOME/plorp/config.yaml`

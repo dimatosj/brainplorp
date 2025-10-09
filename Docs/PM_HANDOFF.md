@@ -33,31 +33,27 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 - Sprint 8 spec: ✅ Complete with bug fix documentation and sign-off
 - Sprint 8.5 spec: ✅ COMPLETE v1.3.0 - Implementation complete, PM reviewed and verified
 - Sprint 8.6 spec: ✅ COMPLETE v2.1.0 - Architectural rewrite complete, ready for implementation (13-18 hours)
-- Sprint 9 spec: ✅ COMPLETE (2025-10-09) - All 4 phases complete, 488/488 tests passing, version 1.5.0
+- Sprint 9 spec: ✅ COMPLETE & SIGNED OFF (2025-10-09 16:45) - All 4 phases complete, 488/488 tests passing, version 1.5.0, PM approved
+- Sprint 9.1 spec: 📝 DRAFT (2025-10-09 17:30) - Fast Task Query Commands, ready for review (2-3 hour minor sprint)
 - MCP User Manual: ✅ Updated to v1.5.0 (all 38 tools documented)
 - MCP Workflows: ✅ NEW - 23 workflow examples created
 - Handoff system: ✅ Fully operational
 - Role prompts: ✅ Updated with State Synchronization pattern
 
 **Next PM Instance Should:**
-1. ✅ Sprint 9 signed off - Proceed to Sprint 10 planning (REST API mode - optional enhancement)
-2. Review Sprint 10 specification and estimate effort
-3. Consider Sprint 11+ AI-enhanced features (semantic search, classification, real-time sync)
-4. Monitor user feedback for MCP tool improvements
-5. Version 1.5.0 released, next version bump will be for Sprint 10 (if implemented)
+1. ✅ Sprint 9 signed off - Sprint 9.1 spec created (Fast Task Query Commands)
+2. Review Sprint 9.1 spec and confirm scope with user (2-3 hour minor sprint)
+3. If approved, assign to lead engineer for implementation
+4. After 9.1: Consider Sprint 10 planning (REST API mode - optional enhancement)
+5. Version 1.5.0 released, next version will be 1.5.1 for Sprint 9.1 (PATCH bump)
 
 **Future Work Identified:**
-- **Sprint 8.6: Interactive Project Notes** - ✅ IMPLEMENTATION COMPLETE (2025-10-08)
-  - Lead engineer reports: 417/417 tests passing (393 baseline + 24 new)
-  - All 4 main items delivered (auto-sync, checkbox sync, sync-all, scoped workflows deferred)
-  - Awaiting PM review and sign-off
-
-- **Sprint 9: General Note Management** (18-20 hours) - READY FOR IMPLEMENTATION
-  - Filesystem-based vault access via 12 MCP tools
-  - Read/write notes, search, folder operations
-  - Context-aware content management
-  - Security via allowed_folders whitelist
-  - Note: Validation workflows (items 1-5) already complete from Sprint 8.5
+- **Sprint 9.1: Fast Task Query Commands** (2-3 hours) - 📝 SPEC READY
+  - CLI commands for instant task queries (<100ms vs 5-8s natural language)
+  - Slash commands for Claude Desktop (/tasks, /urgent, /today, /overdue)
+  - Addresses "MCP slowness" for common task queries
+  - Three-tier approach: CLI (instant) → Slash (1-2s) → Natural language (5-8s)
+  - Reference: `Docs/sprints/SPRINT_9.1_FAST_TASK_QUERIES_SPEC.md`
 
 - **Sprint 10: REST API Mode** - PLANNED
   - Optional Obsidian REST API integration (enhancement to Sprint 9 filesystem)
@@ -73,7 +69,7 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
   - Sprint 14: Advanced note linking / graph analysis (12-16 hours)
   - Reference: `Docs/OBSIDIAN_REST_API_ANALYSIS.md`
 
-**Last Updated By:** PM/Architect Instance (Session 14 - Sprint 9 PM review and sign-off complete)
+**Last Updated By:** PM/Architect Instance (Session 14 - Sprint 9 signed off, Sprint 9.1 spec created)
 
 ---
 
@@ -134,6 +130,7 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 **Issues Resolved:**
 - Fixed test version mismatches (2 tests expecting old version)
 - All 488 tests now passing
+- Identified and documented solution to "MCP slowness" user pain point
 
 **Key Decisions:**
 - ✅ **APPROVED Sprint 9 for production deployment**
@@ -143,21 +140,49 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 
 **Artifacts Created:**
 - PM sign-off section in Sprint 9 spec (100+ lines)
-- Updated PM_HANDOFF.md CURRENT STATE
-- This session entry
+- Sprint 9.1 spec (SPRINT_9.1_FAST_TASK_QUERIES_SPEC.md, ~600 lines)
+- Updated PM_HANDOFF.md CURRENT STATE (multiple times)
+- This session entry (updated with follow-up work)
 
 **Outcome:**
 - Sprint 9: ✅ COMPLETE & SIGNED OFF (2025-10-09 16:45)
-- Production ready, deploy with confidence
-- Ready for Sprint 10 planning (REST API mode - optional enhancement)
+- Sprint 9.1: 📝 SPEC CREATED (2025-10-09 17:30) - Fast Task Query Commands
+- Production ready (Sprint 9), deploy with confidence
+- Sprint 9.1 ready for user review and lead engineer assignment
 
-**Time Spent:** ~45 minutes (review, testing, fixes, sign-off documentation)
+**Time Spent:** ~2 hours total (review, testing, fixes, sign-off, planning)
+
+**Follow-Up Work (Same Session):**
+
+**User Question: Performance Analysis**
+- User asked: "why are the plorp MCP tools so slow in claude desktop?"
+- PM analysis provided:
+  - MCP tools execute instantly (<50ms)
+  - Bottleneck is agent reasoning loop (5-8s total)
+  - 99.7% of time is network + LLM generation, 0.3% is tool execution
+  - Explained round-trip architecture: Desktop → API → Claude → API → MCP → API → Claude → API → Desktop
+  - Recommended three-tier approach from MCP_ARCHITECTURE_GUIDE.md
+
+**User Follow-Up: Specific Use Case**
+- User asked: "for things like 'show me my tasks' or 'show me urgent tasks in work' can we make it faster?"
+- PM confirmed: YES! This is perfect for three-tier approach
+- Proposed solution:
+  - Tier 1 (CLI): `plorp tasks --urgent --project work` (<100ms)
+  - Tier 2 (Slash): `/urgent-work` (1-2s)
+  - Tier 3 (Natural): "analyze task distribution" (5-8s, expected for intelligence)
+
+**Sprint 9.1 Spec Created:**
+- User approved: "yeah make this spec as 9.1"
+- Created comprehensive spec: `SPRINT_9.1_FAST_TASK_QUERIES_SPEC.md`
+- Scope: CLI commands + slash commands for instant task queries
+- Effort: 2-3 hours (minor sprint, PATCH version bump 1.5.0 → 1.5.1)
+- Status: DRAFT, ready for lead engineer review
 
 **Next PM Instance Should:**
-1. Review this sign-off and proceed to Sprint 10 planning
-2. Sprint 10: REST API mode (enhancement to filesystem-based Sprint 9)
-3. Consider Sprint 11+ AI-enhanced features
-4. Monitor user feedback for MCP tool improvements
+1. Review Sprint 9.1 spec with user and confirm scope
+2. If approved, assign to lead engineer for implementation
+3. After 9.1 complete: Consider Sprint 10 planning (REST API mode)
+4. Monitor user feedback on MCP performance improvements
 
 ---
 
@@ -1709,7 +1734,8 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 | 8 | ✅ COMPLETE | 2025-10-07 | Project management, Obsidian Bases, 9 MCP tools, domain focus | 41 tests | Signed off |
 | 8.5 | ✅ COMPLETE | 2025-10-08 | Auto-sync TW↔Obsidian, SQLite reconciliation, validation, orphaned workflows | 391 tests (19 new) | PM reviewed & verified |
 | 8.6 | ✅ COMPLETE | 2025-10-08 | Auto task section sync, checkbox sync, sync-all command | 417 tests (24 new) | PM signed off 23:15, scoped workflows deferred |
-| 9 | ✅ COMPLETE | 2025-10-09 | General note management, 12 MCP tools, 3-layer architecture, pattern matching | 488 tests (71 new) | Version 1.5.0, documentation phase incomplete |
+| 9 | ✅ COMPLETE | 2025-10-09 16:45 | General note management, 12 MCP tools, 3-layer architecture, pattern matching | 488 tests (71 new) | Version 1.5.0, PM signed off, production ready |
+| 9.1 | 📝 DRAFT | - | Fast task query CLI commands, slash commands, three-tier approach | TBD | Spec created 2025-10-09 17:30, ready for implementation |
 
 ---
 

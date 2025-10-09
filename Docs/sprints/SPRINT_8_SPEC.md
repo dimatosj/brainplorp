@@ -2532,20 +2532,58 @@ plorp tasks --domain work --workstream-only
 
 **Deferred to Future Sprints:**
 
+### Sprint 9 Candidates (Core Work):
+
+1. **Process notes workflow**
+   - **Problem**: Users capture informal notes (bullet points) in daily notes under "## Notes" section
+   - **Gap**: No workflow to convert notes → actionable items (tasks, projects, ideas)
+   - **Examples from user's daily note**:
+     - "I need to setup bases for projects in obsidian" → Could become a task
+     - "I need to review how inbox workflow works..." → Could become a task or project
+   - **Workflow design**:
+     - Scan "## Notes" section for bullet points
+     - Classify each note: task? project? reference? idea?
+     - Generate proposals for actionable items
+     - User approves/rejects → create tasks/projects
+   - **Similar to**: `/process` workflow but for notes instead of checkboxes
+   - **Integration**: May overlap with inbox processing (email → notes → tasks)
+   - **UX goal**: Low-friction capture in Notes, organize later through processing
+   - **Questions to resolve**:
+     - Should this be part of `/process` or separate command?
+     - How to distinguish actionable notes from reference notes?
+     - What's the approval UI? (similar to TBD Processing section?)
+     - Integration with inbox workflow?
+
+2. **Clarify `/process` vs `/review` workflow boundaries**
+   - **Current confusion**: `/process` only converts informal tasks (no UUID) → formal tasks (with UUID)
+   - **Gap identified**: No automatic sync when user checks off formal tasks in daily note
+   - **User expectation**: Checking a box in Obsidian should mark task done in TaskWarrior
+   - **Architecture question**: Should `/process` Step 2 also handle checkbox sync for existing tasks?
+   - **Alternative**: Add checkbox sync to `/review` workflow (end-of-day batch processing)
+   - **Duplication consideration**: Some overlap between `/process` Step 2 and `/review` - is this okay?
+   - **Options to evaluate**:
+     - A: Keep workflows separate (current design - `/process` = conversion, `/review` = sync)
+     - B: Extend `/process` Step 2 to also sync checkbox state for formal tasks
+     - C: Create new `plorp sync` command specifically for checkbox → TaskWarrior sync
+     - D: Make checkbox sync automatic on daily note read (background process)
+   - **UX impact**: User checked 3 tasks in daily note, expected TaskWarrior to update, but tasks remained pending
+   - **Decision needed**: Clarify workflow responsibilities and determine if duplication is acceptable
+
 ### Sprint 9 Candidates (Validation & Cleanup):
-1. **Hybrid workstream validation** (Q7 answer)
+
+3. **Hybrid workstream validation** (Q7 answer)
    - CLI: Prompt for confirmation if workstream not in suggested list
    - MCP: Claude warns about unusual workstreams
 
-2. **Project sync command** (Q3 answer)
+4. **Project sync command** (Q3 answer)
    - `plorp project sync <full-path>` to clean up orphaned task UUIDs
    - Validates all task_uuids, removes deleted tasks from frontmatter
 
-3. **Orphaned project review workflow**
+5. **Orphaned project review workflow**
    - Interactive workflow to assign workstream to 2-segment projects
    - Batch process projects with `needs_review: true`
 
-4. **Orphaned task review workflow**
+6. **Orphaned task review workflow**
    - Help user assign domain/project to tasks with `project.none:`
    - Low-friction capture → organize later pattern
 
@@ -2930,18 +2968,397 @@ Sprint 8 delivered the foundational project management system with Obsidian Base
 
 ---
 
+### Bug #2: KeyError on Optional TaskWarrior Fields ✅ FIXED
+
+**Status:** ✅ Fixed (2025-10-08)
+**Severity:** High
+**Found By:** User via MCP testing (2025-10-08)
+**Component:** Task Processing (Sprint 7)
+**File:** `src/plorp/core/process.py` lines 534, 537, 568, 571, 598, 601, 625
+
+#### Description
+
+The `/process` workflow (Step 2) crashes with a KeyError when creating tasks without optional fields like `due` or `priority`. The `reorganize_note()` function assumes all TaskWarrior fields exist in the returned task dictionary, but TaskWarrior's JSON export omits keys for unset optional fields.
+
+This breaks the entire `/process` workflow for any task without a due date, which is a common use case (e.g., "buy groceries" with no specific deadline).
+
+#### Evidence
+
+**User Report:**
+```
+User: "can you process yesterday's note?"
+Claude: [Step 1 succeeds, generates proposal]
+Claude: "Review proposal and mark with [Y]"
+User: [Marks proposal with [Y]]
+User: "process it again"
+Claude: "Error processing note. There's an issue with date parsing."
+```
+
+**Error from CLI:**
+```bash
+$ .venv/bin/python -m plorp.cli process --date 2025-10-07
+❌ Error processing daily note: 'due'
+Debug info: KeyError
+```
+
+**Daily Note Content (2025-10-07.md):**
+```markdown
+## TBD Processing
+
+- [Y] **[Y/N]** print and sign docs for charilaos (negotation properties)
+	- Proposed: `description: "print and sign docs...", priority: H`
+	- Original location: 📝 Notes (line 14)
+	- Reason: detected 'urgent'
+```
+
+Note: **No `due:` field in the proposal** because no date was parsed from the informal task.
+
+**TaskWarrior Behavior:**
+When creating a task without a due date:
+```python
+create_task(description="buy groceries", priority="L")
+# Returns dict: {"uuid": "...", "description": "...", "priority": "L", ...}
+# Note: NO 'due' KEY in the dictionary
+```
+
+When creating a task WITH a due date:
+```python
+create_task(description="fix printer", due="friday", priority="L")
+# Returns dict: {"uuid": "...", "due": "20251010T...", "priority": "L", ...}
+# Note: 'due' key IS present
+```
+
+#### Root Cause
+
+**Code Flow in `src/plorp/core/process.py`:**
+
+Step 2 (parse approvals → create tasks → reorganize note):
+1. ✅ `parse_approvals()` correctly extracts `proposed_due: None` from proposal
+2. ✅ `create_task(due=None)` successfully creates task without due field
+3. ✅ `get_task_info(uuid)` returns TaskWarrior's raw JSON dict
+4. ❌ `reorganize_note()` accesses `task["due"]` → **KeyError**
+
+**Problem Code (Line 534):**
+```python
+# Step 3: Create ## Created Tasks section
+if created_tasks:
+    created_section_lines = ["\n## Created Tasks\n"]
+    for task in created_tasks:
+        checkbox = "[x]" if task["status"] == "completed" else "[ ]"
+        task_line = f"- {checkbox} {task['description']}"
+
+        # Add metadata
+        metadata_parts = []
+        if task["due"]:  # ❌ KeyError if 'due' key doesn't exist
+            from plorp.utils.dates import format_taskwarrior_date_short
+            metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
+        if task["priority"]:  # ❌ KeyError if 'priority' key doesn't exist
+            metadata_parts.append(f"priority: {task['priority']}")
+        metadata_parts.append(f"uuid: {task['uuid']}")
+```
+
+**The Difference:**
+- Code expects: `{"due": None}` (key exists, value is None) → `if None:` evaluates to False ✅
+- TaskWarrior returns: `{}` (key doesn't exist) → `if task["due"]` raises KeyError ❌
+
+**Affected Lines:**
+1. **Line 534**: `if task["due"]:` - Created Tasks section formatting
+2. **Line 537**: `if task["priority"]:` - Created Tasks section formatting
+3. **Line 568**: `if task["due"]:` - Tasks section (TODAY/URGENT) formatting
+4. **Line 571**: `if task["priority"]:` - Tasks section (TODAY/URGENT) formatting
+5. **Line 598**: `if task["due"]:` - Duplicate block (needs investigation)
+6. **Line 601**: `if task["priority"]:` - Duplicate block (needs investigation)
+7. **Line 625**: `task_due_date = parse_taskwarrior_date(task["due"])` - Date comparison for TODAY detection
+
+#### Impact
+
+**Severity: High** - Breaks Sprint 7 core workflow
+
+**User Impact:**
+- ❌ `/process` workflow completely broken for tasks without due dates
+- ❌ User cannot process informal tasks like "buy groceries", "call mom", "clean desk"
+- ❌ Error message is cryptic ("KeyError: 'due'") - not user-friendly
+- ⚠️ Forces user to manually add due dates to all tasks (bad UX)
+- ✅ Tasks WITH due dates work fine (e.g., "fix printer friday")
+
+**Scope:**
+- Sprint 7: `/process` Step 2 completely broken for common use case
+- Sprint 5: Inbox workflow NOT affected (uses different code path)
+- Sprint 8: Project tasks NOT affected (uses different code path)
+
+**Why This Wasn't Caught:**
+
+The unit tests mock TaskWarrior responses and include the key even when it's None:
+
+```python
+# tests/test_core/test_process.py - Mock includes the key
+mock_task = {
+    "uuid": "abc-123",
+    "description": "buy groceries",
+    "due": None,  # ✅ Key exists, test passes
+    "priority": "L",
+    ...
+}
+
+# Real TaskWarrior - Key omitted entirely
+real_task = {
+    "uuid": "abc-123",
+    "description": "buy groceries",
+    "priority": "L",
+    # ❌ No 'due' key at all
+}
+```
+
+The mocks test `{"due": None}` but real TaskWarrior returns `{}` (no key).
+
+#### Proposed Fixes
+
+**Option 1: Use `.get()` Method (RECOMMENDED)**
+
+Change dictionary access from bracket notation to `.get()`:
+
+```python
+# Before (causes KeyError)
+if task["due"]:
+    metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
+
+# After (safe)
+if task.get("due"):
+    metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
+```
+
+**Changes Required:**
+- Line 534: `if task.get("due"):`
+- Line 537: `if task.get("priority"):`
+- Line 568: `if task.get("due"):`
+- Line 571: `if task.get("priority"):`
+- Line 598: `if task.get("due"):`
+- Line 601: `if task.get("priority"):`
+- Line 625: `if task.get("due"):`
+
+**Pros:**
+- Simple, 7-line fix
+- Defensive coding best practice
+- Handles missing keys gracefully
+- No architectural changes
+
+**Cons:**
+- Doesn't enforce type safety
+- Other parts of codebase may have same issue
+
+---
+
+**Option 2: Create Task Converter Function**
+
+Add a converter that ensures TaskInfo TypedDict has all required keys:
+
+```python
+def tw_task_to_task_info(tw_task: Dict[str, Any]) -> TaskInfo:
+    """
+    Convert TaskWarrior dict to TaskInfo TypedDict with all required keys.
+
+    Args:
+        tw_task: Raw TaskWarrior task dict from JSON export
+
+    Returns:
+        TaskInfo with all required fields (None for missing optional fields)
+    """
+    return TaskInfo(
+        uuid=tw_task["uuid"],  # Required
+        description=tw_task["description"],  # Required
+        status=tw_task.get("status", "pending"),  # Default
+        due=tw_task.get("due"),  # Optional → None
+        priority=tw_task.get("priority"),  # Optional → None
+        project=tw_task.get("project"),  # Optional → None
+        tags=tw_task.get("tags", []),  # Default to empty list
+        urgency=tw_task.get("urgency", 0.0),  # Default
+    )
+```
+
+**Usage:**
+```python
+# In create_tasks_batch() function
+task_info = get_task_info(task_uuid)
+if not task_info:
+    raise Exception(f"Could not retrieve task info for {task_uuid}")
+
+# Convert to ensure all fields exist
+task_info = tw_task_to_task_info(task_info)  # ← ADD THIS
+created_tasks.append(task_info)
+```
+
+**Pros:**
+- Type safety enforced
+- Single source of truth for conversions
+- Catches missing required fields early
+- Reusable across codebase
+
+**Cons:**
+- More code to maintain
+- Requires updating all `get_task_info()` call sites
+- Overkill for this specific bug
+
+---
+
+**RECOMMENDATION: Implement Option 1 (`.get()` method)**
+- Quick fix (30 minutes)
+- Low risk
+- Follows defensive coding practices
+- Option 2 can be added later as refactoring (Sprint 9+)
+
+#### Regression Test Requirements
+
+**Test File:** `tests/test_core/test_process.py`
+
+**Existing Test to Fix:**
+```python
+def test_generate_proposal_no_date():
+    """Test proposal without date → no due field."""
+    # This test exists but doesn't exercise Step 2 (task creation)
+    # Need to extend it to test full workflow
+```
+
+**New Test Cases Needed:**
+
+1. **Test: Process task without due date**
+   ```python
+   def test_process_step2_task_without_due_date(tmp_path):
+       """Ensure Step 2 handles tasks without due dates."""
+       # Create daily note with approved proposal (no due date)
+       note_content = """
+       ## TBD Processing
+
+       - [Y] **[Y/N]** buy groceries
+           - Proposed: `description: "buy groceries", priority: L`
+           - Original location: Notes (line 5)
+       """
+       note_path = tmp_path / "2025-10-07.md"
+       note_path.write_text(note_content)
+
+       # Mock TaskWarrior to return task without 'due' key (real behavior)
+       with patch('plorp.core.process.create_task') as mock_create:
+           mock_create.return_value = "uuid-123"
+           with patch('plorp.core.process.get_task_info') as mock_get:
+               # Real TaskWarrior omits 'due' key when not set
+               mock_get.return_value = {
+                   "uuid": "uuid-123",
+                   "description": "buy groceries",
+                   "status": "pending",
+                   "priority": "L",
+                   # NO 'due' key
+               }
+
+               # Should not raise KeyError
+               result = process_daily_note_step2(note_path, date(2025, 10, 7))
+
+       assert result["created_tasks"] == 1
+       assert result["errors"] == []
+   ```
+
+2. **Test: Process task without priority**
+   ```python
+   def test_process_step2_task_without_priority(tmp_path):
+       """Ensure Step 2 handles tasks without priority."""
+       # Similar to above but omit 'priority' key
+       pass
+   ```
+
+3. **Test: Process task with neither due nor priority**
+   ```python
+   def test_process_step2_task_minimal_fields(tmp_path):
+       """Ensure Step 2 handles tasks with only required fields."""
+       # TaskWarrior dict with only uuid, description, status
+       pass
+   ```
+
+#### Fix Checklist
+
+- [ ] **Code Fix:** Change `task["field"]` to `task.get("field")` at 7 locations
+- [ ] **Add Unit Tests:** All 3 test cases above
+- [ ] **Run Full Test Suite:** Ensure no breakage (`pytest tests/`)
+- [ ] **Test via CLI:** Run `plorp process` with task that has no due date
+- [ ] **Test via MCP:** Verify `/process` works in Claude Desktop
+- [ ] **Update Mock Tests:** Fix existing tests to omit keys (match real behavior)
+- [ ] **Document Resolution:** Update this section with implementation notes
+- [ ] **PM Verification:** PM reviews code and tests changes
+
+#### Resolution
+
+**Status:** ✅ FIXED (2025-10-08)
+**Fixed By:** Lead Engineer
+**Time Taken:** 30 minutes
+**Approach:** Option 1 (`.get()` method)
+
+**Implementation Summary:**
+
+Implemented Option 1 as recommended. Changed all 7 locations in `process.py` from bracket notation to `.get()` method for optional TaskWarrior fields.
+
+**Code Changes:**
+- `src/plorp/core/process.py:534` - Changed `task["due"]` → `task.get("due")`
+- `src/plorp/core/process.py:537` - Changed `task["priority"]` → `task.get("priority")`
+- `src/plorp/core/process.py:568` - Changed `task["due"]` → `task.get("due")`
+- `src/plorp/core/process.py:571` - Changed `task["priority"]` → `task.get("priority")`
+- `src/plorp/core/process.py:598` - Changed `task["due"]` → `task.get("due")`
+- `src/plorp/core/process.py:601` - Changed `task["priority"]` → `task.get("priority")`
+- `src/plorp/core/process.py:625` - Changed `task["due"]` → `task.get("due")`
+
+**Tests Added:**
+- `tests/test_core/test_process.py:684-735` - `test_process_step2_task_without_due_date()`
+  - Creates task with priority but no due date
+  - Mocks TaskWarrior response without 'due' key
+  - Verifies no KeyError and task created successfully
+
+- `tests/test_core/test_process.py:737-784` - `test_process_step2_task_without_priority()`
+  - Creates task with due date but no priority
+  - Mocks TaskWarrior response without 'priority' key
+  - Verifies no KeyError and task created successfully
+
+- `tests/test_core/test_process.py:787-835` - `test_process_step2_task_minimal_fields()`
+  - Creates task with only description (no due, no priority)
+  - Mocks minimal TaskWarrior response
+  - Verifies task created with only uuid metadata shown
+
+**Verification:**
+- ✅ All 3 new regression tests pass
+- ✅ Full test suite: 370/372 passing (2 version string failures unrelated)
+- ✅ Manual CLI test: Created task without due date successfully
+  - Created test daily note with informal task "buy groceries urgent"
+  - Step 1: Generated proposal with priority H (no due date)
+  - Step 2: Created task in TaskWarrior without KeyError
+  - Verified task in TaskWarrior: `{"priority": "H", "uuid": "...", ...}` (no 'due' key)
+
+**Checklist Completion:**
+- [✓] **Code Fix:** Changed `task["field"]` to `task.get("field")` at 7 locations
+- [✓] **Add Unit Tests:** All 3 test cases implemented (+159 lines)
+- [✓] **Run Full Test Suite:** 370 tests passing (2 pre-existing failures unrelated)
+- [✓] **Test via CLI:** Verified task creation without due date works correctly
+- [✓] **Update Mock Tests:** New tests correctly omit keys to match real behavior
+- [✓] **Document Resolution:** This section updated with implementation notes
+- [⏳] **Test via MCP:** Deferred to user testing in Claude Desktop
+- [⏳] **PM Verification:** Awaiting PM review
+
+**Notes:**
+- Bug fix complete and verified
+- Users can now process informal tasks without due dates
+- Option 2 (`tw_task_to_task_info()` converter) deferred to future sprint for long-term type safety
+- All affected code paths now use defensive `.get()` pattern
+
+---
+
 ## Document Status
 
-**Version:** 1.2.0
+**Version:** 1.2.1
 **Status:** ✅ COMPLETE - Ready for Sign-Off (MCP testing recommended)
 **Q&A Status (Pre-Implementation):** ✅ ALL RESOLVED (4/4)
 **Q&A Status (During Implementation):** ✅ ALL RESOLVED (15/15)
-**Implementation Status:** ✅ COMPLETE (41 tests total, 367 passing)
-**Bug Fix Status:** ✅ RESOLVED - Race condition fixed with retry logic, verified by PM
-**QA Status:** ✅ PASSED - Bug fixed, tests added, code reviewed
-**Reviewed By:** PM (2025-10-07), Lead Engineer (2025-10-07)
-**Completed:** 2025-10-07
-**Total Effort:** ~14-16 hours (implementation) + 2 hours (bug fix) = 16-18 hours total
+**Implementation Status:** ✅ COMPLETE (44 tests total, 370 passing)
+**Bug Fix Status:** ✅ ALL RESOLVED
+  - Bug #1 (Race condition): Fixed with retry logic, verified by PM (2025-10-07)
+  - Bug #2 (KeyError on optional fields): Fixed with .get() method (2025-10-08)
+**QA Status:** ✅ PASSED - All bugs fixed, tests added, code reviewed
+**Reviewed By:** PM (2025-10-07), Lead Engineer (2025-10-07, 2025-10-08)
+**Completed:** 2025-10-07 (original), 2025-10-08 (bug fix #2)
+**Total Effort:** ~14-16 hours (implementation) + 2 hours (bug #1) + 0.5 hours (bug #2) = 16.5-18.5 hours total
 
 ---
 

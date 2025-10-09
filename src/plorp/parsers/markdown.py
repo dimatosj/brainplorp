@@ -45,6 +45,38 @@ def parse_daily_note_tasks(note_path: Path) -> List[Tuple[str, str]]:
     return [(desc.strip(), uuid) for desc, uuid in matches]
 
 
+def parse_checked_tasks(note_path: Path) -> List[str]:
+    """
+    Parse note for checked (completed) tasks.
+
+    Sprint 8.6: Extracts UUIDs from checked checkboxes for processing.
+    Used by project note checkbox sync.
+
+    Args:
+        note_path: Path to markdown file
+
+    Returns:
+        List of task UUIDs from checked tasks.
+        Empty list if no checked tasks or file not found.
+
+    Example:
+        >>> uuids = parse_checked_tasks(Path('vault/projects/work.api.md'))
+        >>> for uuid in uuids:
+        ...     print(f"Completed: {uuid}")
+    """
+    try:
+        content = note_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+
+    # Pattern: - [x] Description (metadata, uuid: abc-123)
+    # Matches checked boxes with UUIDs
+    pattern = r"-\s*\[x\]\s*[^(]+\(.*?uuid:\s*([\w-]+)\)"
+    matches = re.findall(pattern, content, re.IGNORECASE)
+
+    return matches
+
+
 def parse_frontmatter(content: str) -> Dict[str, Any]:
     """
     Extract YAML front matter from markdown content.
@@ -325,3 +357,160 @@ def remove_task_from_note_frontmatter(note_path: Path, task_uuid: str) -> None:
         tasks.remove(task_uuid)
         updated_content = add_frontmatter_field(content, "tasks", tasks)
         write_file(note_path, updated_content)
+
+
+# ============================================================================
+# Sprint 8.6 Helper Functions - State Sync Infrastructure
+# ============================================================================
+
+
+def _split_frontmatter_and_body(content: str) -> Tuple[Dict[str, Any], str]:
+    """
+    Split content into frontmatter dict and body string.
+
+    Sprint 8.6: Helper for project note body sync.
+    parse_frontmatter() only returns dict, but we often need both parts.
+
+    Args:
+        content: Markdown content string
+
+    Returns:
+        Tuple of (frontmatter dict, body string)
+
+    Example:
+        >>> content = "---\\ndate: 2025-10-06\\n---\\n# Title\\n\\nBody"
+        >>> fm, body = _split_frontmatter_and_body(content)
+        >>> fm['date']
+        '2025-10-06'
+        >>> body
+        '# Title\\n\\nBody'
+    """
+    frontmatter = parse_frontmatter(content)
+
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        body = parts[2].lstrip("\n") if len(parts) > 2 else ""
+    else:
+        body = content
+
+    return frontmatter, body
+
+
+def _format_with_frontmatter(frontmatter: Dict[str, Any], body: str) -> str:
+    """
+    Combine frontmatter dict and body into markdown with --- delimiters.
+
+    Sprint 8.6: Helper for writing project notes after sync.
+
+    Args:
+        frontmatter: Dictionary of frontmatter fields
+        body: Markdown body content
+
+    Returns:
+        Complete markdown content with frontmatter
+
+    Example:
+        >>> fm = {"date": "2025-10-06", "tags": ["work"]}
+        >>> body = "# Title\\n\\nContent"
+        >>> content = _format_with_frontmatter(fm, body)
+        >>> print(content)
+        ---
+        date: 2025-10-06
+        tags:
+          - work
+        ---
+        # Title
+
+        Content
+    """
+    # Serialize frontmatter to YAML (block style, preserve order)
+    fm_yaml = yaml.dump(frontmatter, default_flow_style=False, sort_keys=False)
+
+    # Combine with body (ensure body doesn't have extra leading newlines)
+    body = body.lstrip("\n")
+
+    return f"---\n{fm_yaml}---\n{body}"
+
+
+def _format_date(date_str: str) -> str:
+    """
+    Format TaskWarrior date for display (20251010T000000Z → 2025-10-10).
+
+    Sprint 8.6: Helper for rendering task metadata in project notes.
+
+    Args:
+        date_str: TaskWarrior ISO 8601 date or already-formatted date
+
+    Returns:
+        Human-readable date string YYYY-MM-DD
+
+    Example:
+        >>> _format_date("20251010T000000Z")
+        '2025-10-10'
+        >>> _format_date("2025-10-10")
+        '2025-10-10'
+    """
+    if not date_str:
+        return ""
+
+    if 'T' in date_str:
+        # TaskWarrior format: 20251010T000000Z
+        date_part = date_str.split('T')[0]  # "20251010"
+        return f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]}"
+
+    # Already formatted or unknown format - return as-is
+    return date_str
+
+
+def _remove_section(content: str, section_heading: str) -> str:
+    """
+    Remove a markdown section from content.
+
+    Sprint 8.6: Helper for updating project note task sections.
+
+    Section defined as:
+    - Starts with heading (e.g., "## Tasks")
+    - Ends at next same-level or higher heading, or end of document
+
+    Supports prefix matching: "## Tasks" will match "## Tasks (3)" or "## Tasks".
+
+    Args:
+        content: Markdown content
+        section_heading: Heading to remove (e.g., "## Tasks")
+
+    Returns:
+        Content with section removed
+
+    Example:
+        >>> content = "# Title\\n## Tasks\\n- Item\\n## Notes\\nStuff"
+        >>> result = _remove_section(content, "## Tasks")
+        >>> "## Tasks" in result
+        False
+        >>> "## Notes" in result
+        True
+    """
+    lines = content.split("\n")
+    result = []
+    in_target_section = False
+    section_level = None
+
+    for line in lines:
+        # Check if this is the target section heading (prefix match)
+        if line.strip().startswith(section_heading):
+            in_target_section = True
+            # Count the # characters at start of line (before any spaces)
+            section_level = len(line) - len(line.lstrip("#"))
+            continue
+
+        # Check if we've reached next same-level or higher heading
+        if in_target_section and line.startswith("#"):
+            # Count # characters for current line
+            current_level = len(line) - len(line.lstrip("#"))
+            if current_level <= section_level:
+                in_target_section = False
+
+        # Include line if not in target section
+        if not in_target_section:
+            result.append(line)
+
+    return "\n".join(result)

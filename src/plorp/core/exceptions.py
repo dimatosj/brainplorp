@@ -71,3 +71,11 @@ class InboxNotFoundError(PlorpError):
     def __init__(self, inbox_path: str):
         self.inbox_path = inbox_path
         super().__init__(f"Inbox not found: {inbox_path}")
+
+
+class ProjectNotFoundError(PlorpError):
+    """Raised when project note doesn't exist."""
+
+    def __init__(self, project_path: str):
+        self.project_path = project_path
+        super().__init__(f"Project not found: {project_path}")

@@ -6,7 +6,8 @@ No I/O decisions - returns structured data for callers to format.
 """
 
 from datetime import date, datetime
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Optional
 
 from plorp.core.types import TaskCompleteResult, TaskDeferResult, TaskDropResult, TaskPriorityResult
 from plorp.core.exceptions import TaskNotFoundError
@@ -19,12 +20,16 @@ from plorp.integrations.taskwarrior import (
 )
 
 
-def mark_completed(uuid: str) -> TaskCompleteResult:
+def mark_completed(uuid: str, vault_path: Optional[Path] = None) -> TaskCompleteResult:
     """
     Mark task as completed in TaskWarrior.
 
+    Sprint 8.5: State Synchronization pattern - when vault_path provided,
+    automatically removes UUID from all project frontmatter.
+
     Args:
         uuid: Task UUID
+        vault_path: Vault path for State Sync (optional, Sprint 8.5)
 
     Returns:
         TaskCompleteResult with confirmation
@@ -39,10 +44,15 @@ def mark_completed(uuid: str) -> TaskCompleteResult:
 
     description = task["description"]
 
-    # Mark done
+    # 1. Update TaskWarrior
     success = mark_done(uuid)
     if not success:
         raise RuntimeError(f"Failed to mark task done: {uuid}")
+
+    # 2. State Sync: Update Obsidian (Sprint 8.5 Item 1)
+    if vault_path:
+        from plorp.core.projects import remove_task_from_all_projects
+        remove_task_from_all_projects(vault_path, uuid)
 
     return {
         "uuid": uuid,
@@ -86,12 +96,16 @@ def defer_task(uuid: str, new_due: date) -> TaskDeferResult:
     }
 
 
-def drop_task(uuid: str) -> TaskDropResult:
+def drop_task(uuid: str, vault_path: Optional[Path] = None) -> TaskDropResult:
     """
     Drop/delete task from TaskWarrior.
 
+    Sprint 8.5: State Synchronization pattern - when vault_path provided,
+    automatically removes UUID from all project frontmatter.
+
     Args:
         uuid: Task UUID
+        vault_path: Vault path for State Sync (optional, Sprint 8.5)
 
     Returns:
         TaskDropResult with confirmation
@@ -106,10 +120,15 @@ def drop_task(uuid: str) -> TaskDropResult:
 
     description = task["description"]
 
-    # Delete task
+    # 1. Delete from TaskWarrior
     success = delete_task(uuid)
     if not success:
         raise RuntimeError(f"Failed to delete task: {uuid}")
+
+    # 2. State Sync: Update Obsidian (Sprint 8.5 Item 1)
+    if vault_path:
+        from plorp.core.projects import remove_task_from_all_projects
+        remove_task_from_all_projects(vault_path, uuid)
 
     return {
         "uuid": uuid,

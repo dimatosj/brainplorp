@@ -13,6 +13,10 @@ from plorp.parsers.markdown import (
     add_frontmatter_field,
     add_task_to_note_frontmatter,
     remove_task_from_note_frontmatter,
+    _split_frontmatter_and_body,
+    _format_with_frontmatter,
+    _format_date,
+    _remove_section,
 )
 
 
@@ -505,3 +509,220 @@ Content
     updated = note.read_text()
     assert "abc-123" not in updated
     assert "- def-456" in updated
+
+
+# Sprint 8.6 Helper Function Tests
+
+
+def test_split_frontmatter_and_body_with_frontmatter():
+    """Test splitting content with frontmatter."""
+    content = """---
+date: 2025-10-08
+type: daily
+---
+# Title
+
+Body content"""
+
+    fm, body = _split_frontmatter_and_body(content)
+
+    assert fm["date"] == "2025-10-08"
+    assert fm["type"] == "daily"
+    assert body == "# Title\n\nBody content"
+
+
+def test_split_frontmatter_and_body_without_frontmatter():
+    """Test splitting content without frontmatter."""
+    content = "# Title\n\nBody content"
+
+    fm, body = _split_frontmatter_and_body(content)
+
+    assert fm == {}
+    assert body == "# Title\n\nBody content"
+
+
+def test_split_frontmatter_and_body_empty_body():
+    """Test splitting content with frontmatter but no body."""
+    content = """---
+date: 2025-10-08
+---"""
+
+    fm, body = _split_frontmatter_and_body(content)
+
+    assert fm["date"] == "2025-10-08"
+    assert body == ""
+
+
+def test_format_with_frontmatter_simple():
+    """Test formatting with simple frontmatter."""
+    frontmatter = {"date": "2025-10-08", "type": "daily"}
+    body = "# Title\n\nContent"
+
+    result = _format_with_frontmatter(frontmatter, body)
+
+    assert result.startswith("---\n")
+    # YAML may add quotes, both formats are valid
+    assert "date:" in result and "2025-10-08" in result
+    assert "type: daily" in result
+    assert "---\n" in result
+    assert "# Title" in result
+    assert "Content" in result
+
+
+def test_format_with_frontmatter_list():
+    """Test formatting with list in frontmatter."""
+    frontmatter = {"tasks": ["abc-123", "def-456"]}
+    body = "Content"
+
+    result = _format_with_frontmatter(frontmatter, body)
+
+    assert "tasks:" in result
+    assert "- abc-123" in result
+    assert "- def-456" in result
+
+
+def test_format_with_frontmatter_strips_leading_newlines():
+    """Test that leading newlines in body are stripped."""
+    frontmatter = {"date": "2025-10-08"}
+    body = "\n\n\nContent"
+
+    result = _format_with_frontmatter(frontmatter, body)
+
+    # Should not have extra newlines between --- and Content
+    assert result.count("\n\n\n") == 0
+
+
+def test_format_date_taskwarrior_format():
+    """Test formatting TaskWarrior date."""
+    result = _format_date("20251010T000000Z")
+
+    assert result == "2025-10-10"
+
+
+def test_format_date_already_formatted():
+    """Test formatting already-formatted date."""
+    result = _format_date("2025-10-10")
+
+    assert result == "2025-10-10"
+
+
+def test_format_date_empty():
+    """Test formatting empty date."""
+    result = _format_date("")
+
+    assert result == ""
+
+
+def test_format_date_none():
+    """Test formatting None date."""
+    result = _format_date(None)
+
+    assert result == ""
+
+
+def test_remove_section_removes_target():
+    """Test removing target section."""
+    content = """# Title
+
+## Tasks
+
+- Item 1
+- Item 2
+
+## Notes
+
+Some notes"""
+
+    result = _remove_section(content, "## Tasks")
+
+    assert "## Tasks" not in result
+    assert "- Item 1" not in result
+    assert "- Item 2" not in result
+    assert "## Notes" in result
+    assert "Some notes" in result
+
+
+def test_remove_section_preserves_other_sections():
+    """Test that other sections are preserved."""
+    content = """# Title
+
+## Section 1
+
+Content 1
+
+## Section 2
+
+Content 2
+
+## Section 3
+
+Content 3"""
+
+    result = _remove_section(content, "## Section 2")
+
+    assert "## Section 1" in result
+    assert "Content 1" in result
+    assert "## Section 2" not in result
+    assert "Content 2" not in result
+    assert "## Section 3" in result
+    assert "Content 3" in result
+
+
+def test_remove_section_handles_nested_headings():
+    """Test removing section with nested headings."""
+    content = """# Title
+
+## Tasks
+
+### Subtask 1
+
+Details
+
+### Subtask 2
+
+More details
+
+## Notes
+
+Content"""
+
+    result = _remove_section(content, "## Tasks")
+
+    assert "## Tasks" not in result
+    assert "### Subtask 1" not in result
+    assert "### Subtask 2" not in result
+    assert "## Notes" in result
+
+
+def test_remove_section_nonexistent():
+    """Test removing section that doesn't exist."""
+    content = """# Title
+
+## Section 1
+
+Content"""
+
+    result = _remove_section(content, "## Nonexistent")
+
+    # Should return content unchanged
+    assert result == content
+
+
+def test_remove_section_at_end():
+    """Test removing section at end of document."""
+    content = """# Title
+
+## Section 1
+
+Content 1
+
+## Section 2
+
+Content 2"""
+
+    result = _remove_section(content, "## Section 2")
+
+    assert "## Section 1" in result
+    assert "Content 1" in result
+    assert "## Section 2" not in result
+    assert "Content 2" not in result

@@ -161,9 +161,11 @@ def create_task_in_project(
     """
     Create task in TaskWarrior and link to project.
 
-    1. Creates task with project: field
-    2. Annotates task with project note path
-    3. Adds task UUID to project note frontmatter
+    Sprint 8.6 State Sync:
+    1. Creates task with project: field (TaskWarrior)
+    2. Annotates task with project note path (TaskWarrior)
+    3. Adds task UUID to project note frontmatter (Obsidian)
+    4. Syncs Tasks section in note body (Obsidian)
 
     Args:
         description: Task description
@@ -200,8 +202,14 @@ def create_task_in_project(
     # Format: plorp-project:work.marketing.website
     add_annotation(task_uuid, f"plorp-project:{project_full_path}")
 
-    # Add task UUID to project note
+    # Add task UUID to project note frontmatter
     add_task_to_project_bases(project_full_path, task_uuid)
+
+    # Sprint 8.6: Sync note body Tasks section
+    # Import locally to allow test mocking
+    from ..integrations.obsidian_bases import get_vault_path as get_vault
+    vault_path = get_vault()
+    _sync_project_task_section(vault_path, project_full_path)
 
     return task_uuid
 
@@ -313,10 +321,14 @@ def list_orphaned_tasks() -> list[TaskInfo]:
 
 def remove_task_from_all_projects(vault_path: Path, uuid: str) -> None:
     """
-    Remove task UUID from all project frontmatter.
+    Remove task UUID from all project frontmatter and sync note bodies.
 
     Part of State Synchronization pattern: when task is marked done or deleted
     in TaskWarrior, this function removes the UUID from all project notes.
+
+    Sprint 8.6 State Sync:
+    - Removes UUID from frontmatter
+    - Syncs Tasks section in note body
 
     Handles edge cases gracefully:
     - No projects directory: silent return
@@ -337,6 +349,9 @@ def remove_task_from_all_projects(vault_path: Path, uuid: str) -> None:
     if not projects_dir.exists():
         return
 
+    # Track projects modified for sync
+    modified_projects = []
+
     # Scan all project files
     for project_file in projects_dir.rglob("*.md"):
         # Extract full_path from filename (e.g., "work.marketing.website.md" → "work.marketing.website")
@@ -350,6 +365,11 @@ def remove_task_from_all_projects(vault_path: Path, uuid: str) -> None:
         # Remove UUID if present (obsidian_bases handles the frontmatter update)
         if uuid in project.get("task_uuids", []):
             remove_uuid(full_path, uuid)
+            modified_projects.append(full_path)
+
+    # Sprint 8.6: Sync all modified project note bodies
+    for full_path in modified_projects:
+        _sync_project_task_section(vault_path, full_path)
 
 
 # ============================================================================
@@ -581,3 +601,224 @@ def set_focused_domain_mcp(domain: str) -> None:
     focus_file = get_config_dir() / "mcp_focus.txt"
     focus_file.parent.mkdir(parents=True, exist_ok=True)
     focus_file.write_text(domain)
+
+
+# ============================================================================
+# Sprint 8.6: Auto-Sync Infrastructure
+# ============================================================================
+
+
+def process_project_note(vault_path: Path, project_path: str) -> int:
+    """
+    Process checked tasks in project note (mark done, sync state).
+
+    Sprint 8.6: Checkbox processing for project notes - similar to daily note
+    review but for project-based task completion.
+
+    Workflow:
+    1. Parse checked tasks from project note
+    2. Mark each as done in TaskWarrior
+    3. Remove UUIDs from frontmatter (State Sync)
+    4. Re-sync note body to reflect changes
+
+    Args:
+        vault_path: Path to Obsidian vault
+        project_path: Full project path (e.g., "work.marketing.website")
+
+    Returns:
+        Number of tasks marked as done
+
+    Raises:
+        ProjectNotFoundError: If project note doesn't exist
+    """
+    from ..parsers.markdown import parse_checked_tasks
+    from ..integrations.taskwarrior import mark_done
+    from .exceptions import ProjectNotFoundError
+
+    # 1. Read project note
+    note_path = vault_path / "projects" / f"{project_path}.md"
+    if not note_path.exists():
+        raise ProjectNotFoundError(project_path)
+
+    # 2. Parse checked tasks
+    checked_uuids = parse_checked_tasks(note_path)
+
+    if not checked_uuids:
+        return 0  # No checked tasks
+
+    # 3. Mark each task as done in TaskWarrior
+    count = 0
+    for uuid in checked_uuids:
+        try:
+            mark_done(uuid)
+            count += 1
+        except Exception as e:
+            # Log but continue processing other tasks
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to mark task {uuid} as done: {e}")
+            continue
+
+    # 4. State Sync: Remove completed task UUIDs from ALL project frontmatter
+    # (This handles the case where a task might be in multiple projects)
+    for uuid in checked_uuids:
+        remove_task_from_all_projects(vault_path, uuid)
+
+    # Note: remove_task_from_all_projects already calls _sync_project_task_section
+    # for each modified project, so we don't need to call it again here.
+
+    return count
+
+
+def sync_all_projects(vault_path: Path) -> dict:
+    """
+    Sync ALL project note bodies with their frontmatter (bulk reconciliation).
+
+    Sprint 8.6: Admin command for reconciling state after external TaskWarrior
+    changes (e.g., tasks marked done via CLI, mobile apps, etc.).
+
+    Use cases:
+    - After bulk TaskWarrior operations
+    - After TaskWarrior sync from other devices
+    - Periodic maintenance to ensure state consistency
+
+    Args:
+        vault_path: Path to Obsidian vault
+
+    Returns:
+        Dict with sync statistics:
+        {
+            "synced": int,  # Number of projects synced
+            "errors": list  # List of (project_path, error_msg) tuples
+        }
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    projects_dir = vault_path / "projects"
+    stats = {
+        "synced": 0,
+        "errors": []
+    }
+
+    # Graceful handling: no projects directory
+    if not projects_dir.exists():
+        return stats
+
+    # Sync all project files
+    for project_file in projects_dir.rglob("*.md"):
+        # Extract full_path from filename
+        full_path = project_file.stem
+
+        try:
+            # Sync this project's task section
+            _sync_project_task_section(vault_path, full_path)
+            stats["synced"] += 1
+        except Exception as e:
+            # Log error but continue with other projects
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            stats["errors"].append((full_path, error_msg))
+            logger.error(f"Failed to sync project '{full_path}': {error_msg}")
+            continue
+
+    return stats
+
+
+def _sync_project_task_section(vault_path: Path, project_path: str) -> None:
+    """
+    Update the ## Tasks section in project note to match frontmatter.
+
+    Sprint 8.6: This is INTERNAL infrastructure called by all project
+    modification functions. NOT a user-facing command.
+
+    State Sync Pattern:
+    - Frontmatter has task_uuids → note body shows those tasks
+    - Frontmatter empty → note body has no task section
+    - Always in sync
+
+    Args:
+        vault_path: Path to Obsidian vault
+        project_path: Full project path (e.g., "work.engineering.api-rewrite")
+
+    Returns:
+        None (modifies file in place)
+
+    Raises:
+        ProjectNotFoundError: If project note doesn't exist
+    """
+    import logging
+    from ..parsers.markdown import (
+        _split_frontmatter_and_body,
+        _format_with_frontmatter,
+        _format_date,
+        _remove_section,
+    )
+    from ..integrations.taskwarrior import get_task_info
+    from .exceptions import ProjectNotFoundError, TaskNotFoundError
+
+    logger = logging.getLogger(__name__)
+
+    # 1. Read project note
+    note_path = vault_path / "projects" / f"{project_path}.md"
+    if not note_path.exists():
+        raise ProjectNotFoundError(project_path)
+
+    content = note_path.read_text()
+    frontmatter, body = _split_frontmatter_and_body(content)
+
+    # 2. Get task UUIDs from frontmatter
+    task_uuids = frontmatter.get("task_uuids", [])
+
+    # 3. Query TaskWarrior for task details
+    tasks = []
+    for uuid in task_uuids:
+        try:
+            task = get_task_info(uuid)
+            # Only include pending tasks (per Q1/Q20 decision)
+            if task and task.get("status") == "pending":
+                tasks.append(task)
+        except TaskNotFoundError:
+            # Orphaned UUID - skip (Sprint 8.5 reconciliation will clean)
+            logger.warning(
+                f"Orphaned UUID '{uuid}' in project '{project_path}' - skipping. "
+                f"Run 'plorp sync-all' to clean up."
+            )
+            continue
+
+    # 4. Remove existing ## Tasks section from body
+    body_without_tasks = _remove_section(body, "## Tasks")
+
+    # 5. Build new Tasks section
+    if tasks:
+        task_lines = []
+        for task in tasks:
+            status = task.get("status", "pending")
+            checkbox = "[x]" if status == "completed" else "[ ]"
+            desc = task["description"]
+
+            # Metadata (Q14: order is due, priority, uuid)
+            metadata = []
+            if "due" in task:
+                due_str = _format_date(task["due"])
+                metadata.append(f"due: {due_str}")
+            if "priority" in task:
+                metadata.append(f"priority: {task['priority']}")
+            # UUID always last
+            metadata.append(f"uuid: {task['uuid']}")
+
+            meta_str = ", ".join(metadata)
+            task_lines.append(f"- {checkbox} {desc} ({meta_str})")
+
+        tasks_section = f"## Tasks ({len(tasks)})\n\n"
+        tasks_section += "\n".join(task_lines)
+        tasks_section += "\n"
+
+        # Append to body
+        new_body = body_without_tasks.rstrip() + "\n\n" + tasks_section
+    else:
+        # No tasks - don't add section (per Q1)
+        new_body = body_without_tasks
+
+    # 6. Write updated note
+    new_content = _format_with_frontmatter(frontmatter, new_body)
+    note_path.write_text(new_content)

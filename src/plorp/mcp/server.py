@@ -50,6 +50,8 @@ from plorp.core.projects import (
     list_project_tasks,
     get_focused_domain_mcp,
     set_focused_domain_mcp,
+    # Sprint 8.6
+    sync_all_projects,
 )
 from plorp.integrations.taskwarrior import get_task_info as tw_get_task_info
 
@@ -574,6 +576,17 @@ async def list_tools() -> list[Tool]:
                 "properties": {},
             },
         ),
+        # ====================================================================
+        # Sprint 8.6: State Synchronization Tools
+        # ====================================================================
+        Tool(
+            name="plorp_sync_all_projects",
+            description="Sync all project note bodies with frontmatter (Sprint 8.6). Bulk reconciliation command that updates Tasks sections across all project notes to match their task_uuids. Useful after external TaskWarrior modifications.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
     ]
 
 
@@ -639,6 +652,9 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent]:
             return await _plorp_set_focused_domain(arguments)
         elif name == "plorp_get_focused_domain":
             return await _plorp_get_focused_domain(arguments)
+        # Sprint 8.6: State sync tools
+        elif name == "plorp_sync_all_projects":
+            return await _plorp_sync_all_projects(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -698,7 +714,9 @@ async def _plorp_add_review_notes(args: Dict[str, Any]) -> list[TextContent]:
 
 async def _plorp_mark_task_completed(args: Dict[str, Any]) -> list[TextContent]:
     """Mark task completed."""
-    result = mark_completed(args["uuid"])
+    # Sprint 8.5: Pass vault_path for State Sync
+    vault = _get_vault_path()
+    result = mark_completed(args["uuid"], vault_path=vault)
 
     import json
     return [TextContent(type="text", text=json.dumps(result, indent=2))]
@@ -715,7 +733,9 @@ async def _plorp_defer_task(args: Dict[str, Any]) -> list[TextContent]:
 
 async def _plorp_drop_task(args: Dict[str, Any]) -> list[TextContent]:
     """Drop task."""
-    result = drop_task(args["uuid"])
+    # Sprint 8.5: Pass vault_path for State Sync
+    vault = _get_vault_path()
+    result = drop_task(args["uuid"], vault_path=vault)
 
     import json
     return [TextContent(type="text", text=json.dumps(result, indent=2))]
@@ -884,7 +904,8 @@ async def _plorp_process_daily_note(args: Dict[str, Any]) -> list[TextContent]:
 
     if has_tbd_section:
         # Step 2: Create tasks from approvals
-        result = process_daily_note_step2(note_path, target_date)
+        # Sprint 8.5: Pass vault for State Sync
+        result = process_daily_note_step2(note_path, target_date, vault)
 
         # Build response message
         response = {
@@ -1038,6 +1059,34 @@ async def _plorp_get_focused_domain(args: Dict[str, Any]) -> list[TextContent]:
     result = {
         "focused_domain": domain,
         "is_default": domain == "home"
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+# ============================================================================
+# Sprint 8.6: State Synchronization Tool Implementations
+# ============================================================================
+
+
+async def _plorp_sync_all_projects(args: Dict[str, Any]) -> list[TextContent]:
+    """
+    Sync all project note bodies with frontmatter.
+
+    Sprint 8.6: Bulk reconciliation after external TaskWarrior changes.
+    Updates Tasks section in all project notes to match task_uuids.
+    """
+    vault = _get_vault_path()
+    stats = sync_all_projects(vault)
+
+    result = {
+        "synced_count": stats["synced"],
+        "errors_count": len(stats["errors"]),
+        "errors": [
+            {"project": project, "error": error}
+            for project, error in stats["errors"]
+        ]
     }
 
     import json

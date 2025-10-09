@@ -752,3 +752,336 @@ def test_assign_orphaned_task_to_project_not_found(tmp_path, monkeypatch):
     # Test: Should raise ValueError
     with pytest.raises(ValueError, match="Project not found"):
         assign_task_to_project("uuid-123", "nonexistent.project", tmp_path)
+
+
+# ============================================================================
+# Sprint 8.6: Auto-Sync Infrastructure Tests
+# ============================================================================
+
+
+def test_sync_project_task_section_creates_section(tmp_path, monkeypatch):
+    """Test that sync creates Tasks section when none exists (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import _sync_project_task_section
+
+    # Create project
+    create_project("website", "work", "marketing", description="Test project")
+
+    # Add task UUID to project frontmatter
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    # Mock TaskWarrior to return task details
+    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+        mock_get_task.return_value = {
+            "uuid": "task-1",
+            "description": "Design homepage",
+            "status": "pending",
+            "due": "20251010T000000Z",
+            "priority": "H"
+        }
+
+        # Test: Sync project task section
+        _sync_project_task_section(tmp_path, "work.marketing.website")
+
+        # Assert: Tasks section created in note body
+        note_path = tmp_path / "projects" / "work.marketing.website.md"
+        content = note_path.read_text()
+
+        assert "## Tasks (1)" in content
+        assert "- [ ] Design homepage" in content
+        assert "due: 2025-10-10" in content
+        assert "priority: H" in content
+        assert "uuid: task-1" in content
+
+
+def test_sync_project_task_section_updates_existing(tmp_path, monkeypatch):
+    """Test that sync replaces old Tasks section (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import _sync_project_task_section
+
+    # Create project with existing Tasks section
+    create_project("website", "work", "marketing")
+
+    # Manually add old Tasks section
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Tasks (0)\n\nNo tasks\n"
+    note_path.write_text(content)
+
+    # Add task to frontmatter
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-new")
+
+    # Mock TaskWarrior
+    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+        mock_get_task.return_value = {
+            "uuid": "task-new",
+            "description": "New task",
+            "status": "pending"
+        }
+
+        # Test: Sync should replace old section
+        _sync_project_task_section(tmp_path, "work.marketing.website")
+
+        # Assert: Old section gone, new section present
+        updated_content = note_path.read_text()
+        assert updated_content.count("## Tasks") == 1  # Only one Tasks section
+        assert "No tasks" not in updated_content
+        assert "New task" in updated_content
+
+
+def test_sync_project_task_section_preserves_content(tmp_path, monkeypatch):
+    """Test that sync preserves other sections and content (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import _sync_project_task_section
+
+    # Create project
+    create_project("website", "work", "marketing", description="Test")
+
+    # Add other sections to note
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Notes\n\nImportant user notes here\n\n## Resources\n\n- Link 1\n- Link 2\n"
+    note_path.write_text(content)
+
+    # Add task
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+        mock_get_task.return_value = {
+            "uuid": "task-1",
+            "description": "Test task",
+            "status": "pending"
+        }
+
+        # Test: Sync
+        _sync_project_task_section(tmp_path, "work.marketing.website")
+
+        # Assert: Other sections preserved
+        updated_content = note_path.read_text()
+        assert "## Notes" in updated_content
+        assert "Important user notes here" in updated_content
+        assert "## Resources" in updated_content
+        assert "- Link 1" in updated_content
+
+
+def test_sync_project_task_section_handles_empty(tmp_path, monkeypatch):
+    """Test sync with no tasks removes Tasks section (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import _sync_project_task_section
+
+    # Create project with existing Tasks section but no task UUIDs
+    create_project("website", "work", "marketing")
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Tasks (1)\n\n- [ ] Old task\n"
+    note_path.write_text(content)
+
+    # Test: Sync with empty task_uuids
+    _sync_project_task_section(tmp_path, "work.marketing.website")
+
+    # Assert: Tasks section removed (no pending tasks)
+    updated_content = note_path.read_text()
+    assert "## Tasks" not in updated_content
+    assert "Old task" not in updated_content
+
+
+def test_sync_project_task_section_skips_orphaned(tmp_path, monkeypatch):
+    """Test sync gracefully skips orphaned UUIDs (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import _sync_project_task_section
+
+    # Create project with orphaned UUID
+    create_project("website", "work", "marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "orphaned-uuid")
+    add_task_to_project("work.marketing.website", "valid-uuid")
+
+    # Mock TaskWarrior - orphaned returns None, valid returns task
+    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+        def side_effect(uuid):
+            if uuid == "orphaned-uuid":
+                from plorp.core.exceptions import TaskNotFoundError
+                raise TaskNotFoundError(uuid)
+            return {
+                "uuid": "valid-uuid",
+                "description": "Valid task",
+                "status": "pending"
+            }
+
+        mock_get_task.side_effect = side_effect
+
+        # Test: Sync should skip orphaned, include valid
+        _sync_project_task_section(tmp_path, "work.marketing.website")
+
+        # Assert: Only valid task in Tasks section
+        note_path = tmp_path / "projects" / "work.marketing.website.md"
+        content = note_path.read_text()
+
+        assert "## Tasks (1)" in content
+        assert "Valid task" in content
+        # Orphaned UUID remains in frontmatter (Sprint 8.5 reconciliation will clean)
+        # but is NOT rendered in the Tasks section body
+        tasks_section = content.split("## Tasks")[1].split("##")[0] if "## Tasks" in content else ""
+        assert "orphaned-uuid" not in tasks_section  # Not in Tasks section
+        assert "valid-uuid" in tasks_section  # Valid task IS in Tasks section
+
+
+def test_sync_project_task_section_formats_correctly(tmp_path, monkeypatch):
+    """Test sync formats task lines correctly (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import _sync_project_task_section
+
+    # Create project with task
+    create_project("website", "work", "marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+        # Task with all metadata fields
+        mock_get_task.return_value = {
+            "uuid": "task-1",
+            "description": "Complete design",
+            "status": "pending",
+            "due": "20251015T120000Z",
+            "priority": "M"
+        }
+
+        _sync_project_task_section(tmp_path, "work.marketing.website")
+
+        note_path = tmp_path / "projects" / "work.marketing.website.md"
+        content = note_path.read_text()
+
+        # Assert: Correct format (due, priority, uuid order per Q14)
+        assert "- [ ] Complete design (due: 2025-10-15, priority: M, uuid: task-1)" in content
+
+
+def test_sync_project_task_section_project_not_found(tmp_path):
+    """Test sync raises error for non-existent project (Sprint 8.6)."""
+    from plorp.core.projects import _sync_project_task_section
+    from plorp.core.exceptions import ProjectNotFoundError
+
+    # Test: Should raise ProjectNotFoundError
+    with pytest.raises(ProjectNotFoundError, match="Project not found"):
+        _sync_project_task_section(tmp_path, "nonexistent.project")
+
+
+# ============================================================================
+# Sprint 8.6: Checkbox Processing for Project Notes
+# ============================================================================
+
+
+def test_process_project_note_marks_tasks_done(tmp_path, monkeypatch):
+    """Test processing project note marks checked tasks as done (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import process_project_note
+
+    # Create project with task
+    create_project("website", "work", "marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    # Manually add checked task to Tasks section
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Tasks (1)\n\n- [x] Complete task (uuid: task-1)\n"
+    note_path.write_text(content)
+
+    # Mock TaskWarrior
+    with patch("plorp.integrations.taskwarrior.mark_done") as mock_done:
+        # Test: Process project note
+        process_project_note(tmp_path, "work.marketing.website")
+
+        # Assert: Task marked done in TaskWarrior
+        mock_done.assert_called_once_with("task-1")
+
+
+def test_process_project_note_syncs_after_marking_done(tmp_path, monkeypatch):
+    """Test processing syncs note body after marking tasks done (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import process_project_note
+
+    # Create project with task
+    create_project("website", "work", "marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    # Add checked task to Tasks section
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Tasks (1)\n\n- [x] Complete task (uuid: task-1)\n"
+    note_path.write_text(content)
+
+    # Mock TaskWarrior
+    with patch("plorp.integrations.taskwarrior.mark_done") as mock_done, \
+         patch("plorp.integrations.taskwarrior.get_task_info") as mock_get:
+
+        # After marking done, task status changes to completed
+        mock_get.return_value = {
+            "uuid": "task-1",
+            "description": "Complete task",
+            "status": "completed"  # Now completed
+        }
+
+        # Test: Process
+        process_project_note(tmp_path, "work.marketing.website")
+
+        # Assert: Note body synced (completed tasks removed from Tasks section per Q1)
+        updated_content = note_path.read_text()
+        # Completed task should not be in Tasks section anymore
+        if "## Tasks" in updated_content:
+            tasks_section = updated_content.split("## Tasks")[1].split("##")[0] if "## Tasks" in updated_content else ""
+            assert "task-1" not in tasks_section
+
+
+def test_process_project_note_removes_from_frontmatter(tmp_path, monkeypatch):
+    """Test processing removes completed task UUIDs from frontmatter (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import process_project_note, get_project_info
+
+    # Create project with task
+    create_project("website", "work", "marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    # Add checked task
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Tasks (1)\n\n- [x] Complete task (uuid: task-1)\n"
+    note_path.write_text(content)
+
+    # Mock TaskWarrior
+    with patch("plorp.integrations.taskwarrior.mark_done"):
+        # Test: Process
+        process_project_note(tmp_path, "work.marketing.website")
+
+        # Assert: UUID removed from frontmatter (State Sync)
+        project = get_project_info("work.marketing.website")
+        assert "task-1" not in project["task_uuids"]
+
+
+def test_process_project_note_handles_no_checkboxes(tmp_path, monkeypatch):
+    """Test processing with no checked tasks does nothing (Sprint 8.6)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import process_project_note
+
+    # Create project with unchecked task
+    create_project("website", "work", "marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+
+    # Add UNchecked task
+    note_path = tmp_path / "projects" / "work.marketing.website.md"
+    content = note_path.read_text()
+    content += "\n## Tasks (1)\n\n- [ ] Pending task (uuid: task-1)\n"
+    note_path.write_text(content)
+
+    # Mock TaskWarrior
+    with patch("plorp.integrations.taskwarrior.mark_done") as mock_done:
+        # Test: Process
+        process_project_note(tmp_path, "work.marketing.website")
+
+        # Assert: mark_done not called (no checked tasks)
+        mock_done.assert_not_called()

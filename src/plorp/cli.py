@@ -173,7 +173,8 @@ def _review_task(task, vault_path):
     )
 
     if action == "d":
-        mark_completed(task["uuid"])
+        # Sprint 8.5: Pass vault_path for State Sync
+        mark_completed(task["uuid"], vault_path=vault_path)
         console.print("[green]✓ Marked complete[/green]")
     elif action == "f":
         new_due = prompt("New due date (YYYY-MM-DD)")
@@ -185,7 +186,8 @@ def _review_task(task, vault_path):
         console.print(f"[yellow]Priority set to {priority or 'none'}[/yellow]")
     elif action == "x":
         if confirm("Really delete this task?", default=False):
-            drop_task(task["uuid"])
+            # Sprint 8.5: Pass vault_path for State Sync
+            drop_task(task["uuid"], vault_path=vault_path)
             console.print("[red]✗ Deleted[/red]")
     elif action == "s":
         console.print("[dim]Skipped[/dim]")
@@ -447,7 +449,8 @@ def process(ctx, date_str):
 
         if has_tbd_section:
             # Run Step 2: Create tasks from approvals
-            result = process_daily_note_step2(note_path, target_date)
+            # Sprint 8.5: Pass vault_path for State Sync
+            result = process_daily_note_step2(note_path, target_date, vault_path)
 
             # Display summary
             console.print(f"[green]✅ Processed approvals:[/green] {note_path}")
@@ -594,6 +597,38 @@ def project_info(ctx, full_path):
         click.echo(f"Description: {project['description']}")
     click.echo(f"Tasks: {len(project['task_uuids'])}")
     click.echo(f"Note: {project['note_path']}")
+
+
+@project.command("sync-all")
+@click.pass_context
+def project_sync_all(ctx):
+    """Sync all project note bodies with frontmatter (Sprint 8.6).
+
+    Bulk reconciliation command useful after:
+    - External TaskWarrior changes (CLI, mobile apps)
+    - TaskWarrior sync from other devices
+    - Periodic state maintenance
+    """
+    config = load_config()
+    vault_path = Path(config["vault_path"]).expanduser().resolve()
+
+    from plorp.core.projects import sync_all_projects
+
+    try:
+        console.print("[yellow]🔄 Syncing all project notes...[/yellow]")
+        stats = sync_all_projects(vault_path)
+
+        console.print(f"[green]✅ Synced {stats['synced']} project(s)[/green]")
+
+        if stats["errors"]:
+            console.print(f"[red]❌ {len(stats['errors'])} error(s) occurred:[/red]")
+            for project_path, error_msg in stats["errors"]:
+                console.print(f"  {project_path}: {error_msg}")
+            ctx.exit(1)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error syncing projects:[/red] {e}")
+        ctx.exit(1)
 
 
 @cli.group()

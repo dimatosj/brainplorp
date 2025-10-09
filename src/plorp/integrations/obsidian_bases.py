@@ -301,6 +301,52 @@ def add_task_to_project(full_path: str, task_uuid: str) -> ProjectInfo:
     return ProjectInfo(**frontmatter, note_path=str(note_path))
 
 
+def remove_task_from_project(full_path: str, task_uuid: str) -> ProjectInfo:
+    """
+    Remove task UUID from project's task_uuids list.
+
+    Part of State Synchronization pattern (Sprint 8.5): when task is marked
+    done or deleted in TaskWarrior, remove UUID from project frontmatter.
+
+    Args:
+        full_path: Project identifier
+        task_uuid: TaskWarrior task UUID to remove
+
+    Returns:
+        Updated ProjectInfo
+
+    Raises:
+        ValueError: If project not found
+
+    Sprint 8.5 Item 1: State Sync helper function
+    """
+    projects_dir = get_projects_dir()
+    note_path = projects_dir / f"{full_path}.md"
+
+    if not note_path.exists():
+        raise ValueError(f"Project not found: {full_path}")
+
+    # Parse note
+    content = note_path.read_text()
+    parts = content.split("---", 2)
+    frontmatter = yaml.safe_load(parts[1])
+    body = parts[2]
+
+    # Remove UUID if present
+    task_uuids = frontmatter.get("task_uuids", [])
+    if task_uuid in task_uuids:
+        task_uuids.remove(task_uuid)
+        frontmatter["task_uuids"] = task_uuids
+
+        # Write back (preserve field order)
+        updated_content = f"""---
+{yaml.dump(frontmatter, default_flow_style=False, sort_keys=False)}---{body}"""
+
+        note_path.write_text(updated_content)
+
+    return ProjectInfo(**frontmatter, note_path=str(note_path))
+
+
 def delete_project(full_path: str) -> bool:
     """
     Delete project note.

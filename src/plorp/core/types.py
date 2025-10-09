@@ -7,7 +7,7 @@ with JSON serialization (for MCP) and Python type checking.
 Requires Python 3.10+ for native union syntax.
 """
 
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Any
 
 
 # ============================================================================
@@ -240,3 +240,51 @@ class ProjectListResult(TypedDict):
 
     projects: list[ProjectInfo]
     grouped_by_domain: dict[str, list[ProjectInfo]]  # Grouped by domain
+
+
+# ============================================================================
+# Note Management Types (Sprint 9)
+# ============================================================================
+
+
+class NoteContent(TypedDict):
+    """Content returned by read_note operation."""
+
+    path: str  # Relative path in vault
+    title: str  # From frontmatter or first # header
+    content: str  # Full markdown content
+    metadata: dict[str, Any]  # YAML frontmatter
+    word_count: int
+    headers: list[str]  # List of ## headers
+    mode: str  # "full", "preview", "metadata", "structure"
+    warnings: list[str]  # Context usage warnings
+
+
+class NoteInfo(TypedDict):
+    """Metadata about a note (without full content)."""
+
+    path: str
+    title: str
+    metadata: dict[str, Any]
+    word_count: int
+    created: str  # ISO timestamp
+    modified: str  # ISO timestamp
+
+
+class FolderReadResult(TypedDict):
+    """Result from read_folder operation."""
+
+    folder_path: str
+    notes: list[NoteInfo]
+    total_count: int
+    returned_count: int
+    has_more: bool
+    excluded_folders: list[str]
+
+
+class Header(TypedDict):
+    """Represents a markdown header."""
+
+    text: str  # Header text (without # prefix)
+    level: int  # 1-6 (number of # symbols)
+    line_number: int  # 0-indexed line in content

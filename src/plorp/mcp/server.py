@@ -53,6 +53,23 @@ from plorp.core.projects import (
     # Sprint 8.6
     sync_all_projects,
 )
+from plorp.core.note_operations import (
+    # Note management (Sprint 9)
+    read_note,
+    read_folder,
+    append_to_note,
+    update_note_section,
+    search_notes_by_metadata,
+    create_note_in_folder,
+    list_vault_folders,
+)
+from plorp.parsers.note_structure import (
+    # Pattern matching (Sprint 9 Phase 2)
+    extract_headers,
+    find_header_content,
+    detect_project_headers,
+    extract_bullet_points,
+)
 from plorp.integrations.taskwarrior import get_task_info as tw_get_task_info
 
 
@@ -587,6 +604,245 @@ async def list_tools() -> list[Tool]:
                 "properties": {},
             },
         ),
+        # ====================================================================
+        # Sprint 9: General Note Management Tools
+        # ====================================================================
+        Tool(
+            name="plorp_read_note",
+            description="Read any markdown note in vault. Returns content with metadata, headers, word count. Supports different modes: full (entire content), preview (first 1000 chars), metadata (frontmatter only), structure (headers only).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path to note (e.g., 'notes/ideas.md', 'Docs/spec.md')",
+                    },
+                    "mode": {
+                        "type": "string",
+                        "description": "Content mode: full, preview, metadata, or structure (default: full)",
+                        "enum": ["full", "preview", "metadata", "structure"],
+                    },
+                },
+                "required": ["path"],
+            },
+        ),
+        Tool(
+            name="plorp_read_folder",
+            description="Read all notes in folder with filtering. Returns list of notes with metadata. Useful for exploring vault structure or finding notes in specific locations.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative folder path (e.g., 'notes', 'Docs')",
+                    },
+                    "recursive": {
+                        "type": "boolean",
+                        "description": "Include subdirectories (default: false)",
+                    },
+                    "exclude": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Folder names to skip (e.g., ['archive', 'templates'])",
+                    },
+                    "limit": {
+                        "type": "number",
+                        "description": "Max notes to return (default: 10, max: 50)",
+                    },
+                    "mode": {
+                        "type": "string",
+                        "description": "Content mode for each note (default: metadata)",
+                        "enum": ["full", "preview", "metadata", "structure"],
+                    },
+                },
+                "required": ["path"],
+            },
+        ),
+        Tool(
+            name="plorp_append_to_note",
+            description="Append content to end of note. Adds content with proper spacing (blank line separator). Useful for adding notes, observations, or updates to existing documents.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path to note",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to append",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        ),
+        Tool(
+            name="plorp_update_note_section",
+            description="Replace content under specific header. Updates section between header and next same-level header. Useful for updating specific parts of structured documents.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path to note",
+                    },
+                    "header": {
+                        "type": "string",
+                        "description": "Header text (without ## prefix)",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "New content for section",
+                    },
+                },
+                "required": ["path", "header", "content"],
+            },
+        ),
+        Tool(
+            name="plorp_search_notes_by_tag",
+            description="Find notes with specific tag in frontmatter. Returns list of matching notes with metadata. Useful for finding all notes on a topic.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tag": {
+                        "type": "string",
+                        "description": "Tag to search for (e.g., 'SEO', 'project', 'meeting')",
+                    },
+                    "limit": {
+                        "type": "number",
+                        "description": "Max results (default: 20)",
+                    },
+                },
+                "required": ["tag"],
+            },
+        ),
+        Tool(
+            name="plorp_search_notes_by_field",
+            description="Find notes by frontmatter field value. Returns list of matching notes. Useful for finding notes with specific metadata (status, category, etc).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "field": {
+                        "type": "string",
+                        "description": "Frontmatter field name (e.g., 'status', 'category', 'author')",
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "Value to match",
+                    },
+                    "limit": {
+                        "type": "number",
+                        "description": "Max results (default: 20)",
+                    },
+                },
+                "required": ["field", "value"],
+            },
+        ),
+        Tool(
+            name="plorp_create_note_in_folder",
+            description="Create note in any vault folder. Creates note with optional frontmatter metadata. Folder will be created if it doesn't exist.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "folder": {
+                        "type": "string",
+                        "description": "Target folder path (e.g., 'notes', 'Docs', 'projects/work')",
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Note title (filename will be title.md)",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Note body content (optional)",
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Frontmatter fields as key-value pairs (optional)",
+                    },
+                },
+                "required": ["folder", "title"],
+            },
+        ),
+        Tool(
+            name="plorp_list_vault_folders",
+            description="Get vault directory structure. Returns allowed folders, excluded folders, and list of all folders in vault. Useful for understanding vault organization.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        # ====================================================================
+        # Sprint 9 Phase 2: Pattern Matching Tools
+        # ====================================================================
+        Tool(
+            name="plorp_extract_headers",
+            description="Extract all headers from note content. Returns list of headers with text, level (1-6), and line numbers. Useful for understanding document structure.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Markdown content to parse",
+                    },
+                    "level": {
+                        "type": "number",
+                        "description": "Filter by header level (1-6), omit for all levels",
+                    },
+                },
+                "required": ["content"],
+            },
+        ),
+        Tool(
+            name="plorp_get_section_content",
+            description="Get content under specific header (until next same-level header). Returns section content as string. Useful for extracting specific parts of notes.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Markdown content to parse",
+                    },
+                    "header": {
+                        "type": "string",
+                        "description": "Header text to find (without # prefix)",
+                    },
+                },
+                "required": ["content", "header"],
+            },
+        ),
+        Tool(
+            name="plorp_detect_projects_in_note",
+            description="Find ### headers that look like project names using heuristics. Returns list of potential project names. Useful for discovering projects mentioned in daily notes.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Markdown content to analyze (typically from daily note)",
+                    },
+                },
+                "required": ["content"],
+            },
+        ),
+        Tool(
+            name="plorp_extract_bullets",
+            description="Extract bullet points from content, optionally from specific section. Returns list of bullet text. Useful for collecting tasks, notes, or ideas.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Markdown content to parse",
+                    },
+                    "section": {
+                        "type": "string",
+                        "description": "Header name to extract bullets from (optional, omit for all bullets)",
+                    },
+                },
+                "required": ["content"],
+            },
+        ),
     ]
 
 
@@ -655,6 +911,32 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent]:
         # Sprint 8.6: State sync tools
         elif name == "plorp_sync_all_projects":
             return await _plorp_sync_all_projects(arguments)
+        # Sprint 9: Note management tools
+        elif name == "plorp_read_note":
+            return await _plorp_read_note(arguments)
+        elif name == "plorp_read_folder":
+            return await _plorp_read_folder(arguments)
+        elif name == "plorp_append_to_note":
+            return await _plorp_append_to_note(arguments)
+        elif name == "plorp_update_note_section":
+            return await _plorp_update_note_section(arguments)
+        elif name == "plorp_search_notes_by_tag":
+            return await _plorp_search_notes_by_tag(arguments)
+        elif name == "plorp_search_notes_by_field":
+            return await _plorp_search_notes_by_field(arguments)
+        elif name == "plorp_create_note_in_folder":
+            return await _plorp_create_note_in_folder(arguments)
+        elif name == "plorp_list_vault_folders":
+            return await _plorp_list_vault_folders(arguments)
+        # Sprint 9 Phase 2: Pattern matching tools
+        elif name == "plorp_extract_headers":
+            return await _plorp_extract_headers(arguments)
+        elif name == "plorp_get_section_content":
+            return await _plorp_get_section_content(arguments)
+        elif name == "plorp_detect_projects_in_note":
+            return await _plorp_detect_projects_in_note(arguments)
+        elif name == "plorp_extract_bullets":
+            return await _plorp_extract_bullets(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -1087,6 +1369,209 @@ async def _plorp_sync_all_projects(args: Dict[str, Any]) -> list[TextContent]:
             {"project": project, "error": error}
             for project, error in stats["errors"]
         ]
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+# ============================================================================
+# Sprint 9: Note Management Tool Implementations
+# ============================================================================
+
+
+async def _plorp_read_note(args: Dict[str, Any]) -> list[TextContent]:
+    """Read note."""
+    vault = _get_vault_path()
+    mode = args.get("mode", "full")
+
+    result = read_note(vault, args["path"], mode)
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_read_folder(args: Dict[str, Any]) -> list[TextContent]:
+    """Read folder."""
+    vault = _get_vault_path()
+
+    result = read_folder(
+        vault,
+        args["path"],
+        recursive=args.get("recursive", False),
+        exclude=args.get("exclude"),
+        limit=args.get("limit", 10),
+        mode=args.get("mode", "metadata"),
+    )
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_append_to_note(args: Dict[str, Any]) -> list[TextContent]:
+    """Append to note."""
+    vault = _get_vault_path()
+
+    append_to_note(vault, args["path"], args["content"])
+
+    result = {
+        "path": args["path"],
+        "action": "appended",
+        "message": f"Content appended to {args['path']}"
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_update_note_section(args: Dict[str, Any]) -> list[TextContent]:
+    """Update note section."""
+    vault = _get_vault_path()
+
+    update_note_section(vault, args["path"], args["header"], args["content"])
+
+    result = {
+        "path": args["path"],
+        "header": args["header"],
+        "action": "updated",
+        "message": f"Section '{args['header']}' updated in {args['path']}"
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_search_notes_by_tag(args: Dict[str, Any]) -> list[TextContent]:
+    """Search notes by tag."""
+    vault = _get_vault_path()
+    limit = args.get("limit", 20)
+
+    results = search_notes_by_metadata(vault, "tags", args["tag"], limit)
+
+    result = {
+        "tag": args["tag"],
+        "count": len(results),
+        "notes": results
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_search_notes_by_field(args: Dict[str, Any]) -> list[TextContent]:
+    """Search notes by field."""
+    vault = _get_vault_path()
+    limit = args.get("limit", 20)
+
+    results = search_notes_by_metadata(vault, args["field"], args["value"], limit)
+
+    result = {
+        "field": args["field"],
+        "value": args["value"],
+        "count": len(results),
+        "notes": results
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_create_note_in_folder(args: Dict[str, Any]) -> list[TextContent]:
+    """Create note in folder."""
+    vault = _get_vault_path()
+
+    note_path = create_note_in_folder(
+        vault,
+        args["folder"],
+        args["title"],
+        content=args.get("content", ""),
+        metadata=args.get("metadata"),
+    )
+
+    result = {
+        "path": str(note_path),
+        "folder": args["folder"],
+        "title": args["title"],
+        "action": "created",
+        "message": f"Note created at {note_path}"
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_list_vault_folders(args: Dict[str, Any]) -> list[TextContent]:
+    """List vault folders."""
+    vault = _get_vault_path()
+
+    result = list_vault_folders(vault)
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+# ============================================================================
+# Sprint 9 Phase 2: Pattern Matching Tool Implementations
+# ============================================================================
+
+
+async def _plorp_extract_headers(args: Dict[str, Any]) -> list[TextContent]:
+    """Extract headers from content."""
+    headers = extract_headers(
+        content=args["content"],
+        level=args.get("level")
+    )
+
+    result = {
+        "headers": headers,
+        "count": len(headers)
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_get_section_content(args: Dict[str, Any]) -> list[TextContent]:
+    """Get section content by header."""
+    section_content = find_header_content(
+        content=args["content"],
+        header=args["header"]
+    )
+
+    result = {
+        "header": args["header"],
+        "content": section_content,
+        "found": bool(section_content)
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_detect_projects_in_note(args: Dict[str, Any]) -> list[TextContent]:
+    """Detect project headers in note."""
+    projects = detect_project_headers(args["content"])
+
+    result = {
+        "projects": projects,
+        "count": len(projects)
+    }
+
+    import json
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def _plorp_extract_bullets(args: Dict[str, Any]) -> list[TextContent]:
+    """Extract bullet points from content."""
+    bullets = extract_bullet_points(
+        content=args["content"],
+        section=args.get("section")
+    )
+
+    result = {
+        "bullets": bullets,
+        "count": len(bullets),
+        "section": args.get("section")
     }
 
     import json

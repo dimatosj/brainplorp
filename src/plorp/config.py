@@ -19,6 +19,14 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "taskwarrior_data": os.path.expanduser("~/.task"),
     "inbox_email": None,
     "default_editor": os.environ.get("EDITOR", "vim"),
+    # Sprint 9: Note access control
+    "note_access": {
+        "allowed_folders": ["daily", "inbox", "projects", "notes", "Docs"],
+        "excluded_folders": [".obsidian", ".trash", "templates"],
+        "max_file_size_kb": 500,
+        "max_folder_read": 50,
+        "warn_large_file_words": 10000,
+    },
 }
 
 

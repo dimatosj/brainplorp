@@ -1,7 +1,7 @@
 # plorp MCP Server - User Manual
 
-**Version:** 1.4.0
-**Last Updated:** 2025-10-07
+**Version:** 1.5.0
+**Last Updated:** 2025-10-09
 
 ---
 
@@ -14,11 +14,12 @@
 5. [Inbox Processing](#inbox-processing)
 6. [Project Management](#project-management)
 7. [Note Management](#note-management)
-8. [Task Processing (/process)](#task-processing-process)
-9. [Common Workflows](#common-workflows)
-10. [Natural Language Examples](#natural-language-examples)
-11. [Troubleshooting](#troubleshooting)
-12. [Advanced Usage](#advanced-usage)
+8. [Vault Access & Note Reading](#vault-access--note-reading)
+9. [Task Processing (/process)](#task-processing-process)
+10. [Common Workflows](#common-workflows)
+11. [Natural Language Examples](#natural-language-examples)
+12. [Troubleshooting](#troubleshooting)
+13. [Advanced Usage](#advanced-usage)
 
 ---
 
@@ -33,6 +34,10 @@ The plorp MCP (Model Context Protocol) server enables Claude Desktop to interact
 - Create and link notes to tasks
 - Review and update task status
 - Process informal tasks with natural language date parsing
+- Read and analyze notes from your vault
+- Search notes by tags and metadata
+- Extract document structure and content
+- Discover projects and bullet points in notes
 
 **Architecture:**
 ```
@@ -96,7 +101,7 @@ which plorp-mcp
 
 1. Restart Claude Desktop
 2. In Claude, say: "List the plorp MCP tools available"
-3. You should see 25+ tools listed
+3. You should see 38 tools listed
 
 ---
 
@@ -151,6 +156,28 @@ which plorp-mcp
 | `plorp_list_project_tasks` | List tasks for project | `project_full_path` |
 | `plorp_set_focused_domain` | Set domain focus | `domain` |
 | `plorp_get_focused_domain` | Get current domain focus | None |
+
+### Vault Access (8 tools)
+
+| Tool | Purpose | Required Args |
+|------|---------|---------------|
+| `plorp_read_note` | Read note content | `note_path`, `mode` (optional) |
+| `plorp_read_folder` | List notes in folder | `folder_path` |
+| `plorp_append_to_note` | Add content to end of note | `note_path`, `content` |
+| `plorp_update_note_section` | Replace section content | `note_path`, `header`, `new_content` |
+| `plorp_search_notes_by_tag` | Search by tag | `tag` |
+| `plorp_search_notes_by_field` | Search by metadata field | `field`, `value` |
+| `plorp_create_note_in_folder` | Create note with metadata | `folder_path`, `filename` |
+| `plorp_list_vault_folders` | Get vault structure | None |
+
+### Pattern Matching (4 tools)
+
+| Tool | Purpose | Required Args |
+|------|---------|---------------|
+| `plorp_extract_headers` | Get document structure | `note_path` |
+| `plorp_get_section_content` | Extract section content | `note_path`, `header` |
+| `plorp_detect_projects_in_note` | Find project headers | `note_path` |
+| `plorp_extract_bullets` | Extract bullet points | `note_path` |
 
 ### Advanced Workflow (1 tool)
 
@@ -512,6 +539,160 @@ Calls `plorp_link_note_to_task`:
   "task_uuid": "xyz-789"
 }
 ```
+
+---
+
+## Vault Access & Note Reading
+
+Sprint 9 introduced comprehensive vault access tools that enable Claude to read, analyze, and manipulate notes beyond just task and project management.
+
+### Reading Notes
+
+**Say to Claude:**
+> "Read the note at vault/projects/work.marketing.website-redesign.md"
+
+**What Happens:**
+1. Claude calls `plorp_read_note` with `mode: "full"`
+2. Returns complete note with frontmatter, content, headers, and metadata
+
+**Example Response:**
+```json
+{
+  "path": "projects/work.marketing.website-redesign.md",
+  "title": "Website Redesign",
+  "content": "...",
+  "metadata": {"domain": "work", "state": "active"},
+  "word_count": 342,
+  "headers": ["Goals", "Timeline", "Tasks"],
+  "warnings": []
+}
+```
+
+**Read Modes:**
+- `mode: "full"` - Complete note with content
+- `mode: "info"` - Metadata only (faster)
+
+**Large File Warning:**
+Files over 10,000 words trigger a context warning to help manage token usage.
+
+### Listing Folders
+
+**Say to Claude:**
+> "What notes are in my projects folder?"
+
+Calls `plorp_read_folder` to list all notes with metadata:
+```json
+{
+  "folder_path": "projects",
+  "notes": [
+    {
+      "path": "projects/work.marketing.website-redesign.md",
+      "title": "Website Redesign",
+      "metadata": {"state": "active"},
+      "word_count": 342,
+      "created": "2025-10-01T10:00:00",
+      "modified": "2025-10-07T15:30:00"
+    }
+  ],
+  "total_count": 12,
+  "returned_count": 12,
+  "has_more": false
+}
+```
+
+**Recursive reading:**
+> "List all notes under vault/notes/ including subfolders"
+
+Uses `recursive: true` to walk entire directory tree.
+
+### Searching by Metadata
+
+**Search by tag:**
+> "Find all notes tagged with #urgent"
+
+Calls `plorp_search_notes_by_tag("urgent")` to search frontmatter across vault.
+
+**Search by field:**
+> "Find all projects in the work domain that are active"
+
+Calls `plorp_search_notes_by_field("domain", "work")` and filters by `state`.
+
+**Smart matching:**
+- Matches scalar values: `domain: work`
+- Matches list values: `domains: [work, personal]`
+- Case-insensitive
+
+### Updating Notes
+
+**Append content:**
+> "Add this to my daily note: ## Evening Reflection..."
+
+Calls `plorp_append_to_note` to add content to end of file.
+
+**Update section:**
+> "In my website-redesign project, update the Timeline section with..."
+
+Calls `plorp_update_note_section` to replace content between headers.
+
+### Extracting Structure
+
+**Get headers:**
+> "What's the structure of my database-comparison note?"
+
+Calls `plorp_extract_headers` to return all headers with levels:
+```json
+{
+  "headers": [
+    {"text": "Database Comparison", "level": 1, "line_number": 0},
+    {"text": "PostgreSQL", "level": 2, "line_number": 5},
+    {"text": "Conclusion", "level": 2, "line_number": 58}
+  ]
+}
+```
+
+**Get section content:**
+> "Show me the Conclusion section"
+
+Calls `plorp_get_section_content` to extract only that section.
+
+**Extract bullets:**
+> "List all bullet points in the Tasks section"
+
+Calls `plorp_extract_bullets` with optional `section` parameter.
+
+### Project Detection
+
+**Find potential projects:**
+> "What project-like items are mentioned in my daily note?"
+
+Calls `plorp_detect_projects_in_note` to find:
+- Title Case headers (e.g., `### Website Redesign`)
+- kebab-case headers (e.g., `### api-rewrite`)
+- Excludes common sections (Tasks, Notes, etc.)
+
+### Vault Structure
+
+**Discover folders:**
+> "What folders exist in my vault?"
+
+Calls `plorp_list_vault_folders` to show complete directory tree and permission boundaries.
+
+**Permission boundaries:**
+All tools respect `allowed_folders` configuration. Default allowed:
+- `daily`, `inbox`, `projects`, `notes`, `Docs`
+
+Excluded by default:
+- `.obsidian`, `.trash`, `templates`
+
+### Advanced Workflows
+
+See [MCP_WORKFLOWS.md](MCP_WORKFLOWS.md) for 23 detailed workflow examples including:
+- Reading and analyzing notes
+- Folder navigation
+- Metadata-based searches
+- Document structure analysis
+- Content extraction patterns
+- Multi-tool workflows
 
 ---
 
@@ -969,7 +1150,17 @@ Planning → Active → Completed
 
 ## Version History
 
-**v1.4.0** (2025-10-07) - Current
+**v1.5.0** (2025-10-09) - Current
+- Sprint 9: General Note Management & Vault Interface
+- 12 new tools (8 I/O + 4 pattern matching)
+- Read notes with metadata and content
+- Search by tags and metadata fields
+- Extract document structure (headers, sections, bullets)
+- Project detection heuristics
+- Large file context warnings
+- Permission model for vault access
+
+**v1.4.0** (2025-10-07)
 - Sprint 8: Project management with Obsidian Bases
 - 9 project management tools
 - Domain focus mechanism
@@ -1062,11 +1253,27 @@ ls -la /Users/jsd/vault/{daily,projects,notes,inbox}
 - `plorp_set_focused_domain` - Set focus
 - `plorp_get_focused_domain` - Get focus
 
+### Vault Access (8)
+- `plorp_read_note` - Read note content
+- `plorp_read_folder` - List notes in folder
+- `plorp_append_to_note` - Append content
+- `plorp_update_note_section` - Replace section
+- `plorp_search_notes_by_tag` - Search by tag
+- `plorp_search_notes_by_field` - Search by field
+- `plorp_create_note_in_folder` - Create with metadata
+- `plorp_list_vault_folders` - List vault structure
+
+### Pattern Matching (4)
+- `plorp_extract_headers` - Get document structure
+- `plorp_get_section_content` - Extract section
+- `plorp_detect_projects_in_note` - Find projects
+- `plorp_extract_bullets` - Extract bullets
+
 ### Advanced (1)
 - `plorp_process_daily_note` - Process informal tasks
 
 ---
 
-**Total:** 26 MCP tools
+**Total:** 38 MCP tools
 
 **End of Manual**

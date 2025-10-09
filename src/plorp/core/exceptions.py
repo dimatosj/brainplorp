@@ -79,3 +79,12 @@ class ProjectNotFoundError(PlorpError):
     def __init__(self, project_path: str):
         self.project_path = project_path
         super().__init__(f"Project not found: {project_path}")
+
+
+class HeaderNotFoundError(PlorpError):
+    """Raised when header not found in note."""
+
+    def __init__(self, header: str, note_path: str):
+        self.header = header
+        self.note_path = note_path
+        super().__init__(f"Header '{header}' not found in note: {note_path}")

@@ -1076,3 +1076,258 @@ plorp tasks --sort priority
 **Date:** 2025-10-09
 **Author:** PM/Architect Instance (Session 14)
 **Status:** Ready for Lead Engineer Review
+
+---
+
+## Lead Engineer Clarifying Questions
+
+**Status:** PENDING ANSWERS
+**Date Added:** 2025-10-09
+**Engineer:** Lead Engineer Instance (Session XX)
+
+### Q1: Date Utility Import
+**Question:** The `format_date()` function in `src/plorp/utils/dates.py` (line 340) uses `timedelta` but doesn't import it. Should the import block include `from datetime import datetime, date as dt_date, timedelta`?
+
+**Impact:** Compilation error without import
+**Severity:** High (blocks implementation)
+**Suggested Answer:** Yes, add `timedelta` to imports
+
+---
+
+### Q2: TaskWarrior Not Installed Error Handling
+**Question:** What should `plorp tasks` output if TaskWarrior is not installed or returns an error? Should we:
+- (A) Show friendly error message and exit with code 1
+- (B) Show empty table with warning
+- (C) Show error and suggest installation instructions
+
+**Impact:** User experience when TaskWarrior missing
+**Severity:** Medium
+**Suggested Answer:** (A) - Clear error message pointing to installation docs
+
+---
+
+### Q3: Terminal Compatibility for Emojis
+**Question:** Line 287 uses emoji indicators (🔴, 🟡). Should we:
+- (A) Always show emojis (assume UTF-8 terminal)
+- (B) Detect terminal capabilities and fall back to ASCII
+- (C) Add config option for emoji display
+
+**Impact:** Users on non-UTF-8 terminals see garbage characters
+**Severity:** Low (most modern terminals support UTF-8)
+**Suggested Answer:** (A) for Sprint 9.1, document UTF-8 requirement
+
+---
+
+### Q4: Invalid Filter Combinations
+**Question:** Are there any invalid combinations of filters we should prevent or warn about? For example:
+- `--urgent --important` (mutually exclusive?)
+- `--due today --overdue` (contradictory?)
+
+**Impact:** User confusion if filters conflict
+**Severity:** Low
+**Suggested Answer:** Allow all combinations (user responsibility), document behavior
+
+---
+
+### Q5: Testing Strategy for TaskWarrior Integration
+**Question:** Should we:
+- (A) Mock `get_tasks()` in all tests (as shown in spec)
+- (B) Use real TaskWarrior with test data
+- (C) Both (unit tests mock, integration tests real)
+
+**Impact:** Test reliability and coverage
+**Severity:** Medium
+**Suggested Answer:** (A) for Sprint 9.1 - All tests mock for speed/isolation
+
+---
+
+### Q6: Existing `get_tasks()` Function Signature
+**Question:** The spec assumes `get_tasks(filters: list[str])` exists in `integrations/taskwarrior.py`. Can you confirm:
+- Exact function signature?
+- Does it return list of dict (as assumed)?
+- What exception types does it raise?
+
+**Impact:** Integration correctness
+**Severity:** High (blocks implementation)
+**Action Required:** Verify in codebase before implementing
+
+---
+
+### Q7: Rich Library Dependency
+**Question:** Is `rich` already in `pyproject.toml` dependencies? If not, should we:
+- (A) Add it as required dependency
+- (B) Add it as optional dependency
+- (C) Fall back to basic output if not installed
+
+**Impact:** Installation requirements
+**Severity:** Medium
+**Action Required:** Check `pyproject.toml` and confirm approach
+
+---
+
+### Q8: Slash Command Testing
+**Question:** How should we verify slash commands work? The spec says "Test in Claude Desktop" (line 756) but no automated tests. Should we:
+- (A) Manual testing only (document in handoff)
+- (B) Add E2E tests that verify slash command files exist
+- (C) Defer slash command testing to PM review
+
+**Impact:** Quality assurance completeness
+**Severity:** Low (slash commands are simple file creation)
+**Suggested Answer:** (A) - Manual test each one, document results in handoff
+
+---
+
+### Q9: Performance Measurement Implementation
+**Question:** Should we add timing/profiling code to verify <100ms performance target, or just rely on manual testing with `time` command? If adding code:
+- Where should timing code live?
+- Should it be always-on or debug-only?
+- How do we report results?
+
+**Impact:** Success criteria verification
+**Severity:** Low (can manually test with `time plorp tasks`)
+**Suggested Answer:** Use `time` command for manual verification, no embedded timing
+
+---
+
+### Q10: `plorp focus` Integration Details
+**Question:** Line 956 shows:
+```bash
+plorp focus work.api-rewrite    # Set context
+plorp tasks --urgent            # See urgent tasks in focused project
+```
+
+Should `plorp tasks` automatically respect focused project, or is this showing a future feature? If automatic:
+- Where is focus stored?
+- How do we read it?
+- Does it override `--project` flag?
+
+**Impact:** Feature completeness and user expectations
+**Severity:** Medium
+**Suggested Answer:** Clarify - I believe this is showing manual workflow, not automatic filtering
+
+---
+
+### Q11: Version Bump Timing
+**Question:** The spec says update version in Phase 4 (Documentation), but tests in Phase 3 will fail if they check version (test_cli.py, test_smoke.py expect 1.5.0, not 1.5.1). Should we:
+- (A) Update version in Phase 1 (before tests)
+- (B) Update tests to expect 1.5.1 in Phase 3
+- (C) Update version and tests together in Phase 4
+
+**Impact:** Test execution order
+**Severity:** Low
+**Suggested Answer:** (C) - Update version + test assertions together in Phase 4
+
+---
+
+### Q12: `.claude/commands/` Directory Creation
+**Question:** Should Phase 2 include creating the `.claude/commands/` directory if it doesn't exist? Or assume it already exists from previous work?
+
+**Impact:** Slash command file creation
+**Severity:** Low
+**Action Required:** Check if directory exists, create if needed
+
+---
+
+### Q13: TaskWarrior Export vs. Custom Formatting
+**Question:** The spec uses `get_tasks(filters)` which presumably calls `task export`. Do we need any additional formatting/parsing of TaskWarrior's JSON output, or can we use it directly?
+
+**Impact:** Implementation complexity
+**Severity:** Low
+**Action Required:** Verify existing `get_tasks()` returns ready-to-use format
+
+---
+
+### Q14: Error Messages for Empty Results
+**Question:** Line 583 shows `Tasks (0)` for empty results. Should we add a helpful message like "No tasks found matching filters" or keep it minimal?
+
+**Impact:** User experience
+**Severity:** Low
+**Suggested Answer:** Keep minimal for 9.1, users can infer empty list
+
+---
+
+### Q15: Due Date Edge Cases
+**Question:** For `--due overdue`, should we show:
+- (A) Tasks with due date in the past
+- (B) Tasks with due date in the past AND not completed
+- (C) Same as (B) but also include tasks due today
+
+**Impact:** User expectations for "overdue"
+**Severity:** Low
+**Suggested Answer:** (A) - `due.before:today` handles this (TaskWarrior interprets correctly)
+
+---
+
+### Q16: JSON Format Output - Full Object or Filtered?
+**Question:** Line 265 shows `json.dumps(tasks, indent=2)` which outputs full TaskWarrior objects. Should we:
+- (A) Output full objects (all fields)
+- (B) Filter to relevant fields (description, priority, project, due, uuid)
+- (C) Make it configurable
+
+**Impact:** JSON output size and usability
+**Severity:** Low
+**Suggested Answer:** (A) - Full objects for maximum flexibility
+
+---
+
+### Q17: CLI Import Placement
+**Question:** Line 256 shows `from plorp.integrations.taskwarrior import get_tasks` inside the function. Should this be:
+- (A) At top of file (standard practice)
+- (B) Inside function (lazy import for performance)
+- (C) Either is fine
+
+**Impact:** Code style consistency
+**Severity:** Very Low
+**Suggested Answer:** (A) - Import at top of file for consistency
+
+---
+
+### Q18: Table Width and Truncation
+**Question:** Line 282 sets `Description` column width to 40 chars. Should we:
+- (A) Hard-code 40 chars (as shown)
+- (B) Auto-detect terminal width and adjust
+- (C) Make configurable
+
+**Impact:** User experience on wide/narrow terminals
+**Severity:** Low
+**Suggested Answer:** (A) for 9.1 - Hard-code, add auto-width in future sprint if requested
+
+---
+
+### Q19: Priority Display Consistency
+**Question:** What should display for tasks with no priority? Spec shows `' '` (line 286). Should we:
+- (A) Show empty space: `[  ]`
+- (B) Show 'L' for low: `[L]`
+- (C) Show '-' or 'N': `[-]` or `[N]`
+
+**Impact:** User understanding of task priorities
+**Severity:** Low
+**Suggested Answer:** (A) - Empty space is clearest for "no priority set"
+
+---
+
+### Q20: Documentation Updates - Where Exactly?
+**Question:** Phase 4 says "Update CLAUDE.md with performance guidance" (line 777). What specific sections should be updated:
+- Add new section "Performance Optimization"?
+- Update "Development Commands" section?
+- Update "Core Workflows" section?
+
+**Impact:** Documentation clarity
+**Severity:** Low
+**Action Required:** PM should specify exact sections to update
+
+---
+
+**Summary of Blocking Questions:**
+- Q1: Missing import (timedelta) - HIGH PRIORITY
+- Q6: Verify `get_tasks()` signature - HIGH PRIORITY
+- Q7: Verify `rich` dependency - MEDIUM PRIORITY
+
+**Summary of Clarifications:**
+- 17 low-severity questions about implementation details
+- Most have suggested answers that can be confirmed or adjusted
+
+**Next Steps:**
+1. PM/User reviews questions and provides answers
+2. Spec updated with confirmed answers
+3. Lead Engineer proceeds with implementation

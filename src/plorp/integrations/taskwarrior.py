@@ -279,6 +279,38 @@ def delete_task(uuid: str) -> bool:
     return True
 
 
+def modify_task(uuid: str, **kwargs) -> bool:
+    """
+    Modify task properties (generic modification function).
+
+    Args:
+        uuid: Task UUID
+        **kwargs: Task properties to modify (project, due, priority, description, etc.)
+
+    Returns:
+        True on success, False on failure
+
+    Example:
+        modify_task(uuid, project="work.engineering.api", priority="H")
+        modify_task(uuid, due="tomorrow", description="Updated description")
+    """
+    args = [uuid, "modify"]
+
+    for key, value in kwargs.items():
+        if value is None:
+            # Skip None values
+            continue
+        args.append(f"{key}:{value}")
+
+    result = run_task_command(args, capture=True)
+
+    if result.returncode != 0:
+        print(f"Error modifying task: {result.stderr}", file=sys.stderr)
+        return False
+
+    return True
+
+
 def add_annotation(uuid: str, annotation: str) -> bool:
     """
     Add an annotation to a task.

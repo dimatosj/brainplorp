@@ -489,3 +489,266 @@ def test_create_task_in_project_returns_uuid(tmp_path, monkeypatch):
             assert uuid is not None
             assert len(uuid) == 36  # UUID format (with dashes)
             assert uuid == test_uuid
+
+
+# ============================================================================
+# Sprint 8.5: Auto-Sync Tests (Item 1)
+# ============================================================================
+
+
+def test_remove_task_from_all_projects_single_project(tmp_path, monkeypatch):
+    """Test removing task UUID from single project frontmatter."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+
+    # Create project with tasks
+    create_project(name="website", domain="work", workstream="marketing")
+
+    # Add task UUIDs to project
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+    add_task_to_project("work.marketing.website", "task-2")
+    add_task_to_project("work.marketing.website", "task-3")
+
+    # Verify UUIDs added
+    project = get_project_info("work.marketing.website")
+    assert len(project["task_uuids"]) == 3
+    assert "task-2" in project["task_uuids"]
+
+    # Test: Remove task-2 from all projects
+    from plorp.core.projects import remove_task_from_all_projects
+    remove_task_from_all_projects(tmp_path, "task-2")
+
+    # Assert: task-2 removed, others remain
+    project = get_project_info("work.marketing.website")
+    assert len(project["task_uuids"]) == 2
+    assert "task-1" in project["task_uuids"]
+    assert "task-3" in project["task_uuids"]
+    assert "task-2" not in project["task_uuids"]
+
+
+def test_remove_task_from_all_projects_multiple_projects(tmp_path, monkeypatch):
+    """Test removing task UUID from multiple projects (cleanup orphaned refs)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+
+    # Create multiple projects
+    create_project(name="website", domain="work", workstream="marketing")
+    create_project(name="api", domain="work", workstream="engineering")
+    create_project(name="garden", domain="home", workstream="maintenance")
+
+    # Add same UUID to multiple projects (shouldn't happen, but test data integrity fix per Q4)
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "orphaned-uuid")
+    add_task_to_project("work.engineering.api", "orphaned-uuid")
+    add_task_to_project("work.marketing.website", "task-1")
+    add_task_to_project("home.maintenance.garden", "orphaned-uuid")
+
+    # Verify UUID in all projects
+    assert "orphaned-uuid" in get_project_info("work.marketing.website")["task_uuids"]
+    assert "orphaned-uuid" in get_project_info("work.engineering.api")["task_uuids"]
+    assert "orphaned-uuid" in get_project_info("home.maintenance.garden")["task_uuids"]
+
+    # Test: Remove orphaned UUID from ALL projects
+    from plorp.core.projects import remove_task_from_all_projects
+    remove_task_from_all_projects(tmp_path, "orphaned-uuid")
+
+    # Assert: UUID removed from ALL projects (per Q4 answer)
+    assert "orphaned-uuid" not in get_project_info("work.marketing.website")["task_uuids"]
+    assert "orphaned-uuid" not in get_project_info("work.engineering.api")["task_uuids"]
+    assert "orphaned-uuid" not in get_project_info("home.maintenance.garden")["task_uuids"]
+
+    # Assert: Other UUIDs preserved
+    assert "task-1" in get_project_info("work.marketing.website")["task_uuids"]
+
+
+def test_remove_task_from_all_projects_no_projects(tmp_path, monkeypatch):
+    """Test removing task UUID when no projects exist (graceful handling)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+
+    # No projects created, but projects directory exists
+    (tmp_path / "projects").mkdir()
+
+    # Test: Should not raise error
+    from plorp.core.projects import remove_task_from_all_projects
+    remove_task_from_all_projects(tmp_path, "nonexistent-uuid")
+
+    # Assert: No error raised (graceful handling)
+
+
+def test_remove_task_from_all_projects_uuid_not_found(tmp_path, monkeypatch):
+    """Test removing task UUID that doesn't exist in any project."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+
+    # Create project with different UUIDs
+    create_project(name="website", domain="work", workstream="marketing")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.marketing.website", "task-1")
+    add_task_to_project("work.marketing.website", "task-2")
+
+    # Test: Remove UUID that doesn't exist
+    from plorp.core.projects import remove_task_from_all_projects
+    remove_task_from_all_projects(tmp_path, "nonexistent-uuid")
+
+    # Assert: Project unchanged
+    project = get_project_info("work.marketing.website")
+    assert len(project["task_uuids"]) == 2
+    assert "task-1" in project["task_uuids"]
+    assert "task-2" in project["task_uuids"]
+
+
+# ============================================================================
+# Sprint 8.5: Workstream Validation (Item 3)
+# ============================================================================
+
+
+def test_validate_workstream_returns_warning_for_unknown():
+    """Test that validation warns about non-standard workstreams (Sprint 8.5 Item 3)."""
+    from plorp.core.projects import validate_workstream
+
+    # Test: Unknown workstream for 'work' domain
+    warning = validate_workstream("work", "foobar")
+
+    # Assert: Warning message returned
+    assert warning is not None
+    assert "foobar" in warning
+    assert "work" in warning
+
+
+def test_validate_workstream_passes_for_known():
+    """Test that validation passes for standard workstreams."""
+    from plorp.core.projects import validate_workstream
+
+    # Test: Known workstreams for each domain
+    assert validate_workstream("work", "engineering") is None
+    assert validate_workstream("work", "marketing") is None
+    assert validate_workstream("home", "maintenance") is None
+    assert validate_workstream("personal", "learning") is None
+
+
+def test_validate_workstream_handles_unknown_domain():
+    """Test that validation passes for unknown domains (no validation rules)."""
+    from plorp.core.projects import validate_workstream
+
+    # Test: Unknown domain with any workstream
+    warning = validate_workstream("custom-domain", "any-workstream")
+
+    # Assert: No warning (no validation for unknown domains)
+    assert warning is None
+
+
+# ============================================================================
+# Sprint 8.5: Orphaned Project Review (Item 4)
+# ============================================================================
+
+
+def test_find_orphaned_projects(tmp_path, monkeypatch):
+    """Test finding projects with needs_review flag (Sprint 8.5 Item 4)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import find_orphaned_projects
+
+    # Create projects - 2 with needs_review, 1 without
+    create_project("api", "work")  # 2-segment, needs_review=true
+    create_project("website", "work", "marketing")  # 3-segment, needs_review=false
+    create_project("garden", "home")  # 2-segment, needs_review=true
+
+    # Test: Find orphaned projects
+    orphaned = find_orphaned_projects(tmp_path)
+
+    # Assert: Found 2 orphaned projects
+    assert len(orphaned) == 2
+    full_paths = [p["full_path"] for p in orphaned]
+    assert "work.api" in full_paths
+    assert "home.garden" in full_paths
+    assert "work.marketing.website" not in full_paths  # Has workstream
+
+
+def test_rename_project(tmp_path, monkeypatch):
+    """Test renaming project file and updating frontmatter (Sprint 8.5 Item 4)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import rename_project
+
+    # Create 2-segment project
+    create_project("api", "work", description="API rewrite project")
+
+    # Test: Rename to 3-segment
+    result = rename_project(tmp_path, "work.api", "work.engineering.api")
+
+    # Assert: Old file removed, new file created
+    old_file = tmp_path / "projects" / "work.api.md"
+    new_file = tmp_path / "projects" / "work.engineering.api.md"
+    assert not old_file.exists()
+    assert new_file.exists()
+
+    # Assert: Frontmatter updated
+    assert result["full_path"] == "work.engineering.api"
+    assert result["workstream"] == "engineering"
+    assert result["needs_review"] is False  # Flag removed
+    assert result["description"] == "API rewrite project"  # Preserved
+
+
+def test_rename_project_preserves_task_uuids(tmp_path, monkeypatch):
+    """Test that rename preserves task UUIDs and updates TaskWarrior (Sprint 8.5 Item 4)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import rename_project
+
+    # Create project with tasks
+    create_project("api", "work")
+    from plorp.integrations.obsidian_bases import add_task_to_project
+    add_task_to_project("work.api", "task-1")
+    add_task_to_project("work.api", "task-2")
+
+    # Mock TaskWarrior modify and annotate
+    from unittest.mock import patch
+    with patch("plorp.integrations.taskwarrior.modify_task") as mock_modify, \
+         patch("plorp.integrations.taskwarrior.add_annotation") as mock_annotate:
+
+        # Test: Rename project
+        result = rename_project(tmp_path, "work.api", "work.engineering.api")
+
+        # Assert: Task UUIDs preserved
+        assert len(result["task_uuids"]) == 2
+        assert "task-1" in result["task_uuids"]
+        assert "task-2" in result["task_uuids"]
+
+        # Assert: TaskWarrior updated for both tasks (State Sync per Q8)
+        assert mock_modify.call_count == 2
+        assert mock_annotate.call_count == 2
+
+
+# ============================================================================
+# Sprint 8.5: Orphaned Task Review (Item 5)
+# ============================================================================
+
+
+def test_assign_orphaned_task_to_project(tmp_path, monkeypatch):
+    """Test assigning orphaned task to project with State Sync (Sprint 8.5 Item 5)."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import assign_task_to_project
+
+    # Create project
+    create_project("website", "work", "marketing")
+
+    # Mock TaskWarrior
+    from unittest.mock import patch
+    with patch("plorp.integrations.taskwarrior.modify_task") as mock_modify, \
+         patch("plorp.integrations.taskwarrior.add_annotation") as mock_annotate:
+
+        # Test: Assign orphaned task to project
+        assign_task_to_project("orphan-uuid-123", "work.marketing.website", tmp_path)
+
+        # Assert: TaskWarrior updated (State Sync per Q9)
+        mock_modify.assert_called_once_with("orphan-uuid-123", project="work.marketing.website")
+        mock_annotate.assert_called_once()
+
+        # Assert: Obsidian updated (State Sync)
+        project = get_project_info("work.marketing.website")
+        assert "orphan-uuid-123" in project["task_uuids"]
+
+
+def test_assign_orphaned_task_to_project_not_found(tmp_path, monkeypatch):
+    """Test assigning task to non-existent project raises error."""
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    from plorp.core.projects import assign_task_to_project
+
+    # Test: Should raise ValueError
+    with pytest.raises(ValueError, match="Project not found"):
+        assign_task_to_project("uuid-123", "nonexistent.project", tmp_path)

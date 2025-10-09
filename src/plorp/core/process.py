@@ -10,7 +10,7 @@ Provides two-step workflow for processing informal tasks:
 import re
 from datetime import date
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from plorp.core.types import (
     InformalTask,
@@ -531,10 +531,10 @@ def reorganize_note(
 
             # Add metadata
             metadata_parts = []
-            if task["due"]:
+            if task.get("due"):
                 from plorp.utils.dates import format_taskwarrior_date_short
                 metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
-            if task["priority"]:
+            if task.get("priority"):
                 metadata_parts.append(f"priority: {task['priority']}")
             metadata_parts.append(f"uuid: {task['uuid']}")
 
@@ -565,10 +565,10 @@ def reorganize_note(
 
                 # Add metadata
                 metadata_parts = []
-                if task["due"]:
+                if task.get("due"):
                     from plorp.utils.dates import format_taskwarrior_date_short
                     metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
-                if task["priority"]:
+                if task.get("priority"):
                     metadata_parts.append(f"priority: {task['priority']}")
                 metadata_parts.append(f"uuid: {task['uuid']}")
 
@@ -595,10 +595,10 @@ def reorganize_note(
                 task_line = f"- {checkbox} {task['description']}"
 
                 metadata_parts = []
-                if task["due"]:
+                if task.get("due"):
                     from plorp.utils.dates import format_taskwarrior_date_short
                     metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
-                if task["priority"]:
+                if task.get("priority"):
                     metadata_parts.append(f"priority: {task['priority']}")
                 metadata_parts.append(f"uuid: {task['uuid']}")
 
@@ -622,34 +622,64 @@ def _is_today_or_urgent(task: TaskInfo, reference_date: date) -> bool:
     # TODAY: due date equals reference date
     if task.get("due"):
         from plorp.utils.dates import parse_taskwarrior_date
-        task_due_date = parse_taskwarrior_date(task["due"])
+        task_due_date = parse_taskwarrior_date(task.get("due"))
         if task_due_date and task_due_date == reference_date:
             return True
 
     return False
 
 
-def process_daily_note_step2(note_path: Path, reference_date: date) -> ProcessStepTwoResult:
+def process_daily_note_step2(note_path: Path, reference_date: date, vault_path: Optional[Path] = None) -> ProcessStepTwoResult:
     """
     Step 2: Parse approvals, create tasks, reorganize note.
 
     Args:
         note_path: Path to daily note
         reference_date: Reference date
+        vault_path: Vault path for State Sync (optional, Sprint 8.5)
 
     Returns:
         ProcessStepTwoResult with created tasks and errors
 
     Workflow:
-        1. Parse TBD section for [Y] and [N] markers
-        2. Create TaskWarrior tasks for approved items
-        3. Remove informal tasks from original locations
-        4. Create ## Created Tasks section
-        5. Update ## Tasks section for TODAY/URGENT items
-        6. Remove TBD section if no errors, keep if NEEDS_REVIEW
+        1. Sync formal task checkbox state (Obsidian → TaskWarrior) (Sprint 8.5)
+        2. Parse TBD section for [Y] and [N] markers
+        3. Create TaskWarrior tasks for approved items
+        4. Remove informal tasks from original locations
+        5. Create ## Created Tasks section
+        6. Update ## Tasks section for TODAY/URGENT items
+        7. Remove TBD section if no errors, keep if NEEDS_REVIEW
     """
     # Read note
     content = note_path.read_text(encoding="utf-8")
+
+    # Sprint 8.5: Sync formal task checkbox state (Obsidian → TaskWarrior)
+    if vault_path:
+        from plorp.integrations.taskwarrior import mark_done, get_task_info
+        from plorp.core.projects import remove_task_from_all_projects
+        from plorp.core.exceptions import TaskNotFoundError
+
+        lines = content.split("\n")
+        formal_tasks_synced = []
+
+        for line in lines:
+            # Match: - [x] Description (uuid: abc-123)
+            # Case-insensitive [x] or [X]
+            checkbox_match = re.match(r'^\s*-\s*\[([xX])\]\s+.*uuid:\s*([a-zA-Z0-9-]+)', line)
+            if checkbox_match:
+                uuid = checkbox_match.group(2)
+                try:
+                    # Verify task exists first
+                    task = get_task_info(uuid)
+                    if task:
+                        # Mark done in TaskWarrior
+                        mark_done(uuid)
+                        # State Sync: Remove from all project frontmatter
+                        remove_task_from_all_projects(vault_path, uuid)
+                        formal_tasks_synced.append(uuid)
+                except (TaskNotFoundError, Exception):
+                    # Gracefully handle missing tasks
+                    pass
 
     # Parse approvals
     approved_proposals, rejected_proposals = parse_approvals(content)

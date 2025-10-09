@@ -674,3 +674,257 @@ def test_full_workflow_with_errors(tmp_path):
             # Verify the successful task was created
             assert "## Created Tasks" in final_content
             assert "buy groceries" in final_content
+
+
+# ============================================================================
+# Bug #2 Regression Tests: Optional TaskWarrior Fields
+# ============================================================================
+
+
+def test_process_step2_task_without_due_date(tmp_path):
+    """Ensure Step 2 handles tasks without due dates (Bug #2 regression test).
+
+    TaskWarrior omits the 'due' key entirely when a task has no due date,
+    rather than setting it to None. This test ensures we use .get() instead
+    of bracket notation to avoid KeyError.
+    """
+    # Create daily note with approved proposal (no due date)
+    content = """# 2025-10-07 Monday
+
+## Notes
+- [ ] buy groceries
+
+## TBD Processing
+
+- [Y] **[Y/N]** buy groceries
+\t- Proposed: `description: "buy groceries", priority: L`
+\t- Original location: Notes (line 4)
+"""
+    note_path = create_test_daily_note(tmp_path, content)
+
+    # Mock TaskWarrior integration
+    from unittest.mock import patch
+
+    with patch('plorp.integrations.taskwarrior.create_task') as mock_create, \
+         patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+
+        mock_create.return_value = "uuid-123"
+
+        # Real TaskWarrior omits 'due' key when not set (not None, ABSENT)
+        mock_get.return_value = {
+            "uuid": "uuid-123",
+            "description": "buy groceries",
+            "status": "pending",
+            "priority": "L",
+            # NO 'due' key - this is what triggers the bug
+        }
+
+        # Should not raise KeyError
+        result = process_daily_note_step2(note_path, date(2025, 10, 7))
+
+    # Verify success
+    assert result["approved_count"] == 1
+    assert len(result["errors"]) == 0
+    assert len(result["created_tasks"]) == 1
+    assert result["created_tasks"][0]["description"] == "buy groceries"
+
+    # Verify note content (task should be in Created Tasks section)
+    final_content = note_path.read_text()
+    assert "## Created Tasks" in final_content
+    assert "buy groceries" in final_content
+
+
+def test_process_step2_task_without_priority(tmp_path):
+    """Ensure Step 2 handles tasks without priority (Bug #2 regression test).
+
+    TaskWarrior omits the 'priority' key entirely when a task has no priority,
+    rather than setting it to None. This test ensures we use .get() instead
+    of bracket notation to avoid KeyError.
+    """
+    # Create daily note with approved proposal (no priority)
+    content = """# 2025-10-07 Monday
+
+## Notes
+- [ ] call dentist
+
+## TBD Processing
+
+- [Y] **[Y/N]** call dentist
+\t- Proposed: `description: "call dentist", due: 2025-10-10`
+\t- Original location: Notes (line 4)
+"""
+    note_path = create_test_daily_note(tmp_path, content)
+
+    from unittest.mock import patch
+
+    with patch('plorp.integrations.taskwarrior.create_task') as mock_create, \
+         patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+
+        mock_create.return_value = "uuid-456"
+
+        # Real TaskWarrior omits 'priority' key when not set
+        mock_get.return_value = {
+            "uuid": "uuid-456",
+            "description": "call dentist",
+            "status": "pending",
+            "due": "20251010T000000Z",
+            # NO 'priority' key
+        }
+
+        result = process_daily_note_step2(note_path, date(2025, 10, 7))
+
+    # Verify success
+    assert result["approved_count"] == 1
+    assert len(result["errors"]) == 0
+    assert len(result["created_tasks"]) == 1
+
+    # Verify note content
+    final_content = note_path.read_text()
+    assert "## Created Tasks" in final_content
+    assert "call dentist" in final_content
+
+
+def test_process_step2_task_minimal_fields(tmp_path):
+    """Ensure Step 2 handles tasks with only required fields (Bug #2 regression test).
+
+    TaskWarrior only requires 'description'. When both 'due' and 'priority' are
+    omitted, the JSON export omits both keys entirely. This test ensures we
+    handle the minimal case gracefully.
+    """
+    # Create daily note with approved proposal (no due, no priority)
+    content = """# 2025-10-07 Monday
+
+## Notes
+- [ ] read book
+
+## TBD Processing
+
+- [Y] **[Y/N]** read book
+\t- Proposed: `description: "read book"`
+\t- Original location: Notes (line 4)
+"""
+    note_path = create_test_daily_note(tmp_path, content)
+
+    from unittest.mock import patch
+
+    with patch('plorp.integrations.taskwarrior.create_task') as mock_create, \
+         patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+
+        mock_create.return_value = "uuid-789"
+
+        # Minimal TaskWarrior response (only required fields)
+        mock_get.return_value = {
+            "uuid": "uuid-789",
+            "description": "read book",
+            "status": "pending",
+            # NO 'due' or 'priority' keys
+        }
+
+        result = process_daily_note_step2(note_path, date(2025, 10, 7))
+
+    # Verify success
+    assert result["approved_count"] == 1
+    assert len(result["errors"]) == 0
+    assert len(result["created_tasks"]) == 1
+    assert result["created_tasks"][0]["description"] == "read book"
+
+    # Verify note content shows only uuid metadata (no due, no priority)
+    final_content = note_path.read_text()
+    assert "## Created Tasks" in final_content
+    assert "read book" in final_content
+    assert "(uuid: uuid-789)" in final_content
+
+
+# ============================================================================
+# Sprint 8.5: Checkbox Sync Tests (Item 1)
+# ============================================================================
+
+
+def test_process_step2_syncs_checked_formal_tasks(tmp_path):
+    """Test that checked formal tasks are marked done in TaskWarrior (Sprint 8.5 Item 1).
+
+    When /process Step 2 runs, it should scan for formal tasks (with UUIDs)
+    that have been checked in Obsidian and mark them done in TaskWarrior.
+    """
+    # Create daily note with checked formal task
+    content = """# 2025-10-07 Monday
+
+## Tasks
+- [x] Buy groceries (uuid: task-abc-123)
+- [ ] Call dentist (uuid: task-def-456)
+
+## Notes
+Some notes here
+"""
+    note_path = create_test_daily_note(tmp_path, content)
+
+    # Mock TaskWarrior integration
+    from unittest.mock import patch, MagicMock
+
+    with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get_info, \
+         patch('plorp.integrations.taskwarrior.mark_done') as mock_mark_done:
+
+        # Mock task exists
+        mock_get_info.return_value = {
+            "uuid": "task-abc-123",
+            "description": "Buy groceries",
+            "status": "pending"
+        }
+
+        # Mock vault_path for State Sync (no projects to update in this test)
+        result = process_daily_note_step2(note_path, date(2025, 10, 7), tmp_path)
+
+        # Assert: mark_done was called for the checked task
+        mock_mark_done.assert_called_once_with("task-abc-123")
+
+
+def test_process_step2_removes_from_projects_when_done(tmp_path, monkeypatch):
+    """Test that checked tasks are removed from project frontmatter (Sprint 8.5 Item 1).
+
+    State Synchronization pattern: when a task is marked done via checkbox,
+    it must be removed from all project frontmatter.
+    """
+    # Setup: Create vault structure with project
+    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+
+    # Create project with task
+    from plorp.core.projects import create_project
+    from plorp.integrations.obsidian_bases import add_task_to_project
+
+    create_project(name="groceries", domain="home", workstream="chores")
+    add_task_to_project("home.chores.groceries", "task-xyz-789")
+
+    # Create daily note with checked formal task
+    content = """# 2025-10-07 Monday
+
+## Tasks
+- [x] Buy milk (uuid: task-xyz-789)
+
+## Notes
+Some notes
+"""
+    note_path = create_test_daily_note(tmp_path, content)
+
+    # Mock TaskWarrior integration
+    from unittest.mock import patch
+
+    with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get_info, \
+         patch('plorp.integrations.taskwarrior.mark_done') as mock_mark_done:
+
+        mock_get_info.return_value = {
+            "uuid": "task-xyz-789",
+            "description": "Buy milk",
+            "status": "pending"
+        }
+
+        # Run Step 2 with vault_path for State Sync
+        result = process_daily_note_step2(note_path, date(2025, 10, 7), tmp_path)
+
+        # Assert: Task was marked done
+        mock_mark_done.assert_called_once_with("task-xyz-789")
+
+        # Assert: UUID was removed from project frontmatter
+        from plorp.core.projects import get_project_info
+        project = get_project_info("home.chores.groceries")
+        assert project is not None
+        assert "task-xyz-789" not in project["task_uuids"]

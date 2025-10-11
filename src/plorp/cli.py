@@ -217,27 +217,71 @@ def _add_review_reflection(target_date, vault_path):
         console.print("[green]✓ Review notes saved[/green]")
 
 
-@cli.command()
-@click.argument("subcommand", default="process")
-@click.option("--limit", default=20, help="(fetch) Max emails to fetch")
-@click.option("--label", default=None, help="(fetch) Gmail label (default: INBOX)")
-@click.option("--dry-run", is_flag=True, help="(fetch) Show emails without appending")
-@click.option("--verbose", "-v", is_flag=True, help="(fetch) Show detailed progress")
+@cli.group()
 @click.pass_context
-def inbox(ctx, subcommand, limit, label, dry_run, verbose):
-    """Inbox management (process, fetch)."""
-    if subcommand == "fetch":
-        _inbox_fetch(ctx, limit, label, dry_run, verbose)
-    elif subcommand == "process":
-        _inbox_process(ctx)
-    else:
-        console.print(f"[red]❌ Unknown inbox subcommand:[/red] {subcommand}")
-        console.print("[dim]💡 Available: plorp inbox process, plorp inbox fetch[/dim]")
+def inbox(ctx):
+    """Inbox management (add, process, fetch)."""
+    pass
+
+
+@inbox.command("add")
+@click.argument("text", nargs=-1, required=True)
+@click.option("--urgent", "-u", is_flag=True, help="Mark as urgent (🔴)")
+@click.pass_context
+def inbox_add(ctx, text, urgent):
+    """
+    Quick-add item to inbox.
+
+    Pure capture - no metadata. Use 'plorp inbox process' to assign projects and tags.
+    Perfect for keyboard-driven workflows and fast thought capture.
+
+    Examples:
+
+        # Simple add
+        plorp inbox add "Buy milk"
+
+        # Multi-word items (no quotes needed)
+        plorp inbox add Review PR #42 before EOD
+
+        # Mark as urgent
+        plorp inbox add "Call client ASAP" --urgent
+
+    All project assignment, tagging, and due dates happen during 'plorp inbox process'.
+    """
+    from plorp.core.inbox import quick_add_to_inbox
+
+    try:
+        config = load_config()
+        vault_path = Path(config["vault_path"]).expanduser().resolve()
+
+        # Join text arguments
+        text_str = " ".join(text)
+
+        # Quick add
+        result = quick_add_to_inbox(
+            text=text_str,
+            vault_path=vault_path,
+            urgent=urgent
+        )
+
+        # Report success
+        console.print(f"[green]✓ Added to inbox:[/green] {result['item']}")
+        console.print(f"[dim]  {result['inbox_path']}[/dim]")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}", err=True)
         ctx.exit(1)
 
 
-def _inbox_process(ctx):
-    """Process inbox items interactively."""
+@inbox.command("process")
+@click.pass_context
+def inbox_process(ctx):
+    """
+    Process inbox items interactively.
+
+    For each unprocessed item, choose to create a task, note, both, discard, or skip.
+    This is where you assign projects, tags, due dates, and priorities.
+    """
     config = load_config()
     vault_path = Path(config["vault_path"]).expanduser().resolve()
 
@@ -268,7 +312,13 @@ def _inbox_process(ctx):
         ctx.exit(1)
 
 
-def _inbox_fetch(ctx, limit, label, dry_run, verbose):
+@inbox.command("fetch")
+@click.option("--limit", default=20, help="Max emails to fetch")
+@click.option("--label", default=None, help="Gmail label (default: INBOX)")
+@click.option("--dry-run", is_flag=True, help="Show emails without appending")
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed progress")
+@click.pass_context
+def inbox_fetch(ctx, limit, label, dry_run, verbose):
     """
     Fetch emails from Gmail and append to inbox.
 

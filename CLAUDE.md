@@ -237,6 +237,40 @@ plorp tasks --project home --limit 10
 
 Use the appropriate tier based on query complexity.
 
+## Quick Add to Inbox
+
+**Sprint 9.3** introduced keyboard-driven inbox capture for macOS.
+
+### Fast Capture Anywhere on Mac
+
+**Keyboard-Driven Capture (Recommended):**
+
+Raycast (⌘⌥I anywhere):
+- Setup: Install Raycast + copy script command from `raycast/quick-add-inbox.sh`
+- Usage: ⌘⌥I → Type → Enter
+- Speed: <3 seconds per capture
+
+CLI (Terminal):
+```bash
+plorp inbox add "Buy milk"
+plorp inbox add "Call client" --urgent
+plorp inbox add Multi word items work without quotes
+```
+
+**Philosophy:**
+Quick-add is **pure capture only**. All processing (projects, tags, due dates) happens during `plorp inbox process` workflow.
+
+**Workflow:**
+1. Capture thoughts instantly with ⌘⌥I (no decisions, no metadata)
+2. Process inbox items once daily with `plorp inbox process` (assign projects, priorities, due dates)
+3. This separates capture (fast, no friction) from organization (thoughtful, once daily)
+
+**Alternative Frontends:**
+See `Docs/QUICK_ADD_FRONTENDS.md` for:
+- macOS Shortcuts (native, free)
+- Alfred Workflow (paid, $34)
+- Automator Service (native, older Macs)
+
 ## Development Commands
 
 **Setup**:

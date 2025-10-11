@@ -329,3 +329,72 @@ def append_emails_to_inbox(emails: list, vault_path: Path) -> dict:
         "inbox_path": str(inbox_file),
         "total_unprocessed": unprocessed_count,
     }
+
+
+def quick_add_to_inbox(text: str, vault_path: Path, urgent: bool = False) -> dict:
+    """
+    Quick-add text to inbox file.
+
+    Pure capture - no metadata besides optional urgent flag.
+    Project assignment, tags, and due dates happen during '/process' workflow.
+
+    Args:
+        text: Item text to add
+        vault_path: Path to Obsidian vault
+        urgent: Mark as urgent (adds 🔴 indicator for visual priority)
+
+    Returns:
+        Dict with:
+            - added: Boolean success
+            - inbox_path: Path to inbox file
+            - item: Formatted item that was added
+
+    Example:
+        {
+            "added": True,
+            "inbox_path": "/vault/inbox/2025-10.md",
+            "item": "- Buy milk"
+        }
+    """
+    # Get current month's inbox file
+    today = date.today()
+    inbox_dir = vault_path / "inbox"
+    inbox_file = inbox_dir / f"{today.year}-{today.month:02d}.md"
+
+    # Ensure inbox directory exists
+    inbox_dir.mkdir(parents=True, exist_ok=True)
+
+    # Read existing inbox (create if doesn't exist)
+    if inbox_file.exists():
+        content = inbox_file.read_text(encoding="utf-8")
+    else:
+        content = (
+            f"# Inbox {today.year}-{today.month:02d}\n\n## Unprocessed\n\n## Processed\n"
+        )
+
+    # Find "## Unprocessed" section
+    unprocessed_section_start = content.find("## Unprocessed")
+    processed_section_start = content.find("## Processed")
+
+    if unprocessed_section_start == -1:
+        # Create sections if missing
+        content += "\n## Unprocessed\n\n## Processed\n"
+        unprocessed_section_start = content.find("## Unprocessed")
+        processed_section_start = content.find("## Processed")
+
+    # Format item (simple bullet, with optional urgent indicator)
+    if urgent:
+        item = f"- 🔴 {text}"
+    else:
+        item = f"- {text}"
+
+    # Insert item at end of Unprocessed section (before ## Processed)
+    insertion_point = processed_section_start
+    new_content = (
+        content[:insertion_point].rstrip() + "\n" + item + "\n\n" + content[insertion_point:]
+    )
+
+    # Write back
+    inbox_file.write_text(new_content, encoding="utf-8")
+
+    return {"added": True, "inbox_path": str(inbox_file), "item": item}

@@ -454,3 +454,107 @@ def test_append_emails_empty_list(tmp_path):
 
         assert result["appended_count"] == 0
         assert result["total_unprocessed"] == 0
+
+
+# Quick Add Tests (Sprint 9.3)
+
+
+def test_quick_add_to_inbox_simple(tmp_path):
+    """Test simple quick add to inbox."""
+    from plorp.core.inbox import quick_add_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = quick_add_to_inbox("Buy milk", vault)
+
+        assert result["added"] is True
+        assert "2025-10" in result["inbox_path"]
+        assert result["item"] == "- Buy milk"
+
+        # Verify file content
+        inbox_file = Path(result["inbox_path"])
+        assert inbox_file.exists()
+        content = inbox_file.read_text()
+        assert "- Buy milk" in content
+        assert "## Unprocessed" in content
+        assert "## Processed" in content
+
+
+def test_quick_add_to_inbox_urgent(tmp_path):
+    """Test quick add with urgent flag."""
+    from plorp.core.inbox import quick_add_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = quick_add_to_inbox("Fix production bug", vault, urgent=True)
+
+        assert result["added"] is True
+        assert result["item"] == "- 🔴 Fix production bug"
+
+        # Verify file content
+        inbox_file = Path(result["inbox_path"])
+        content = inbox_file.read_text()
+        assert "🔴 Fix production bug" in content
+
+
+def test_quick_add_to_inbox_existing_file(tmp_path):
+    """Test quick add to existing inbox file."""
+    from plorp.core.inbox import quick_add_to_inbox
+
+    vault = tmp_path / "vault"
+    inbox_dir = vault / "inbox"
+    inbox_dir.mkdir(parents=True)
+
+    # Create existing inbox with one item
+    inbox_file = inbox_dir / "2025-10.md"
+    inbox_file.write_text(
+        "# Inbox 2025-10\n\n"
+        "## Unprocessed\n\n"
+        "- Existing item\n\n"
+        "## Processed\n"
+    )
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = quick_add_to_inbox("New item", vault)
+
+        assert result["added"] is True
+        assert result["item"] == "- New item"
+
+        # Verify both items exist
+        content = inbox_file.read_text()
+        assert "- Existing item" in content
+        assert "- New item" in content
+        # New item should be after existing item
+        assert content.find("Existing item") < content.find("New item")
+
+
+def test_quick_add_to_inbox_multi_word(tmp_path):
+    """Test quick add with multi-word text."""
+    from plorp.core.inbox import quick_add_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = quick_add_to_inbox(
+            "This is a long item with many words", vault
+        )
+
+        assert result["added"] is True
+        assert result["item"] == "- This is a long item with many words"
+
+        inbox_file = Path(result["inbox_path"])
+        content = inbox_file.read_text()
+        assert "- This is a long item with many words" in content

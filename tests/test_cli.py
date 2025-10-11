@@ -24,7 +24,7 @@ def test_cli_version():
     result = runner.invoke(cli, ["--version"])
 
     assert result.exit_code == 0
-    assert "1.5.2" in result.output
+    assert "1.5.3" in result.output
 
 
 def test_start_command():
@@ -154,8 +154,9 @@ def test_inbox_command_invalid_subcommand():
     runner = CliRunner()
     result = runner.invoke(cli, ["inbox", "invalid"])
 
-    assert result.exit_code == 1
-    assert "Unknown" in result.output
+    # Click groups return exit code 2 for invalid subcommands (usage errors)
+    assert result.exit_code == 2
+    assert "No such command" in result.output or "Error" in result.output
 
 
 @patch("plorp.cli.load_config")

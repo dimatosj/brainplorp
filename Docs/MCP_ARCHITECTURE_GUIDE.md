@@ -1544,6 +1544,116 @@ Novel workflow:
                                    ← Agent uses multiple tools
 ```
 
+### Real-World Example: Sprint 9.1 Fast Task Queries
+
+**Sprint 9.1** implemented the three-tier architecture to solve MCP agent slowness (5-8 seconds for simple task queries):
+
+#### Tier 1: CLI Commands (<100ms)
+
+```bash
+# Direct terminal access - instant, deterministic
+$ plorp tasks
+$ plorp tasks --urgent
+$ plorp tasks --project work
+$ plorp tasks --due today
+$ plorp tasks --due overdue
+
+# Output formats for different uses
+$ plorp tasks --format table     # Rich table with emojis (default)
+$ plorp tasks --format simple    # Plain text for scripts
+$ plorp tasks --format json      # JSON for programmatic use
+```
+
+#### Tier 2: Slash Commands (1-2s)
+
+```markdown
+# .claude/commands/tasks.md
+Run the command: `plorp tasks`
+
+# .claude/commands/urgent.md
+Run the command: `plorp tasks --urgent`
+
+# .claude/commands/today.md
+Run the command: `plorp tasks --due today`
+
+# .claude/commands/overdue.md
+Run the command: `plorp tasks --due overdue`
+
+# .claude/commands/work-tasks.md
+Run the command: `plorp tasks --project work`
+```
+
+Usage:
+```
+User: /urgent           → Claude runs `plorp tasks --urgent`
+User: /today            → Claude runs `plorp tasks --due today`
+User: /work-tasks       → Claude runs `plorp tasks --project work`
+```
+
+#### Tier 3: Natural Language (5-8s)
+
+```
+User: "Show me urgent tasks in the API project due this week"
+
+Claude (agent reasoning):
+  1. Interprets user intent
+  2. Decides which filters to combine
+  3. Calls: plorp tasks --urgent --project api --due week
+  4. Formats and presents results with analysis
+```
+
+#### Performance Comparison
+
+| Tier | Interface | Latency | Use Case |
+|------|-----------|---------|----------|
+| 1 | `plorp tasks --urgent` | <100ms | Terminal workflows, scripts |
+| 2 | `/urgent` | 1-2s | Claude Desktop quick queries |
+| 3 | "show urgent tasks" | 5-8s | Complex queries, analysis |
+
+#### Design Benefits
+
+1. **Deterministic Core** - CLI command always behaves the same
+2. **Fast Access** - Slash commands bypass slow agent reasoning
+3. **Flexible When Needed** - Natural language for complex queries
+4. **Single Implementation** - All three tiers use the same `tasks()` function in `cli.py`
+
+#### Key Implementation Details
+
+```python
+# src/plorp/cli.py - Single implementation serves all tiers
+@cli.command()
+@click.option('--urgent', is_flag=True)
+@click.option('--project', help='Filter by project')
+@click.option('--due', help='Filter by due date')
+@click.option('--format', default='table', type=click.Choice(['table', 'simple', 'json']))
+def tasks(urgent, project, due, format):
+    """List pending tasks with optional filters."""
+    # Build filters
+    filters = ['status:pending']
+    if urgent:
+        filters.append('priority:H')
+    if project:
+        filters.append(f'project:{project}')
+    if due == 'today':
+        filters.append('due:today')
+    elif due == 'overdue':
+        filters.append('due.before:today')
+
+    # Query TaskWarrior (deterministic)
+    tasks = get_tasks(filters)
+
+    # Format output (three options)
+    if format == 'json':
+        click.echo(json.dumps(tasks, indent=2))
+    elif format == 'simple':
+        for task in tasks:
+            click.echo(f"[{task.get('priority', ' ')}] {task['description']}")
+    else:  # table
+        display_task_table(tasks)
+```
+
+This pattern can be applied to other plorp commands as they evolve.
+
 ### Plorp MCP Server Design
 
 Tools designed for reliability:

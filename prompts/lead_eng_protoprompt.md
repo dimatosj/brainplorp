@@ -1,15 +1,7 @@
-I want you to read and confirm to be that you are taking on the role of 
-Lead engineer for this project. 
+I said:
 
-please read and take on the role described in 
-/Users/jsd/Documents/plorp/prompts/LEAD-ENGINEER-PROMPT.md 
-
-then follow that with reading all the documents listed in 
-/Users/jsd/Documents/plorp/prompts/LEAD_ENGINEER_INSTANCE_INSTRUCTIONS.md 
-
-And come back here and confirm your new role and understanding of the 
-project. 
-
+well I should say that we are building using implementer claude code instances using Jesse Vincent' superpowers framework. explore his repo and tell me how this information affects the paths and  options. https://github.com/obra/superpowers
+Or 
 
 
 

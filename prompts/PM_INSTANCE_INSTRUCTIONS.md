@@ -17,11 +17,13 @@ Location: /Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md
 
 **What to look for:**
 - **CURRENT STATE** section at top (what's done, what's blocking, what's next)
-- **SESSION HISTORY** (last 2-3 sessions to understand recent work)
+- **SESSION HISTORY** (last 5-6 sessions to understand recent work)
 - **SPRINT COMPLETION REGISTRY** (which sprints are COMPLETE)
 - **ANTI-PATTERNS** section (learn from past mistakes)
 
 **Critical:** This document is append-only session journal. It's the SOURCE OF TRUTH.
+
+**Note:** Older sessions (1-9) archived to `PM_HANDOFF_ARCHIVE.md` for context budget management. Read archive only if deep historical context needed.
 
 ### 1.2 Read Active Sprint Specs (Check HANDOFF First)
 ```

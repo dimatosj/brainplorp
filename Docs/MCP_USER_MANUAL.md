@@ -1,6 +1,6 @@
 # plorp MCP Server - User Manual
 
-**Version:** 1.5.0
+**Version:** 1.5.1
 **Last Updated:** 2025-10-09
 
 ---
@@ -16,10 +16,11 @@
 7. [Note Management](#note-management)
 8. [Vault Access & Note Reading](#vault-access--note-reading)
 9. [Task Processing (/process)](#task-processing-process)
-10. [Common Workflows](#common-workflows)
-11. [Natural Language Examples](#natural-language-examples)
-12. [Troubleshooting](#troubleshooting)
-13. [Advanced Usage](#advanced-usage)
+10. [Fast Task Queries](#fast-task-queries)
+11. [Common Workflows](#common-workflows)
+12. [Natural Language Examples](#natural-language-examples)
+13. [Troubleshooting](#troubleshooting)
+14. [Advanced Usage](#advanced-usage)
 
 ---
 
@@ -768,6 +769,183 @@ The `/process` workflow understands:
 
 **Projects:**
 - "for work.engineering" → `project:work.engineering`
+
+---
+
+## Fast Task Queries
+
+Sprint 9.1 introduced instant task queries to solve the "MCP slowness problem" - simple task queries that previously took 5-8 seconds now complete in under 2 seconds via slash commands.
+
+### The Three-Tier Query Architecture
+
+plorp offers three ways to query your tasks, each with different speed/flexibility tradeoffs:
+
+| Tier | Interface | Speed | Use Case |
+|------|-----------|-------|----------|
+| **1. CLI** | `plorp tasks` | <100ms | Terminal workflows, scripts, instant queries |
+| **2. Slash Commands** | `/urgent`, `/today` | 1-2s | Quick Claude Desktop queries |
+| **3. Natural Language** | "show urgent tasks" | 5-8s | Complex queries with analysis |
+
+### Available Slash Commands
+
+Five slash commands provide instant access to common queries:
+
+**`/tasks`** - List all pending tasks
+```
+User: /tasks
+
+Claude runs: plorp tasks
+Shows: All pending tasks in a rich table (default limit: 50)
+```
+
+**`/urgent`** - Show only urgent (priority:H) tasks
+```
+User: /urgent
+
+Claude runs: plorp tasks --urgent
+Shows: High-priority tasks only
+```
+
+**`/today`** - Tasks due today
+```
+User: /today
+
+Claude runs: plorp tasks --due today
+Shows: Tasks with due date = today
+```
+
+**`/overdue`** - Tasks past their due date
+```
+User: /overdue
+
+Claude runs: plorp tasks --due overdue
+Shows: Tasks where due < today
+```
+
+**`/work-tasks`** - Tasks in work project
+```
+User: /work-tasks
+
+Claude runs: plorp tasks --project work
+Shows: All tasks with project:work
+```
+
+### CLI Command Reference
+
+All slash commands use the `plorp tasks` CLI command. You can also use it directly in the terminal:
+
+**Basic usage:**
+```bash
+plorp tasks                          # All pending tasks
+plorp tasks --limit 10               # Limit to 10 tasks
+```
+
+**Filters:**
+```bash
+plorp tasks --urgent                 # Priority:H tasks
+plorp tasks --important              # Priority:M tasks
+plorp tasks --project work           # Filter by project
+plorp tasks --due today              # Due today
+plorp tasks --due overdue            # Overdue tasks
+plorp tasks --due tomorrow           # Due tomorrow
+plorp tasks --due week               # Due this week
+```
+
+**Output formats:**
+```bash
+plorp tasks --format table           # Rich table with emojis (default)
+plorp tasks --format simple          # Plain text for scripts
+plorp tasks --format json            # JSON for programmatic use
+```
+
+**Combine filters:**
+```bash
+plorp tasks --urgent --project work                    # Urgent work tasks
+plorp tasks --due today --project home                # Today's home tasks
+plorp tasks --important --due week --limit 5          # Top 5 important tasks this week
+```
+
+### When to Use Each Tier
+
+**Tier 1 (CLI):** Use when working in the terminal
+```bash
+# Quick check before starting work
+$ plorp tasks --urgent
+
+# Export for scripting
+$ plorp tasks --format json | jq '.[] | select(.project == "work")'
+```
+
+**Tier 2 (Slash Commands):** Use for instant queries in Claude Desktop
+```
+You: /urgent                    ← 1-2 seconds
+Claude: Shows 3 urgent tasks
+
+You: /today                     ← 1-2 seconds
+Claude: Shows 5 tasks due today
+```
+
+**Tier 3 (Natural Language):** Use for complex queries requiring reasoning
+```
+You: "Show me urgent tasks in the API project that are due this week and analyze which ones are blocking"
+
+Claude: (5-8 seconds)
+  1. Reasons about the query
+  2. Combines multiple filters
+  3. Calls: plorp tasks --urgent --project api --due week
+  4. Analyzes dependencies
+  5. Provides detailed breakdown
+```
+
+### Performance Benefits
+
+**Before Sprint 9.1:**
+```
+You: "Show me urgent tasks"
+Agent reasoning: 3 seconds
+Tool calls: 2-3 seconds
+Total: 5-8 seconds
+```
+
+**After Sprint 9.1:**
+```
+You: /urgent
+Command execution: <100ms
+Claude overhead: 1-2 seconds
+Total: 1-2 seconds ← 3-4x faster
+```
+
+### Creating Custom Slash Commands
+
+You can create your own slash commands for common queries:
+
+**Example:** Create `/api-tasks` for your API project
+```bash
+# Create file: .claude/commands/api-tasks.md
+Run the command: `plorp tasks --project work.engineering.api`
+
+Display tasks for the API rewrite project.
+```
+
+**Usage:**
+```
+You: /api-tasks
+Claude: Runs plorp tasks --project work.engineering.api
+```
+
+### Natural Language Still Works
+
+Slash commands are a shortcut, not a replacement. Natural language queries still work for complex needs:
+
+```
+You: "Show me urgent tasks in the API project that have dependencies"
+
+Claude will:
+  1. Use plorp tasks --urgent --project work.engineering.api
+  2. Fetch each task's details
+  3. Analyze dependencies from annotations
+  4. Present organized breakdown
+```
 
 ---
 

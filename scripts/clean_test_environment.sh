@@ -12,10 +12,9 @@ echo "======================================"
 echo ""
 echo "This script will:"
 echo "  1. Backup existing TaskWarrior and Obsidian configs"
-echo "  2. Remove TaskWarrior data and config"
-echo "  3. Remove Obsidian vault and config"
-echo "  4. Remove brainplorp config"
-echo "  5. Uninstall brainplorp (if installed via Homebrew)"
+echo "  2. Uninstall brainplorp and TaskWarrior (Homebrew)"
+echo "  3. Remove TaskWarrior and brainplorp config files"
+echo "  4. Optionally remove Obsidian config"
 echo ""
 echo "⚠️  This preserves:"
 echo "  - This repository ($SCRIPT_DIR)"
@@ -82,46 +81,50 @@ else
 fi
 
 echo ""
-echo "Step 2: Removing TaskWarrior..."
+echo "Step 2: Uninstalling Homebrew packages..."
+
+# Uninstall brainplorp first (this will allow task to be uninstalled)
+if command -v brew &> /dev/null && brew list brainplorp &> /dev/null 2>&1; then
+    echo "  🍺 Uninstalling brainplorp via Homebrew..."
+    brew uninstall brainplorp
+    echo "     ✓ Uninstalled brainplorp"
+else
+    echo "  ℹ️  brainplorp not installed via Homebrew"
+fi
+
+# Now uninstall TaskWarrior (no longer blocked by brainplorp dependency)
+if command -v brew &> /dev/null && brew list task &> /dev/null 2>&1; then
+    echo "  🍺 Uninstalling TaskWarrior via Homebrew..."
+    brew uninstall task
+    echo "     ✓ Uninstalled task"
+else
+    echo "  ℹ️  TaskWarrior not installed via Homebrew"
+fi
+
+echo ""
+echo "Step 3: Removing configuration files..."
+
+# Remove TaskWarrior configs
 if [ -d "$HOME/.task" ]; then
     rm -rf "$HOME/.task"
     echo "  ✓ Removed $HOME/.task"
 else
-    echo "  ℹ️  Already removed"
+    echo "  ℹ️  No TaskWarrior data directory"
 fi
 
 if [ -f "$HOME/.taskrc" ]; then
     rm "$HOME/.taskrc"
     echo "  ✓ Removed $HOME/.taskrc"
 else
-    echo "  ℹ️  Already removed"
+    echo "  ℹ️  No .taskrc file"
 fi
 
-# Check if TaskWarrior is installed via Homebrew
-if command -v brew &> /dev/null && brew list task &> /dev/null 2>&1; then
-    echo "  🍺 Uninstalling TaskWarrior via Homebrew..."
-    brew uninstall task
-    echo "     ✓ Uninstalled"
-else
-    echo "  ℹ️  TaskWarrior not installed via Homebrew"
-fi
-
-echo ""
-echo "Step 3: Removing brainplorp config..."
+# Remove brainplorp config
 if [ -d "$HOME/.config/brainplorp" ]; then
     rm -rf "$HOME/.config/brainplorp"
     echo "  ✓ Removed $HOME/.config/brainplorp"
 else
-    echo "  ℹ️  Already removed"
-fi
-
-# Check if brainplorp is installed via Homebrew
-if command -v brew &> /dev/null && brew list brainplorp &> /dev/null 2>&1; then
-    echo "  🍺 Uninstalling brainplorp via Homebrew..."
-    brew uninstall brainplorp
-    echo "     ✓ Uninstalled"
-else
-    echo "  ℹ️  brainplorp not installed via Homebrew"
+    echo "  ℹ️  No brainplorp config directory"
 fi
 
 echo ""

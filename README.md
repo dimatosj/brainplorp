@@ -47,8 +47,8 @@ Claude: [Generates your daily note with intelligent summaries]
 
 ```bash
 # Clone the repository
-git clone https://github.com/dimatosj/plorp.git
-cd plorp
+git clone https://github.com/dimatosj/brainplorp.git
+cd brainplorp
 
 # Create virtual environment
 python3 -m venv .venv
@@ -299,13 +299,13 @@ brainplorp follows these design principles:
 
 ## Support
 
-- **Issues**: https://github.com/dimatosj/plorp/issues
+- **Issues**: https://github.com/dimatosj/brainplorp/issues
 - **Documentation**: See `Docs/` directory
 - **Questions**: Open a GitHub Discussion
 
 ## License
 
-[To be determined]
+MIT License - See [LICENSE](LICENSE) file for details
 
 ## Acknowledgments
 

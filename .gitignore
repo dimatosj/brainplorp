@@ -49,3 +49,25 @@ dmypy.json
 
 # Side projects
 plorp_obsidian/
+
+# Secrets and sensitive data
+*.env
+.env.*
+*_secret
+*_password
+*.key
+*.pem
+*.p12
+*.pfx
+config.yaml
+*.credentials
+secrets.yaml
+secrets.json
+
+# User-specific config (allow example configs)
+!config.example.yaml
+!config.sample.yaml
+
+# Personal vault paths (for development)
+vault/
+test_vault/

@@ -265,7 +265,7 @@ def test_review_mark_task_done(
 
     # Mock date.today()
     mock_date = type("MockDate", (), {"today": staticmethod(lambda: date(2025, 10, 6))})
-    monkeypatch.setattr("plorp.workflows.daily.date", mock_date)
+    monkeypatch.setattr("brainplorp.workflows.daily.date", mock_date)
 
     # Mock task info
     mock_get_task.side_effect = [
@@ -307,7 +307,7 @@ def test_review_defer_task(
     vault, note_path = daily_note_with_uncompleted_tasks
 
     mock_date = type("MockDate", (), {"today": staticmethod(lambda: date(2025, 10, 6))})
-    monkeypatch.setattr("plorp.workflows.daily.date", mock_date)
+    monkeypatch.setattr("brainplorp.workflows.daily.date", mock_date)
 
     mock_get_task.return_value = {
         "uuid": "abc-123",
@@ -343,7 +343,7 @@ def test_review_task_not_found(
     vault, note_path = daily_note_with_uncompleted_tasks
 
     mock_date = type("MockDate", (), {"today": staticmethod(lambda: date(2025, 10, 6))})
-    monkeypatch.setattr("plorp.workflows.daily.date", mock_date)
+    monkeypatch.setattr("brainplorp.workflows.daily.date", mock_date)
 
     # First task not found, second task exists
     mock_get_task.side_effect = [
@@ -375,7 +375,7 @@ def test_review_no_daily_note(tmp_path, capsys, monkeypatch):
     vault.mkdir()
 
     mock_date = type("MockDate", (), {"today": staticmethod(lambda: date(2025, 10, 6))})
-    monkeypatch.setattr("plorp.workflows.daily.date", mock_date)
+    monkeypatch.setattr("brainplorp.workflows.daily.date", mock_date)
 
     config = {"vault_path": str(vault)}
 
@@ -408,7 +408,7 @@ date: 2025-10-06
     note_path.write_text(content)
 
     mock_date = type("MockDate", (), {"today": staticmethod(lambda: date(2025, 10, 6))})
-    monkeypatch.setattr("plorp.workflows.daily.date", mock_date)
+    monkeypatch.setattr("brainplorp.workflows.daily.date", mock_date)
 
     config = {"vault_path": str(vault)}
 
@@ -486,7 +486,7 @@ def test_review_change_priority_with_validation(
     vault, note_path = daily_note_with_uncompleted_tasks
 
     mock_date = type("MockDate", (), {"today": staticmethod(lambda: date(2025, 10, 6))})
-    monkeypatch.setattr("plorp.workflows.daily.date", mock_date)
+    monkeypatch.setattr("brainplorp.workflows.daily.date", mock_date)
 
     mock_get_task.return_value = {"uuid": "abc-123", "description": "Buy groceries"}
 

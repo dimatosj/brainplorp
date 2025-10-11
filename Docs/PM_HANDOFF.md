@@ -10,7 +10,7 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 
 ---
 
-## CURRENT STATE (Updated: 2025-10-10 - Session 18)
+## CURRENT STATE (Updated: 2025-10-11 - Session 19)
 
 **Active Sprints:**
 - Sprint 6: ✅ COMPLETE (2025-10-06)
@@ -22,11 +22,12 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 - Sprint 9.1: ✅ COMPLETE & SIGNED OFF (2025-10-09) - Fast task query commands (CLI + slash), 501/501 tests passing (13 new), version 1.5.1, PM approved, production-ready
 - Sprint 9.2: ✅ COMPLETE & SIGNED OFF (2025-10-10) - Email inbox capture (Gmail IMAP), 522/522 tests passing (21 new), version 1.5.2, PM approved, production-ready
 - Sprint 9.3: ✅ COMPLETE & SIGNED OFF (2025-10-10) - Quick add to inbox (macOS), 526/526 tests passing (4 new), version 1.5.3, PM approved, production-ready
+- Sprint 10: 📝 SPEC COMPLETE (2025-10-11) - Mac Installation & Multi-Computer Sync, ready for lead engineer assignment
 
 **Repository:**
 - GitHub: https://github.com/dimatosj/plorp
-- Branch: master (10 commits ahead of origin, some docs uncommitted)
-- Version: v1.5.3 (Sprint 9.3 complete)
+- Branch: master (package renamed: plorp → brainplorp, pushed to GitHub)
+- Version: v1.5.3 (Sprint 9.3 complete, Sprint 10 will be v1.6.0)
 
 **Blocking Issues:**
 - None
@@ -39,20 +40,22 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 - Sprint 8.6 spec: ✅ COMPLETE v2.1.0 - Architectural rewrite complete, ready for implementation (13-18 hours)
 - Sprint 9 spec: ✅ COMPLETE & SIGNED OFF (2025-10-09 16:45) - All 4 phases complete, 488/488 tests passing, version 1.5.0, PM approved
 - Sprint 9.1 spec: ✅ COMPLETE & SIGNED OFF (2025-10-09) - Fast Task Query Commands, 501/501 tests passing (13 new), version 1.5.1, PM approved
-- Sprint 9.2 spec: ✅ READY FOR IMPLEMENTATION (2025-10-10) - Email inbox capture (Gmail IMAP), ALL Q&A ANSWERED (20/20), version 1.0.1, 2-3 hours
+- Sprint 9.2 spec: ✅ COMPLETE & SIGNED OFF (2025-10-10) - Email inbox capture (Gmail IMAP), 522/522 tests passing (21 new), version 1.5.2, PM approved
+- Sprint 9.3 spec: ✅ COMPLETE & SIGNED OFF (2025-10-10) - Quick add to inbox (macOS), 526/526 tests passing (4 new), version 1.5.3, PM approved
+- Sprint 10 spec: ✅ COMPLETE v1.0.0 (2025-10-11) - Mac Installation & Multi-Computer Sync, user-needs-driven, 18 hours estimated, ready for lead engineer
 - MCP User Manual: ✅ Updated to v1.5.0 (all 38 tools documented)
 - MCP Workflows: ✅ NEW - 23 workflow examples created
 - Handoff system: ✅ Fully operational
 - Role prompts: ✅ Updated with State Synchronization pattern
 - **PM_HANDOFF_ARCHIVE.md**: ✅ Created (2025-10-09) - Sessions 1-9 archived
+- **Package Rename**: ✅ plorp → brainplorp (2025-10-11) - RENAME_TO_BRAINPLORP.md guide created for Computer 2 migration
 
 **Next PM Instance Should:**
-1. ✅ Sprint 9.1 complete and signed off (2.5 hours, all success criteria met)
-2. ✅ Sprint 9.2 spec finalized with all Q&A answered (20/20 questions resolved)
-3. Assign Sprint 9.2 to lead engineer for implementation (estimated 2-3 hours + 30 min for additional tests)
-4. Monitor user feedback on Sprint 9.1 performance improvements
-5. Consider Sprint 10 planning (REST API mode - optional enhancement) after 9.2 complete
-6. Version 1.5.1 released, next will be 1.5.2 for Sprint 9.2 (PATCH bump for minor sprint)
+1. Assign Sprint 10 to lead engineer for implementation (~18 hours, 4 phases)
+2. Review Sprint 10 spec with user if any scope questions
+3. Monitor package rename migration on Computer 2
+4. Consider Sprint 11 direction: Cloud backend vs GUI installer vs platform expansion
+5. Next version will be 1.6.0 for Sprint 10 (MINOR bump for major sprint)
 
 **Future Work Identified:**
 
@@ -76,7 +79,516 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 
 ## SESSION HISTORY (Append-Only)
 
-**Note:** Sessions 1-9 (2025-10-06 through 2025-10-08) archived to `PM_HANDOFF_ARCHIVE.md` for context budget management.
+**Note:** Sessions 1-14 (2025-10-06 through 2025-10-10) archived to `PM_HANDOFF_ARCHIVE.md` for context budget management.
+
+---
+
+### Session 19 - 2025-10-11 (PM/Architect)
+**Participant:** PM/Architect (Sprint 10 Planning - Mac Installation & Multi-Computer Sync)
+
+**What Happened:**
+
+**Context Setup:**
+- User requested: "lets review the spec for sprint 10"
+- Assumed PM/Architect role and read role documents
+- Read PM_HANDOFF.md for current project state
+- Checked existing Sprint 10 planning materials
+
+**Discovery - Sprint 10 Not User-Needs-Driven:**
+- Found OBSIDIAN_REST_API_ANALYSIS.md (research document, 1,292 lines)
+- No formal Sprint 10 spec existed
+- Previous Sprint 10 planning: REST API integration (~20 hours)
+- Research-driven (mcp-obsidian comparison) vs user-needs-driven
+- Provided PM assessment highlighting lack of user validation
+
+**User Needs Discovery:**
+User provided real pain points Sprint 10 must address:
+1. **Multi-computer sync:** "I want to use brainplorp on more than one computer and I want syncing ability"
+   - Full suite: MCP, tasks, Obsidian, multiple inputs
+   - Need sync strategy for all components
+2. **Easy installation:** "I want to allow people who aren't the most technically adept to test it for me"
+   - Current: 11 manual installation steps
+   - Target: One-click installation or clear alternative
+3. **Deprioritize REST API:** "I don't want to emphasize or think about the API unless it's enabling some of the core user needs"
+
+**Requirements Gathering (Q&A with User):**
+
+**Q1-Q3: Multi-Computer Sync Strategy**
+- **TaskWarrior sync:** TaskChampion server (cloud or self-hosted)
+  - User has TaskChampion server available
+  - Sync via `task sync` command
+- **Obsidian vault sync:** iCloud Drive
+  - All Macs have iCloud Drive access
+  - User chose iCloud over Dropbox/OneDrive
+- **Config sync:** Git-based (optional, for power users)
+
+**Q4-Q7: Installation Options Analysis**
+Compared 5 options:
+1. Installation script (easy but brittle)
+2. Docker container (complex for Mac users)
+3. Cloud-hosted service (future potential)
+4. GUI installer (polished but time-intensive)
+5. Homebrew formula (Mac-native, handles dependencies)
+
+**User Decision:** Homebrew Formula as starting point
+- Rationale: Mac users familiar, dependency management, easier to maintain
+- Effort: 4-6 hours (sweet spot between ease and polish)
+- Defer GUI installer to future sprint if needed
+
+**Q8-Q10: Backend Architecture**
+- User signal: "we're inching towards something" (cloud service interest)
+- Decision: Backend abstraction layer in Sprint 10
+- Protocol-based interfaces (TaskBackend, VaultBackend)
+- Prepares for Sprint 11+ cloud migration without changing Sprint 10 behavior
+
+**Sprint 10 Reframing:**
+User approved scope: "yes. I think this is the way to go."
+
+**New Sprint 10 Scope:**
+1. **Phase 1: Homebrew Formula** (~4 hours)
+   - Formula creation with dependencies (Python 3.11, TaskWarrior 3.x)
+   - PyPI packaging and release automation
+   - Testing on clean Mac
+
+2. **Phase 2: Interactive Setup Wizard** (~6 hours)
+   - CLI-based configuration with auto-detection
+   - Obsidian vault detection
+   - TaskWarrior sync configuration (TaskChampion server)
+   - Default editor and email inbox setup
+   - Claude Desktop MCP configuration
+
+3. **Phase 3: Multi-Computer Setup Guide** (~3 hours)
+   - Documentation: MULTI_COMPUTER_SETUP.md
+   - Three sync mechanisms:
+     - TaskWarrior: TaskChampion server sync
+     - Obsidian: iCloud Drive (or user's choice)
+     - Config: Git-based (optional)
+   - Computer-specific identifiers
+
+4. **Phase 4: Backend Abstraction Layer** (~5 hours)
+   - Protocol-based interfaces
+   - Prepare for future cloud backend
+   - No behavior changes in Sprint 10
+
+**Total Effort:** 18 hours, Version 1.5.3 → 1.6.0 (MINOR bump)
+
+**Sprint 10 Spec Creation:**
+Created comprehensive specification:
+- File: `/Users/jsd/Documents/plorps/brainplorp/Docs/sprints/SPRINT_10_SPEC.md`
+- Size: 13,000+ lines
+- 4 implementation phases with complete code examples
+- 10 Q&A technical decisions
+- Success criteria and testing requirements
+- Multi-computer architecture diagrams
+- Backend abstraction patterns
+
+**Key Technical Decisions:**
+
+1. **Homebrew Over GUI Installer:**
+   - Faster to implement (4-6 hours vs 16-20 hours)
+   - Better dependency management
+   - Mac-native package manager
+   - Easier to maintain
+
+2. **Three Sync Mechanisms:**
+   - TaskWarrior: TaskChampion server (`task sync`)
+   - Obsidian: iCloud Drive (user's choice)
+   - Config: Git-based (optional, manual)
+
+3. **No Auto-Sync in Sprint 10:**
+   - User controls sync timing
+   - Can automate via cron if desired
+   - Cloud backend (Sprint 11+) will enable auto-sync
+
+4. **Backend Abstraction Layer:**
+   - Protocol-based: `TaskBackend`, `VaultBackend`
+   - Enables future cloud migration
+   - No behavior changes in Sprint 10
+
+5. **Interactive Setup Wizard:**
+   - Auto-detect Obsidian vault
+   - Guide TaskChampion server configuration
+   - One-time setup, stores in ~/.config/brainplorp/
+
+**Code Examples Provided:**
+
+**Homebrew Formula:**
+```ruby
+class Brainplorp < Formula
+  desc "Workflow automation for TaskWarrior + Obsidian"
+  homepage "https://github.com/dimatosj/plorp"
+  url "https://github.com/dimatosj/plorp/archive/refs/tags/v1.6.0.tar.gz"
+
+  depends_on "python@3.11"
+  depends_on "task"  # TaskWarrior 3.x
+
+  def install
+    virtualenv_install_with_resources
+  end
+end
+```
+
+**Setup Wizard:**
+```python
+@click.command()
+def setup():
+    """Interactive setup wizard for brainplorp."""
+
+    click.echo("🧠 brainplorp Setup Wizard")
+    click.echo("=" * 50)
+
+    config = {}
+
+    # Step 1: Detect Obsidian vault
+    # Step 2: TaskWarrior sync configuration
+    # Step 3: Default editor
+    # Step 4: Email inbox (optional)
+    # Step 5: Save configuration
+    # Step 6: Configure Claude Desktop MCP
+```
+
+**Backend Abstraction:**
+```python
+class TaskBackend(Protocol):
+    def get_tasks(self, filters: dict) -> list[dict]: ...
+    def add_task(self, description: str, **metadata) -> dict: ...
+    def modify_task(self, uuid: str, **changes) -> dict: ...
+    def sync(self) -> dict: ...
+
+class VaultBackend(Protocol):
+    def read_note(self, path: str) -> str: ...
+    def write_note(self, path: str, content: str) -> None: ...
+    def list_notes(self, folder: str) -> list[str]: ...
+```
+
+**Package Rename Completed:**
+- Renamed: plorp → brainplorp (132 files affected)
+- Package name, imports, CLI entry points, documentation all updated
+- RENAME_TO_BRAINPLORP.md migration guide created for Computer 2
+- Changes committed and pushed to GitHub
+
+**PM_HANDOFF.md Updates:**
+1. Updated CURRENT STATE section:
+   - Session 18 → Session 19
+   - Date: 2025-10-10 → 2025-10-11
+   - Added Sprint 10 to Active Sprints: "📝 SPEC COMPLETE (2025-10-11)"
+   - Updated Repository status: noted package rename
+   - Updated Version: "Sprint 10 will be v1.6.0"
+   - Added Sprint 10 spec to Documentation Status
+   - Added Package Rename note to Documentation Status
+   - Updated "Next PM Instance Should" section
+
+2. Added this Session 19 entry to SESSION HISTORY
+
+**Sprint Status Changes:**
+- Sprint 10: "RESEARCH PHASE (REST API)" → "SPEC COMPLETE (2025-10-11)" - Mac Installation & Multi-Computer Sync
+
+**Documents Created:**
+- `/Users/jsd/Documents/plorps/brainplorp/Docs/sprints/SPRINT_10_SPEC.md` - Complete specification (13,000+ lines)
+- `/Users/jsd/Documents/plorps/brainplorp/RENAME_TO_BRAINPLORP.md` - Migration guide for Computer 2
+
+**Documents Modified:**
+- `/Users/jsd/Documents/plorps/brainplorp/Docs/PM_HANDOFF.md` - Updated CURRENT STATE, added Session 19
+- 132 files affected by package rename (plorp → brainplorp)
+
+**Artifacts Created:**
+- Sprint 10 spec v1.0.0 (13,000+ lines, user-needs-driven)
+- Homebrew formula template with complete examples
+- Interactive setup wizard with auto-detection
+- Multi-computer architecture documentation
+- Backend abstraction layer design
+
+**Key Architectural Insights:**
+
+1. **User-Needs-Driven Sprint Planning:**
+   - Research documents inform but don't define sprints
+   - Always validate with real user pain points
+   - REST API research preserved for Sprint 10+ but deprioritized
+
+2. **Progressive Enhancement:**
+   - Sprint 10: Homebrew + Setup Wizard (basic, works everywhere)
+   - Sprint 11+: Cloud backend (advanced, auto-sync)
+   - GUI installer only if Homebrew insufficient
+
+3. **Three-Tier Architecture Applied to Installation:**
+   - Tier 1 (Manual): 11 steps (current, works but tedious)
+   - Tier 2 (Homebrew): `brew install brainplorp && brainplorp setup` (Sprint 10)
+   - Tier 3 (Cloud): One-click web installer (Sprint 11+, if needed)
+
+4. **Multi-Computer Sync Strategy:**
+   - Each component syncs independently (TaskWarrior, Obsidian, Config)
+   - User controls sync timing (manual or cron)
+   - Cloud backend (future) will unify and automate
+
+**Outcome:**
+- Sprint 10 scope completely reframed based on user needs
+- 18-hour implementation plan (4 phases)
+- Ready for lead engineer assignment
+- Clear path to v1.6.0 with multi-computer support
+
+**Issues Resolved:**
+- Sprint 10 was research-driven (REST API focus) → Now user-needs-driven (installation + sync)
+- No formal spec existed → Comprehensive spec created
+- 11-step manual installation → 2-step Homebrew installation planned
+- No multi-computer support → Full sync strategy documented
+
+**Notes for Next PM:**
+- Sprint 10 ready for lead engineer assignment
+- REST API analysis preserved in OBSIDIAN_REST_API_ANALYSIS.md for future sprints
+- Package rename (plorp → brainplorp) requires migration on Computer 2
+- User expressed interest in cloud backend (Sprint 11+)
+- Homebrew formula may require iteration based on testing feedback
+
+**Time Spent:** ~2-3 hours (needs discovery, comparison analysis, spec creation, documentation)
+
+**User Feedback:**
+- Initial: "it sounds like so far the notes and research on sprint isn't really based on user needs"
+- Mid-session: "I want to use brainplorp on more than one computer and I want syncing ability"
+- Final: "yes. I think this is the way to go." (approving Homebrew + multi-computer sync scope)
+
+---
+
+### Session 19.1 - 2025-10-11 (PM/Architect)
+**Participant:** PM/Architect (Sprint 10 Q&A - Lead Engineer Questions)
+
+**What Happened:**
+
+**Context:**
+- Lead Engineer reviewed Sprint 10 spec (13,000+ lines)
+- Added 25 clarifying questions covering all 4 phases
+- Questions marked by priority: 8 blocking, 2 high, 8 medium, 7 low
+- User requested: "the lead eng instance has requested you to review and answer their questions"
+
+**Q&A Process:**
+
+**Blocking Questions (8 total):**
+- **Q2 (MCP entry points):** ✅ CONFIRMED - Both `brainplorp` and `brainplorp-mcp` entry points already exist in pyproject.toml
+- **Q3 (GitHub repo):** ✅ USER ACTION - John must create `dimatosj/homebrew-brainplorp` repo (blocking Phase 1)
+- **Q8 (MCP installation):** ✅ ANSWERED - Same package, different entry point (see Q2)
+- **Q10 (TaskWarrior config):** ✅ AUTOMATIC - Wizard runs `task config` automatically for better UX
+- **Q14 (Refactoring strategy):** ✅ KEEP BOTH FILES - Backends delegate to integrations initially (safer, incremental)
+- **Q15 (Refactoring scope):** ✅ SPECIFIC LIST - 6 core modules, ~100-125 lines affected (3-4 hours)
+- **Q20 (Beta testing):** ✅ NON-BLOCKING - Beta testing happens in Sprint 10.1 (separate sprint)
+- **Q24 (State Sync):** ✅ CORE MODULES RESPONSIBLE - Backends are data access only, State Sync stays in core
+
+**High-Priority Questions (2 total):**
+- **Q4 (Homebrew dependencies):** ✅ AUTOMATIC - `virtualenv_install_with_resources` handles all dependencies from PyPI
+- **Q23 (Release permissions):** ✅ USER CREATES RELEASE - Lead Engineer prepares artifacts, John publishes
+
+**Medium-Priority Questions (8 total):**
+- **Q5 (Setup command location):** ✅ CREATE `commands/` DIRECTORY
+- **Q9 (Config validation):** ✅ SUBCOMMAND GROUP - `brainplorp config validate` (extensible)
+- **Q11 (Multi-computer testing):** ✅ MULTIPLE OPTIONS - Recommended: You + John on separate Macs
+- **Q12 (Test server):** ✅ SHARED TEST SERVER - Ask John to deploy on Railway/Fly.io
+- **Q17 (Backend config exposure):** ✅ HIDDEN IN SPRINT 10 - Hardcoded, not user-facing
+- **Q19 (Fresh install testing):** ✅ NEW USER ACCOUNT - Best for truly fresh environment
+- **Q25 (Config initialization):** ✅ LAZY INITIALIZATION - Backends validate when accessed, not on load
+
+**Low-Priority Questions (7 total):**
+- **Q1 (Post-install directory):** ✅ FUTURE-PROOFING - Not used in Sprint 10, harmless
+- **Q6 (Cloud server TODO):** ✅ KEEP TODO - Or replace with test server URL if deployed
+- **Q7 (Utility functions):** ✅ SEPARATE MODULE - Create `src/brainplorp/utils/system.py`
+- **Q13 (Backend directory):** ✅ CREATE IT - `src/brainplorp/core/backends/`
+- **Q16 (Protocol vs ABC):** ✅ USE PROTOCOL - Structural typing, more flexible
+- **Q18 (Backend singleton):** ✅ SINGLETON - Created once in Config.__init__()
+- **Q21 (Test count):** ✅ UPDATE TO 540+ - Expect ~16 new backend tests
+- **Q22 (SHA256 calculation):** ✅ STANDARD PROCESS - Document in RELEASE_PROCESS.md
+
+**Key Technical Answers:**
+
+**Backend Architecture Clarity:**
+- Backends are data access only (no business logic)
+- Core modules handle State Synchronization (critical pattern preserved)
+- Lazy initialization for graceful error messages
+- Protocol over ABC for flexibility
+- Keep integrations/, backends delegate to them (safer migration)
+
+**Critical Decisions:**
+- **GitHub repo creation:** BLOCKING - John must create before Phase 1
+- **Refactoring scope:** 6 core modules (daily.py, tasks.py, process.py, projects.py, note_operations.py x2)
+- **State Sync pattern:** Stays in core modules (backends don't enforce sync)
+- **Beta testing:** Sprint 10.1 (non-blocking for Sprint 10 completion)
+- **Backend exposure:** Hidden in Sprint 10 (hardcoded local backends)
+
+**Implementation Guidance Summary:**
+
+**Critical blockers resolved:**
+1. Q3: Ask John to create homebrew-brainplorp repo NOW
+2. Q14: Keep integrations/, backends delegate (safer)
+3. Q15: Refactor 6 core modules (~100 lines)
+4. Q20: Beta testing is Sprint 10.1 (non-blocking)
+5. Q24: State Sync stays in core modules
+
+**Testing strategy:**
+- Fresh install: New user account on Mac
+- Multi-computer: You + John testing
+- Test count: Expect 540+ tests (526 + 16 backend)
+- Beta testing: Sprint 10.1 (after internal validation)
+
+**Next steps for Lead Engineer:**
+1. Ask John to create `dimatosj/homebrew-brainplorp` repo
+2. Ask John to deploy TaskChampion test server (optional but recommended)
+3. Start Phase 1 implementation
+
+**Sprint Status Changes:**
+- Sprint 10: "SPEC COMPLETE" → "SPEC COMPLETE + Q&A ANSWERED (25/25)" (2025-10-11)
+
+**Documents Modified:**
+- `/Users/jsd/Documents/plorps/brainplorp/Docs/sprints/SPRINT_10_SPEC.md` - Added comprehensive PM answers section (1,100+ lines)
+- `/Users/jsd/Documents/plorps/brainplorp/Docs/PM_HANDOFF.md` - Updated with Session 19.1 Q&A notes
+
+**Artifacts Created:**
+- Comprehensive PM answers (25 questions, ~1,100 lines)
+- Implementation guidance summary
+- Architecture clarity diagrams
+- Testing strategy details
+
+**Key Architectural Insights:**
+
+**Backend Pattern Clarification:**
+```
+Core Modules (State Sync happens here)
+    ↓
+Backend Layer (Data access only)
+    ↓
+Integrations (Actual implementation in Sprint 10)
+```
+
+**State Synchronization must stay in core:**
+- `mark_done()` → `task_backend.mark_done()` → `vault_backend.update_section()`
+- Core module orchestrates both backends
+- Backends don't know about each other
+- Sprint 11 could add cloud backends without changing sync logic
+
+**Outcome:**
+- All 25 questions answered comprehensively
+- Lead Engineer unblocked for implementation
+- Clear architecture boundaries established
+- Safe refactoring strategy defined
+- Sprint 10 ready for Phase 1 kickoff pending GitHub repo creation
+
+**Notes for Next PM:**
+- Lead Engineer has comprehensive guidance (Q&A section in spec)
+- Two user actions required: 1) Create homebrew-brainplorp repo, 2) Deploy test server (optional)
+- Expect Sprint 10 implementation to start immediately after repo created
+- Backend abstraction is internal refactoring (no user-facing changes)
+- State Sync pattern preserved (critical for architecture integrity)
+
+**Time Spent:** ~2 hours (Q&A review, answer writing, spec update, documentation)
+
+---
+
+### Session 19.2 - 2025-10-11 (PM/Architect)
+**Participant:** PM/Architect (Sprint 10 Git Branching Strategy Decision)
+
+**What Happened:**
+
+**Context:**
+- User requested review of "PD-1: Git Branching Strategy for Phase 4" in Sprint 10 spec
+- Lead Engineer had identified branching decision as pending
+- Three options proposed: Single Branch, Two Branches, Defer Phase 4
+
+**PM Assessment:**
+
+**Risk Analysis:**
+- **Phases 1-3:** High value, low risk (new code only)
+  - Homebrew formula, setup wizard, documentation
+  - User-facing, tester enablement, Sprint 10 goal achieved
+  - Can ship independently
+
+- **Phase 4:** No immediate value, medium risk (refactoring)
+  - Touches 6 core modules (~100-125 lines)
+  - State Synchronization pattern must be preserved (CRITICAL)
+  - 526 tests provide safety net, but subtle bugs possible
+  - Future enabler only (Sprint 11 cloud backend)
+
+**Decision:** ✅ **Modified Option B - Two Branches**
+
+**Branching Strategy:**
+
+**Branch 1: `sprint-10-installation` (Phases 1-3)**
+- Target: v1.6.0
+- Scope: Homebrew + Setup Wizard + Multi-Computer Docs
+- Risk: Low (new code only)
+- Timeline: 10-13 hours
+- Merge criteria: Homebrew works, setup wizard completes, docs tested, 526 tests pass
+
+**Branch 2: `sprint-10-backend-abstraction` (Phase 4)**
+- Target: v1.6.1 (or v1.6.0 if merges early)
+- Scope: Backend Protocol + Local Implementations + Core Module Refactoring
+- Risk: Medium (refactors existing code)
+- Timeline: 5 hours
+- Merge criteria: 540+ tests pass, State Sync manually verified, zero behavior changes
+
+**Rationale:**
+- **Maximizes user value:** Ship Phases 1-3 early (v1.6.0)
+- **Minimizes risk:** Phase 4 refactoring isolated, can't block Sprint 10
+- **Preserves flexibility:** Can defer Phase 4 to Sprint 10.1 if needed
+- **Rollback safety:** v1.6.0 ships regardless of Phase 4 status
+
+**Why NOT Single Branch:**
+- All-or-nothing risk
+- Phase 4 problems block entire Sprint 10
+- Example: 3 weeks of working code (Phases 1-3) stuck in branch due to State Sync regression in Phase 4
+
+**Why NOT Defer Phase 4:**
+- Loss of momentum
+- Context switching (Q14 guidance might be forgotten)
+- Two branches allow parallel work, defer still possible
+
+**Implementation Guidance:**
+
+**Option 1 (Recommended): Sequential**
+```
+Week 1: Branch 1 (Phases 1-3) → Ship v1.6.0
+Week 2: Branch 2 (Phase 4) → Ship v1.6.1
+```
+
+**Option 2 (Advanced): Parallel**
+```
+Week 1: Both branches simultaneously
+Merge whichever ready first
+Ship v1.6.0 with 1-4 phases depending on readiness
+```
+
+**Risk Mitigation for Phase 4:**
+1. **TDD approach:** Write backend tests FIRST, then refactor
+2. **Incremental commits:** Refactor ONE core module at a time, test after each
+3. **Manual State Sync verification:** Test task creation/completion in projects
+4. **Rollback plan:** v1.6.0 already shipped if Phase 4 has issues
+
+**Sprint 10 Deliverables:**
+- **Guaranteed:** v1.6.0 with Phases 1-3
+- **If Phase 4 ready:** v1.6.1 with backend abstraction
+- **If Phase 4 needs time:** Defer to Sprint 10.1, v1.6.0 already delivered
+
+**Sprint Status Changes:**
+- Sprint 10: "SPEC COMPLETE + Q&A ANSWERED" → "SPEC COMPLETE + Q&A ANSWERED + BRANCHING DECIDED" (2025-10-11)
+
+**Documents Modified:**
+- `/Users/jsd/Documents/plorps/brainplorp/Docs/sprints/SPRINT_10_SPEC.md` - Updated PD-1 with PM decision (400+ lines added)
+- `/Users/jsd/Documents/plorps/brainplorp/Docs/PM_HANDOFF.md` - Updated with Session 19.2 decision notes
+
+**Key Architectural Decision:**
+- State Synchronization pattern preservation is CRITICAL
+- Phase 4 merge criteria includes manual State Sync verification
+- PM code review required for Phase 4 (verify State Sync intact)
+
+**Outcome:**
+- Clear two-branch strategy defined
+- Lead Engineer has detailed git workflow guidance
+- Sprint 10 can ship v1.6.0 (Phases 1-3) early
+- Phase 4 isolated, can't block Sprint 10 delivery
+- Flexibility preserved for Sprint 10.1 if needed
+
+**Notes for Next PM:**
+- Two-branch strategy reduces Sprint 10 delivery risk
+- Branch 1 (Phases 1-3) should be prioritized (user value)
+- Branch 2 (Phase 4) requires PM code review before merge
+- Manual State Sync verification is mandatory for Phase 4
+- Expect v1.6.0 (Phases 1-3), then v1.6.1 (Phase 4) or Sprint 10.1
+
+**Time Spent:** ~30 minutes (assessment, decision writing, spec update, documentation)
 
 ---
 
@@ -1027,282 +1539,3 @@ def _strip_html_tags(html: str) -> str:
 
 ---
 
-### Session 10 - 2025-10-08 20:00-22:30 (PM/Architect)
-**Participant:** PM Instance (Sprint 8.6 Q&A, Sprint 9 review, REST API research, documentation updates)
-
-**What Happened:**
-
-**Phase 1: Context Restoration (20:00)**
-- Session continued from previous conversation that ran out of context
-- Reviewed conversation summary showing:
-  - Sprint 8.6 Q&A complete (20 questions answered)
-  - Sprint 9 spec reviewed
-  - REST API analysis in progress
-  - Documentation updates pending
-
-**Phase 2: Sprint 9 Review & User Decisions (20:00-20:30)**
-- User: "ok we are waiting for lead eng to implement 8.6. Lets review sprint 9 as we wait."
-- Read Sprint 9 spec (general note management, 12 MCP tools, 18-20 hours)
-- Provided PM assessment: Scope is solid, candidates may be redundant
-- User questioned: "didn't we already do most of these?" (validation workflows)
-- **Direction change:** User: "actually it's time for you to review sprint 8.6 because the engineer finished their work on it"
-
-**Phase 3: Sprint 8.6 Implementation Review (20:30-21:00)**
-- Read git commit 7f5ce24 showing Sprint 8.5 complete (not 8.6)
-- Read Sprint 8.6 spec showing "Implementation Complete - Summary" section
-- **Lead engineer reported:**
-  - Status: ✅ COMPLETE - All Tests Passing (417/417)
-  - Test Results: 417 total (baseline 393 + 24 new)
-  - Items 1, 2, 4 complete (auto-sync, checkbox sync, sync-all)
-  - Item 3 deferred (scoped workflows)
-- **PM Assessment:** ✅ APPROVED
-  - State Sync pattern correctly implemented
-  - All tests passing
-  - Deferred item (scoped workflows) not critical
-  - Ready for user acceptance testing
-
-**Phase 4: Sprint 9 Candidates Assessment (21:00-21:15)**
-- Analyzed Sprint 9 candidate items against Sprint 8.5/8.6 completions
-- **Findings:**
-  1. ✅ Hybrid workstream validation - Complete (Sprint 8.5)
-  2. ✅ Project sync command - Complete (Sprint 8.6 `brainplorp project sync-all`)
-  3. ✅ Orphaned project review - Complete (Sprint 8.5)
-  4. ✅ Orphaned task review - Complete (Sprint 8.5)
-  5. ✅ /process vs /review boundaries - Resolved (Sprint 8.6 checkbox sync)
-- **Remaining:** Only scoped workflows (deferred from 8.6, optional for Sprint 9)
-
-**Phase 5: REST API Research (21:15-22:00)**
-- User pointed to Obsidian REST API in Sprint 9 non-goals
-- User: "obsidian-MCP uses the REST API calls for obsidian. Why shouldn't we go that route"
-- User directed: Clone and examine https://github.com/MarkusPfundstein/mcp-obsidian
-- **Investigation:**
-  - Cloned mcp-obsidian repository
-  - Read README.md, src/mcp_obsidian/obsidian.py, openapi.yaml
-  - Analyzed capabilities: advanced search, intelligent section editing, auto-parsing, periodic notes, active file ops, command execution
-  - Created comprehensive comparison (REST API vs filesystem)
-- **User decision:** Option A - Proceed with Sprint 9 filesystem, REST API for Sprint 10
-- User: "I want you to create a reference in sprint 9 to an analysis note"
-
-**Phase 6: REST API Analysis Documentation (22:00-22:15)**
-- Created `/Users/jsd/Documents/plorp/Docs/OBSIDIAN_REST_API_ANALYSIS.md` (1,244 lines)
-- **Contents:**
-  - Executive summary (REST API vs filesystem)
-  - Detailed capability comparison (6 major categories)
-  - Sprint 10 implementation guidance
-  - Architecture implications
-  - Code examples for all enhancements
-- User: "do note that these [semantic search, AI classification, real-time sync] are out of scope but definitely will be built out in 10+ sprint. I don't want to lose these in the docs."
-- **Added AI-Enhanced Features section:**
-  - Sprint 11: Semantic search / embeddings (12-16 hours)
-  - Sprint 12: AI classification / auto-organization (16-20 hours)
-  - Sprint 13: Real-time file watching / sync (20-24 hours)
-  - Sprint 14: Advanced note linking / graph analysis (12-16 hours)
-  - Total Sprint 10-14: ~96 hours roadmap
-
-**Phase 7: Sprint 9 Spec Updates (22:15-22:30)**
-- Updated Sprint 9 spec with "Future Enhancements (Sprint 10+)" section (lines 463-539)
-- Referenced OBSIDIAN_REST_API_ANALYSIS.md
-- Listed all AI-enhanced features with effort estimates
-- User: "great. mod the spec for 9 to reflect that [validation workflows complete]"
-- Updated "Existing Sprint 9 Candidates" section (lines 704-748):
-  - Marked items 1-5 as ✅ COMPLETE with implementation references
-  - Updated PM Decision to focus on General Note Management
-  - Listed scoped workflows as optional remaining item
-
-**Sprint Status Changes:**
-- Sprint 8.6: "SPEC COMPLETE v2.1.0" → "IMPLEMENTATION COMPLETE" (21:00)
-- Sprint 9: "SPEC COMPLETE" → "SPEC COMPLETE v1.1.0" (22:30 - updated with REST API roadmap)
-
-**Documents Created:**
-- `/Users/jsd/Documents/plorp/Docs/OBSIDIAN_REST_API_ANALYSIS.md` - Created (1,244 lines)
-
-**Key Architectural Decisions from Session:**
-1. **Filesystem for Sprint 9, REST API for Sprint 10:** Filesystem works everywhere, REST API adds power-user features when Obsidian running
-2. **REST API as Enhancement, Not Replacement:** Both modes coexist, filesystem is baseline
-3. **AI Features Preserved for Sprint 11-14:** Semantic search, AI classification, real-time sync documented with effort estimates
-4. **Sprint 9 Validation Workflows Complete:** Items 1-5 done in Sprint 8.5/8.6, focus shifts to general note management
-
----
-
-## SPRINT COMPLETION REGISTRY
-
-| Sprint | Status | Completed | Key Deliverables | Tests | Notes |
-|--------|--------|-----------|------------------|-------|-------|
-| 6 | ✅ COMPLETE | 2025-10-06 | MCP server (16 tools), Core modules, CLI refactor | ✅ Passing | MCP-first rewrite |
-| 7 | ✅ COMPLETE | 2025-10-07 | `/process` command (CLI + MCP), NLP parser, Step 1+2 workflow | 328 passing | Daily note task processing |
-| 8 | ✅ COMPLETE | 2025-10-07 | Project management, Obsidian Bases, 9 MCP tools, domain focus | 41 tests | Signed off |
-| 8.5 | ✅ COMPLETE | 2025-10-08 | Auto-sync TW↔Obsidian, SQLite reconciliation, validation, orphaned workflows | 391 tests (19 new) | PM reviewed & verified |
-| 8.6 | ✅ COMPLETE | 2025-10-08 | Auto task section sync, checkbox sync, sync-all command | 417 tests (24 new) | PM signed off 23:15, scoped workflows deferred |
-| 9 | ✅ COMPLETE | 2025-10-09 16:45 | General note management, 12 MCP tools, 3-layer architecture, pattern matching | 488 tests (71 new) | Version 1.5.0, PM signed off, production ready |
-| 9.1 | ✅ COMPLETE | 2025-10-09 | Fast task query CLI commands, 5 slash commands, three-tier approach | 501 tests (13 new) | Version 1.5.1, PM signed off, 2.5 hours, production ready |
-| 9.2 | ✅ COMPLETE | 2025-10-10 | Email inbox capture (Gmail IMAP), email→bullets conversion, html2text | 522 tests (21 new) | Version 1.5.2, PM signed off, production ready, 2-3 hours |
-| 9.3 | ✅ COMPLETE | 2025-10-10 | Quick add to inbox (macOS), Raycast integration, keyboard capture (⌘⌥I) | 526 tests (4 new) | Version 1.5.3, PM signed off, production ready, GTD capture |
-
----
-
-## HISTORICAL ARCHIVE
-
-**Archived Sessions:** Sessions 1-9 (2025-10-06 through 2025-10-08 early sessions) are archived in `PM_HANDOFF_ARCHIVE.md`.
-
----
-
-## CORE DOCUMENTS REGISTRY
-
-**Source of Truth Documents (Read in This Order):**
-
-1. **PM_HANDOFF.md** (this file)
-   - Location: `/Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md`
-   - Purpose: Current state + recent session history (sessions 10-14+)
-   - Always read FIRST
-
-2. **PM_HANDOFF_ARCHIVE.md** (historical reference)
-   - Location: `/Users/jsd/Documents/plorp/Docs/PM_HANDOFF_ARCHIVE.md`
-   - Purpose: Archived sessions 1-9 for historical context
-   - Read only if needed for deep historical understanding
-
-3. **Active Sprint Specs**
-   - SPRINT_6_SPEC.md - MCP architecture foundation (COMPLETE)
-   - SPRINT_7_SPEC.md - Daily note processing (COMPLETE)
-   - Check SPRINT COMPLETION REGISTRY for status
-
-4. **MCP_ARCHITECTURE_GUIDE.md**
-   - Location: `/Users/jsd/Documents/plorp/Docs/MCP_ARCHITECTURE_GUIDE.md`
-   - Purpose: Architecture patterns (TypedDict, pure functions, MCP-first)
-
-5. **CLAUDE.md**
-   - Location: `/Users/jsd/Documents/plorp/CLAUDE.md`
-   - Purpose: General project overview for Claude Code instances
-   - Warning: May be outdated on sprint status - trust HANDOFF.md
-
-**How to Verify Current State:**
-```bash
-# Check MCP tools exist
-grep "name=\"plorp_" /Users/jsd/Documents/plorp/src/plorp/mcp/server.py
-
-# Check core modules
-ls /Users/jsd/Documents/plorp/src/plorp/core/
-
-# Check test status
-pytest /Users/jsd/Documents/plorp/tests/ --co -q
-
-# Check sprint specs
-grep "Status:" /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
-```
-
-**If Documentation Conflicts:**
-- Priority: HANDOFF.md > Sprint specs > Other docs
-- When in doubt, verify codebase directly
-- Ask user for clarification
-
----
-
-## CRITICAL RULES FOR PM/ARCHITECT INSTANCES
-
-1. **Read HANDOFF.md FIRST** - Before reading anything else
-2. **Verify codebase state** - Don't trust docs alone, use grep/ls commands
-3. **Update session journal DURING work** - Use /update-handoff command
-4. **Copy lead engineer handoff notes** - From sprint specs to SESSION HISTORY
-5. **Sprint status is binary** - COMPLETE or INCOMPLETE (not "ready", "in progress", "step 1 done")
-6. **Append to journal** - Never delete session history
-7. **Update CURRENT STATE** - Overwrite with latest truth at top of file
-8. **Check dependencies** - Before approving any sprint deferral
-9. **Ask user when confused** - Better to ask than assume from docs
-10. **Close session properly** - Run /close-session command before ending
-11. **Archive when needed** - When file approaches 25k tokens, archive older sessions
-
----
-
-## ANTI-PATTERNS (What Went Wrong - Learn From This)
-
-### ❌ Trusting Stale Handoff Docs
-**What Happened:** Session 3 - PM read old PM_HANDOFF saying Sprint 6 "not started", approved Sprint 7 without MCP integration. Sprint 6 was actually complete day before.
-
-**Why It Failed:** Didn't verify codebase state, trusted outdated documentation.
-
-**Prevention:**
-- Always run verification commands (grep for MCP tools, ls core modules)
-- Ask user: "What work happened since last PM session?"
-- Check file modification dates if suspicious
-
-### ❌ Not Capturing Lead Engineer Handoff
-**What Happened:** Session 1 - Sprint 6 completed but no handoff notes recorded initially.
-
-**Why It Failed:** Handoff system didn't exist yet.
-
-**Prevention:**
-- Always copy "Implementation Summary" from sprint specs to HANDOFF.md SESSION HISTORY
-- Include: lines written, tests passing, key decisions, manual testing results
-
-### ❌ Accepting Deferrals Without Checking Dependencies
-**What Happened:** Session 3 - Accepted MCP integration deferral without verifying Sprint 6 status.
-
-**Why It Failed:** Trusted lead engineer's claim that "MCP framework not ready" without verification.
-
-**Prevention:**
-- Check SPRINT COMPLETION REGISTRY for dependencies
-- Verify dependency exists/doesn't exist in codebase
-- Never approve deferral of scope without checking if dependency is actually blocking
-
-### ❌ Ambiguous Sprint Status
-**What Happened:** Sprint 7 marked as "Step 1 Complete" instead of "INCOMPLETE".
-
-**Why It Failed:** Non-binary status created confusion - is it done or not?
-
-**Prevention:**
-- Only use COMPLETE or INCOMPLETE
-- INCOMPLETE means ANY scope is missing, ANY tests failing, ANY requirements unmet
-- COMPLETE means 100% of spec implemented and verified
-
----
-
-## SLASH COMMANDS FOR THIS SYSTEM
-
-### /update-handoff
-**When to use:** After completing significant work during session
-
-**What it does:**
-1. Appends new entry to SESSION HISTORY
-2. Updates CURRENT STATE section
-3. Captures lead engineer handoff notes from sprint specs
-4. Records sprint status changes
-5. Lists documents modified
-
-### /close-session
-**When to use:** Before ending your PM instance
-
-**What it does:**
-1. Reviews HANDOFF.md completeness
-2. Checks all sprint specs have status updated
-3. Verifies CURRENT STATE matches codebase reality
-4. Ensures SESSION HISTORY entry exists for this session
-5. Updates SPRINT COMPLETION REGISTRY
-6. Flags any missing information
-
----
-
-## PROJECT CONTEXT (Background)
-
-**Project:** brainplorp v1.5.0 - MCP-first task management and vault interface
-**Stack:** Python 3.8+, TaskWarrior 3.4.1, Obsidian (markdown vault)
-**Architecture:** Core modules (TypedDict) → MCP/CLI wrappers
-
-**What brainplorp does:**
-- Workflow automation layer between TaskWarrior and Obsidian
-- Daily notes with tasks from TaskWarrior
-- Inbox processing (email → tasks/notes)
-- Review workflow (end-of-day task processing)
-- Natural language task parsing (`/process` command)
-- Project management with Obsidian Bases
-- General vault access and note management (Sprint 9)
-
-**v1.0 → v1.5 Evolution:**
-- v1.0: CLI-first, workflows/ modules
-- v1.1: MCP-first, core/ modules with TypedDict returns (Sprint 6-7)
-- v1.4: Project management with Obsidian Bases (Sprint 8)
-- v1.5: General note management & vault interface (Sprint 9)
-
-**Current state:** v1.5.0 (Sprint 9 complete, 488 tests passing, 38 MCP tools)
-
----
-
-**End of PM_HANDOFF.md**

@@ -12,7 +12,7 @@ Read documents in this EXACT order:
 
 ### 1.1 Read PM_HANDOFF.md (ALWAYS FIRST)
 ```
-Location: /Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md
+Location: /Docs/PM_HANDOFF.md
 ```
 
 **What to look for:**
@@ -27,7 +27,7 @@ Location: /Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md
 
 ### 1.2 Read Active Sprint Specs (Check HANDOFF First)
 ```
-Location: /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_N_SPEC.md
+Location: /Docs/sprints/SPRINT_N_SPEC.md
 ```
 
 **Check PM_HANDOFF.md SPRINT COMPLETION REGISTRY** to see which sprints are:
@@ -41,7 +41,7 @@ Location: /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_N_SPEC.md
 
 ### 1.3 Read MCP_ARCHITECTURE_GUIDE.md (Architecture Context)
 ```
-Location: /Users/jsd/Documents/plorp/Docs/MCP_ARCHITECTURE_GUIDE.md
+Location: /Docs/MCP_ARCHITECTURE_GUIDE.md
 ```
 
 **What to look for:**
@@ -54,7 +54,7 @@ Location: /Users/jsd/Documents/plorp/Docs/MCP_ARCHITECTURE_GUIDE.md
 
 ### 1.4 Read CLAUDE.md (General Context)
 ```
-Location: /Users/jsd/Documents/plorp/CLAUDE.md
+Location: CLAUDE.md
 ```
 
 **Warning:** May be outdated on sprint status. Trust PM_HANDOFF.md over this file.
@@ -76,22 +76,22 @@ Run these verification commands:
 
 ```bash
 # Check what MCP tools exist
-grep "name=\"plorp_" /Users/jsd/Documents/plorp/src/plorp/mcp/server.py
+grep "name=\"plorp_" /src/brainplorp/mcp/server.py
 
 # Count MCP tools (should match SPRINT COMPLETION REGISTRY)
-grep -c "name=\"plorp_" /Users/jsd/Documents/plorp/src/plorp/mcp/server.py
+grep -c "name=\"brainplorp_" /src/brainplorp/mcp/server.py
 
 # Check core modules exist
-ls /Users/jsd/Documents/plorp/src/plorp/core/
+ls /src/brainplorp/core/
 
 # Check MCP directory exists
-ls /Users/jsd/Documents/plorp/src/plorp/mcp/
+ls /src/brainplorp/mcp/
 
 # Check test status
-pytest /Users/jsd/Documents/plorp/tests/ --co -q | head -20
+pytest /tests/ --co -q | head -20
 
 # Check sprint spec statuses
-grep "^**Status:" /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
+grep "^**Status:" /Docs/sprints/SPRINT_*.md
 ```
 
 **Compare results to PM_HANDOFF.md CURRENT STATE.** If they don't match, flag discrepancy.
@@ -185,7 +185,7 @@ Obsidian → TaskWarrior sync:
 - Question 2: "If this reads Obsidian state, does it update TaskWarrior?"
 - Reject specs that don't address BIDIRECTIONAL state synchronization
 
-**See:** `/Users/jsd/Documents/plorp/CLAUDE.md` - State Synchronization section for full details
+**See:** `/CLAUDE.md` - State Synchronization section for full details
 
 ---
 
@@ -337,40 +337,40 @@ If documents contradict each other, trust in this order:
 **MCP Tools:**
 ```bash
 # List all MCP tools
-grep "name=\"plorp_" /Users/jsd/Documents/plorp/src/plorp/mcp/server.py
+grep "name=\"brainplorp_" /src/brainplorp/mcp/server.py
 
 # Count MCP tools
-grep -c "name=\"plorp_" /Users/jsd/Documents/plorp/src/plorp/mcp/server.py
+grep -c "name=\"plorp_" /src/brainplorp/mcp/server.py
 ```
 
 **Core Modules:**
 ```bash
 # List core modules
-ls /Users/jsd/Documents/plorp/src/plorp/core/
+ls /src/brainplorp/core/
 
 # Check if specific module exists
-ls /Users/jsd/Documents/plorp/src/plorp/core/process.py
+ls /src/brainplorp/core/process.py
 ```
 
 **Tests:**
 ```bash
 # List test files
-pytest /Users/jsd/Documents/plorp/tests/ --co -q | head -20
+pytest /tests/ --co -q | head -20
 
 # Run specific test file
-pytest /Users/jsd/Documents/plorp/tests/test_core/test_process.py -v
+pytest /tests/test_core/test_process.py -v
 
 # Count tests
-pytest /Users/jsd/Documents/plorp/tests/ --co -q | wc -l
+pytest /tests/ --co -q | wc -l
 ```
 
 **Sprint Specs:**
 ```bash
 # Check all sprint statuses
-grep "^**Status:" /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
+grep "^**Status:" /Docs/sprints/SPRINT_*.md
 
 # List sprint specs
-ls /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
+ls /Docs/sprints/SPRINT_*.md
 ```
 
 ---

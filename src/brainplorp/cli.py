@@ -42,6 +42,7 @@ from brainplorp.core.process import process_daily_note_step1, process_daily_note
 from brainplorp.integrations.taskwarrior import get_tasks
 from brainplorp.utils.dates import format_date
 from brainplorp.utils.prompts import confirm, prompt
+from brainplorp.commands.setup import setup
 
 console = Console()
 
@@ -918,6 +919,67 @@ def focus_get(ctx):
 
     domain = get_focused_domain_cli()
     click.echo(f"Current focus: {domain}")
+
+
+# Register setup command
+cli.add_command(setup)
+
+
+@cli.group()
+@click.pass_context
+def config(ctx):
+    """Configuration management commands."""
+    pass
+
+
+@config.command("validate")
+@click.pass_context
+def config_validate(ctx):
+    """Validate brainplorp configuration."""
+    from pathlib import Path
+    import json
+    import shutil
+
+    cfg = load_config()
+    errors = []
+    warnings = []
+
+    # Check vault path
+    if not cfg.vault_path.exists():
+        errors.append(f"Vault path does not exist: {cfg.vault_path}")
+    elif not (cfg.vault_path / '.obsidian').exists():
+        warnings.append(f"Not an Obsidian vault (missing .obsidian): {cfg.vault_path}")
+
+    # Check TaskWarrior
+    if not shutil.which('task'):
+        errors.append("TaskWarrior not installed (run: brew install task)")
+
+    # Check MCP configuration
+    claude_config_path = Path.home() / 'Library' / 'Application Support' / 'Claude' / 'claude_desktop_config.json'
+    if claude_config_path.exists():
+        with open(claude_config_path, 'r') as f:
+            claude_config = json.load(f)
+
+        if 'brainplorp' not in claude_config.get('mcpServers', {}):
+            warnings.append("brainplorp MCP server not configured in Claude Desktop")
+    else:
+        warnings.append("Claude Desktop not installed or not configured")
+
+    # Print results
+    if errors:
+        click.secho("❌ Configuration Errors:", fg='red', bold=True)
+        for error in errors:
+            click.echo(f"  • {error}")
+
+    if warnings:
+        click.secho("⚠️  Warnings:", fg='yellow', bold=True)
+        for warning in warnings:
+            click.echo(f"  • {warning}")
+
+    if not errors and not warnings:
+        click.secho("✅ Configuration valid!", fg='green', bold=True)
+
+    return 0 if not errors else 1
 
 
 if __name__ == "__main__":

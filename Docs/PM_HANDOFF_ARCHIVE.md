@@ -964,3 +964,282 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 ---
 
 **End of Archive**
+### Session 10 - 2025-10-08 20:00-22:30 (PM/Architect)
+**Participant:** PM Instance (Sprint 8.6 Q&A, Sprint 9 review, REST API research, documentation updates)
+
+**What Happened:**
+
+**Phase 1: Context Restoration (20:00)**
+- Session continued from previous conversation that ran out of context
+- Reviewed conversation summary showing:
+  - Sprint 8.6 Q&A complete (20 questions answered)
+  - Sprint 9 spec reviewed
+  - REST API analysis in progress
+  - Documentation updates pending
+
+**Phase 2: Sprint 9 Review & User Decisions (20:00-20:30)**
+- User: "ok we are waiting for lead eng to implement 8.6. Lets review sprint 9 as we wait."
+- Read Sprint 9 spec (general note management, 12 MCP tools, 18-20 hours)
+- Provided PM assessment: Scope is solid, candidates may be redundant
+- User questioned: "didn't we already do most of these?" (validation workflows)
+- **Direction change:** User: "actually it's time for you to review sprint 8.6 because the engineer finished their work on it"
+
+**Phase 3: Sprint 8.6 Implementation Review (20:30-21:00)**
+- Read git commit 7f5ce24 showing Sprint 8.5 complete (not 8.6)
+- Read Sprint 8.6 spec showing "Implementation Complete - Summary" section
+- **Lead engineer reported:**
+  - Status: ✅ COMPLETE - All Tests Passing (417/417)
+  - Test Results: 417 total (baseline 393 + 24 new)
+  - Items 1, 2, 4 complete (auto-sync, checkbox sync, sync-all)
+  - Item 3 deferred (scoped workflows)
+- **PM Assessment:** ✅ APPROVED
+  - State Sync pattern correctly implemented
+  - All tests passing
+  - Deferred item (scoped workflows) not critical
+  - Ready for user acceptance testing
+
+**Phase 4: Sprint 9 Candidates Assessment (21:00-21:15)**
+- Analyzed Sprint 9 candidate items against Sprint 8.5/8.6 completions
+- **Findings:**
+  1. ✅ Hybrid workstream validation - Complete (Sprint 8.5)
+  2. ✅ Project sync command - Complete (Sprint 8.6 `brainplorp project sync-all`)
+  3. ✅ Orphaned project review - Complete (Sprint 8.5)
+  4. ✅ Orphaned task review - Complete (Sprint 8.5)
+  5. ✅ /process vs /review boundaries - Resolved (Sprint 8.6 checkbox sync)
+- **Remaining:** Only scoped workflows (deferred from 8.6, optional for Sprint 9)
+
+**Phase 5: REST API Research (21:15-22:00)**
+- User pointed to Obsidian REST API in Sprint 9 non-goals
+- User: "obsidian-MCP uses the REST API calls for obsidian. Why shouldn't we go that route"
+- User directed: Clone and examine https://github.com/MarkusPfundstein/mcp-obsidian
+- **Investigation:**
+  - Cloned mcp-obsidian repository
+  - Read README.md, src/mcp_obsidian/obsidian.py, openapi.yaml
+  - Analyzed capabilities: advanced search, intelligent section editing, auto-parsing, periodic notes, active file ops, command execution
+  - Created comprehensive comparison (REST API vs filesystem)
+- **User decision:** Option A - Proceed with Sprint 9 filesystem, REST API for Sprint 10
+- User: "I want you to create a reference in sprint 9 to an analysis note"
+
+**Phase 6: REST API Analysis Documentation (22:00-22:15)**
+- Created `/Users/jsd/Documents/plorp/Docs/OBSIDIAN_REST_API_ANALYSIS.md` (1,244 lines)
+- **Contents:**
+  - Executive summary (REST API vs filesystem)
+  - Detailed capability comparison (6 major categories)
+  - Sprint 10 implementation guidance
+  - Architecture implications
+  - Code examples for all enhancements
+- User: "do note that these [semantic search, AI classification, real-time sync] are out of scope but definitely will be built out in 10+ sprint. I don't want to lose these in the docs."
+- **Added AI-Enhanced Features section:**
+  - Sprint 11: Semantic search / embeddings (12-16 hours)
+  - Sprint 12: AI classification / auto-organization (16-20 hours)
+  - Sprint 13: Real-time file watching / sync (20-24 hours)
+  - Sprint 14: Advanced note linking / graph analysis (12-16 hours)
+  - Total Sprint 10-14: ~96 hours roadmap
+
+**Phase 7: Sprint 9 Spec Updates (22:15-22:30)**
+- Updated Sprint 9 spec with "Future Enhancements (Sprint 10+)" section (lines 463-539)
+- Referenced OBSIDIAN_REST_API_ANALYSIS.md
+- Listed all AI-enhanced features with effort estimates
+- User: "great. mod the spec for 9 to reflect that [validation workflows complete]"
+- Updated "Existing Sprint 9 Candidates" section (lines 704-748):
+  - Marked items 1-5 as ✅ COMPLETE with implementation references
+  - Updated PM Decision to focus on General Note Management
+  - Listed scoped workflows as optional remaining item
+
+**Sprint Status Changes:**
+- Sprint 8.6: "SPEC COMPLETE v2.1.0" → "IMPLEMENTATION COMPLETE" (21:00)
+- Sprint 9: "SPEC COMPLETE" → "SPEC COMPLETE v1.1.0" (22:30 - updated with REST API roadmap)
+
+**Documents Created:**
+- `/Users/jsd/Documents/plorp/Docs/OBSIDIAN_REST_API_ANALYSIS.md` - Created (1,244 lines)
+
+**Key Architectural Decisions from Session:**
+1. **Filesystem for Sprint 9, REST API for Sprint 10:** Filesystem works everywhere, REST API adds power-user features when Obsidian running
+2. **REST API as Enhancement, Not Replacement:** Both modes coexist, filesystem is baseline
+3. **AI Features Preserved for Sprint 11-14:** Semantic search, AI classification, real-time sync documented with effort estimates
+4. **Sprint 9 Validation Workflows Complete:** Items 1-5 done in Sprint 8.5/8.6, focus shifts to general note management
+
+---
+
+## SPRINT COMPLETION REGISTRY
+
+| Sprint | Status | Completed | Key Deliverables | Tests | Notes |
+|--------|--------|-----------|------------------|-------|-------|
+| 6 | ✅ COMPLETE | 2025-10-06 | MCP server (16 tools), Core modules, CLI refactor | ✅ Passing | MCP-first rewrite |
+| 7 | ✅ COMPLETE | 2025-10-07 | `/process` command (CLI + MCP), NLP parser, Step 1+2 workflow | 328 passing | Daily note task processing |
+| 8 | ✅ COMPLETE | 2025-10-07 | Project management, Obsidian Bases, 9 MCP tools, domain focus | 41 tests | Signed off |
+| 8.5 | ✅ COMPLETE | 2025-10-08 | Auto-sync TW↔Obsidian, SQLite reconciliation, validation, orphaned workflows | 391 tests (19 new) | PM reviewed & verified |
+| 8.6 | ✅ COMPLETE | 2025-10-08 | Auto task section sync, checkbox sync, sync-all command | 417 tests (24 new) | PM signed off 23:15, scoped workflows deferred |
+| 9 | ✅ COMPLETE | 2025-10-09 16:45 | General note management, 12 MCP tools, 3-layer architecture, pattern matching | 488 tests (71 new) | Version 1.5.0, PM signed off, production ready |
+| 9.1 | ✅ COMPLETE | 2025-10-09 | Fast task query CLI commands, 5 slash commands, three-tier approach | 501 tests (13 new) | Version 1.5.1, PM signed off, 2.5 hours, production ready |
+| 9.2 | ✅ COMPLETE | 2025-10-10 | Email inbox capture (Gmail IMAP), email→bullets conversion, html2text | 522 tests (21 new) | Version 1.5.2, PM signed off, production ready, 2-3 hours |
+| 9.3 | ✅ COMPLETE | 2025-10-10 | Quick add to inbox (macOS), Raycast integration, keyboard capture (⌘⌥I) | 526 tests (4 new) | Version 1.5.3, PM signed off, production ready, GTD capture |
+
+---
+
+## HISTORICAL ARCHIVE
+
+**Archived Sessions:** Sessions 1-9 (2025-10-06 through 2025-10-08 early sessions) are archived in `PM_HANDOFF_ARCHIVE.md`.
+
+---
+
+## CORE DOCUMENTS REGISTRY
+
+**Source of Truth Documents (Read in This Order):**
+
+1. **PM_HANDOFF.md** (this file)
+   - Location: `/Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md`
+   - Purpose: Current state + recent session history (sessions 10-14+)
+   - Always read FIRST
+
+2. **PM_HANDOFF_ARCHIVE.md** (historical reference)
+   - Location: `/Users/jsd/Documents/plorp/Docs/PM_HANDOFF_ARCHIVE.md`
+   - Purpose: Archived sessions 1-9 for historical context
+   - Read only if needed for deep historical understanding
+
+3. **Active Sprint Specs**
+   - SPRINT_6_SPEC.md - MCP architecture foundation (COMPLETE)
+   - SPRINT_7_SPEC.md - Daily note processing (COMPLETE)
+   - Check SPRINT COMPLETION REGISTRY for status
+
+4. **MCP_ARCHITECTURE_GUIDE.md**
+   - Location: `/Users/jsd/Documents/plorp/Docs/MCP_ARCHITECTURE_GUIDE.md`
+   - Purpose: Architecture patterns (TypedDict, pure functions, MCP-first)
+
+5. **CLAUDE.md**
+   - Location: `/Users/jsd/Documents/plorp/CLAUDE.md`
+   - Purpose: General project overview for Claude Code instances
+   - Warning: May be outdated on sprint status - trust HANDOFF.md
+
+**How to Verify Current State:**
+```bash
+# Check MCP tools exist
+grep "name=\"plorp_" /Users/jsd/Documents/plorp/src/plorp/mcp/server.py
+
+# Check core modules
+ls /Users/jsd/Documents/plorp/src/plorp/core/
+
+# Check test status
+pytest /Users/jsd/Documents/plorp/tests/ --co -q
+
+# Check sprint specs
+grep "Status:" /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
+```
+
+**If Documentation Conflicts:**
+- Priority: HANDOFF.md > Sprint specs > Other docs
+- When in doubt, verify codebase directly
+- Ask user for clarification
+
+---
+
+## CRITICAL RULES FOR PM/ARCHITECT INSTANCES
+
+1. **Read HANDOFF.md FIRST** - Before reading anything else
+2. **Verify codebase state** - Don't trust docs alone, use grep/ls commands
+3. **Update session journal DURING work** - Use /update-handoff command
+4. **Copy lead engineer handoff notes** - From sprint specs to SESSION HISTORY
+5. **Sprint status is binary** - COMPLETE or INCOMPLETE (not "ready", "in progress", "step 1 done")
+6. **Append to journal** - Never delete session history
+7. **Update CURRENT STATE** - Overwrite with latest truth at top of file
+8. **Check dependencies** - Before approving any sprint deferral
+9. **Ask user when confused** - Better to ask than assume from docs
+10. **Close session properly** - Run /close-session command before ending
+11. **Archive when needed** - When file approaches 25k tokens, archive older sessions
+
+---
+
+## ANTI-PATTERNS (What Went Wrong - Learn From This)
+
+### ❌ Trusting Stale Handoff Docs
+**What Happened:** Session 3 - PM read old PM_HANDOFF saying Sprint 6 "not started", approved Sprint 7 without MCP integration. Sprint 6 was actually complete day before.
+
+**Why It Failed:** Didn't verify codebase state, trusted outdated documentation.
+
+**Prevention:**
+- Always run verification commands (grep for MCP tools, ls core modules)
+- Ask user: "What work happened since last PM session?"
+- Check file modification dates if suspicious
+
+### ❌ Not Capturing Lead Engineer Handoff
+**What Happened:** Session 1 - Sprint 6 completed but no handoff notes recorded initially.
+
+**Why It Failed:** Handoff system didn't exist yet.
+
+**Prevention:**
+- Always copy "Implementation Summary" from sprint specs to HANDOFF.md SESSION HISTORY
+- Include: lines written, tests passing, key decisions, manual testing results
+
+### ❌ Accepting Deferrals Without Checking Dependencies
+**What Happened:** Session 3 - Accepted MCP integration deferral without verifying Sprint 6 status.
+
+**Why It Failed:** Trusted lead engineer's claim that "MCP framework not ready" without verification.
+
+**Prevention:**
+- Check SPRINT COMPLETION REGISTRY for dependencies
+- Verify dependency exists/doesn't exist in codebase
+- Never approve deferral of scope without checking if dependency is actually blocking
+
+### ❌ Ambiguous Sprint Status
+**What Happened:** Sprint 7 marked as "Step 1 Complete" instead of "INCOMPLETE".
+
+**Why It Failed:** Non-binary status created confusion - is it done or not?
+
+**Prevention:**
+- Only use COMPLETE or INCOMPLETE
+- INCOMPLETE means ANY scope is missing, ANY tests failing, ANY requirements unmet
+- COMPLETE means 100% of spec implemented and verified
+
+---
+
+## SLASH COMMANDS FOR THIS SYSTEM
+
+### /update-handoff
+**When to use:** After completing significant work during session
+
+**What it does:**
+1. Appends new entry to SESSION HISTORY
+2. Updates CURRENT STATE section
+3. Captures lead engineer handoff notes from sprint specs
+4. Records sprint status changes
+5. Lists documents modified
+
+### /close-session
+**When to use:** Before ending your PM instance
+
+**What it does:**
+1. Reviews HANDOFF.md completeness
+2. Checks all sprint specs have status updated
+3. Verifies CURRENT STATE matches codebase reality
+4. Ensures SESSION HISTORY entry exists for this session
+5. Updates SPRINT COMPLETION REGISTRY
+6. Flags any missing information
+
+---
+
+## PROJECT CONTEXT (Background)
+
+**Project:** brainplorp v1.5.0 - MCP-first task management and vault interface
+**Stack:** Python 3.8+, TaskWarrior 3.4.1, Obsidian (markdown vault)
+**Architecture:** Core modules (TypedDict) → MCP/CLI wrappers
+
+**What brainplorp does:**
+- Workflow automation layer between TaskWarrior and Obsidian
+- Daily notes with tasks from TaskWarrior
+- Inbox processing (email → tasks/notes)
+- Review workflow (end-of-day task processing)
+- Natural language task parsing (`/process` command)
+- Project management with Obsidian Bases
+- General vault access and note management (Sprint 9)
+
+**v1.0 → v1.5 Evolution:**
+- v1.0: CLI-first, workflows/ modules
+- v1.1: MCP-first, core/ modules with TypedDict returns (Sprint 6-7)
+- v1.4: Project management with Obsidian Bases (Sprint 8)
+- v1.5: General note management & vault interface (Sprint 9)
+
+**Current state:** v1.5.0 (Sprint 9 complete, 488 tests passing, 38 MCP tools)
+
+---
+
+**End of PM_HANDOFF.md**

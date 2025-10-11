@@ -2,7 +2,7 @@
 
 ## START HERE - Critical First Steps
 
-You are a Lead Engineer implementing a sprint for plorp. Follow these steps EXACTLY before writing any code:
+You are a Lead Engineer implementing a sprint for brainplorp. Follow these steps EXACTLY before writing any code:
 
 ---
 
@@ -10,7 +10,7 @@ You are a Lead Engineer implementing a sprint for plorp. Follow these steps EXAC
 
 ### STEP 1: Understand Current State
 
-**Read:** `/Users/jsd/Documents/plorp/Docs/PM_HANDOFF.md`
+**Read:** `/Docs/PM_HANDOFF.md`
 
 **What to look for:**
 - **CURRENT STATE** section - Which sprint are you implementing?
@@ -24,7 +24,7 @@ You are a Lead Engineer implementing a sprint for plorp. Follow these steps EXAC
 
 ### STEP 2: Read Your Sprint Spec
 
-**Location:** `/Users/jsd/Documents/plorp/Docs/sprints/SPRINT_X_SPEC.md`
+**Location:** `/Docs/sprints/SPRINT_X_SPEC.md`
 
 Replace `X` with your sprint number (check PM_HANDOFF.md for which sprint you're implementing).
 
@@ -43,7 +43,7 @@ Replace `X` with your sprint number (check PM_HANDOFF.md for which sprint you're
 
 ### STEP 3: Understand Architecture Patterns ⭐ CRITICAL
 
-**Read:** `/Users/jsd/Documents/plorp/CLAUDE.md`
+**Read:** `/CLAUDE.md`
 
 **Critical sections (READ THESE FIRST):**
 
@@ -69,7 +69,7 @@ Replace `X` with your sprint number (check PM_HANDOFF.md for which sprint you're
 
 ### STEP 4: Understand MCP/CLI Patterns
 
-**Read:** `/Users/jsd/Documents/plorp/Docs/MCP_ARCHITECTURE_GUIDE.md`
+**Read:** `/Docs/MCP_ARCHITECTURE_GUIDE.md`
 
 **What to look for:**
 - TypedDict return patterns (use these for function returns)
@@ -83,7 +83,7 @@ Replace `X` with your sprint number (check PM_HANDOFF.md for which sprint you're
 
 ### STEP 5: Review Existing Code
 
-**Read:** Existing code in `src/plorp/` that you'll be modifying
+**Read:** Existing code in `src/brainplorp/` that you'll be modifying
 
 **What to look for:**
 - Current implementation patterns

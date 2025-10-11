@@ -49,7 +49,7 @@ def test_get_current_inbox_path(tmp_path, monkeypatch):
 
     mock_dt = MagicMock()
     mock_dt.now.return_value.strftime.return_value = "2025-10"
-    monkeypatch.setattr("plorp.workflows.inbox.datetime", mock_dt)
+    monkeypatch.setattr("brainplorp.workflows.inbox.datetime", mock_dt)
 
     inbox_path = get_current_inbox_path(config)
 
@@ -245,7 +245,7 @@ def test_process_creates_inbox_file(tmp_path, capsys, monkeypatch):
         "%Y-%m": "2025-10",
         "%B %Y": "October 2025",
     }[fmt]
-    monkeypatch.setattr("plorp.workflows.inbox.datetime", mock_dt)
+    monkeypatch.setattr("brainplorp.workflows.inbox.datetime", mock_dt)
 
     with patch("brainplorp.workflows.inbox.get_current_inbox_path", return_value=inbox):
         process(config)

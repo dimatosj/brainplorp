@@ -158,6 +158,21 @@ You: I need to track research on deployment tools
 Claude: [Creates project note and linked tasks automatically]
 ```
 
+## Multi-Computer Usage
+
+brainplorp works seamlessly across multiple Macs. See [MULTI_COMPUTER_SETUP.md](Docs/MULTI_COMPUTER_SETUP.md) for detailed instructions.
+
+**Quick setup:**
+1. Computer 1: `brew install brainplorp` → `brainplorp setup`
+2. Set up iCloud vault sync and TaskChampion server
+3. Computer 2: `brew install brainplorp` → `brainplorp setup` (use same sync server)
+4. Both computers stay in sync automatically
+
+**What syncs:**
+- ✅ TaskWarrior tasks → TaskChampion sync server
+- ✅ Obsidian vault → iCloud Drive (or your choice)
+- ✅ brainplorp config → Git repository (optional)
+
 ## Architecture
 
 brainplorp v1.1 uses a layered architecture:

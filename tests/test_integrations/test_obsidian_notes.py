@@ -9,7 +9,7 @@ import pytest
 from pathlib import Path
 from datetime import datetime
 
-from plorp.integrations.obsidian_notes import (
+from brainplorp.integrations.obsidian_notes import (
     _read_note_file,
     _read_folder,
     _append_to_note_file,

@@ -10,7 +10,7 @@
 
 ## Prerequisites
 
-- plorp v1.5.3 installed
+- brainplorp v1.5.3 installed
 - macOS system (for Raycast testing)
 - Obsidian vault configured
 - Raycast installed (recommended frontend)
@@ -21,7 +21,7 @@
 
 ### Verify Version
 ```bash
-plorp --version  # Should show 1.5.3
+brainplorp --version  # Should show 1.5.3
 ```
 
 ### Verify Inbox File Exists
@@ -41,11 +41,11 @@ wc -l ~/vault/inbox/2025-10.md
 ## Phase 1: CLI Command Tests
 
 ### Test 1.1: Basic Quick Add
-**Command:** `plorp inbox add Buy milk`
+**Command:** `brainplorp inbox add Buy milk`
 
 **Steps:**
 ```bash
-plorp inbox add Buy milk
+brainplorp inbox add Buy milk
 ```
 
 **Expected Results:**
@@ -64,11 +64,11 @@ tail -5 ~/vault/inbox/2025-10.md
 ---
 
 ### Test 1.2: Multi-Word Without Quotes
-**Command:** `plorp inbox add Call dentist tomorrow morning`
+**Command:** `brainplorp inbox add Call dentist tomorrow morning`
 
 **Steps:**
 ```bash
-plorp inbox add Call dentist tomorrow morning
+brainplorp inbox add Call dentist tomorrow morning
 ```
 
 **Expected Results:**
@@ -81,11 +81,11 @@ plorp inbox add Call dentist tomorrow morning
 ---
 
 ### Test 1.3: Urgent Flag (Short Form)
-**Command:** `plorp inbox add -u Fix critical bug`
+**Command:** `brainplorp inbox add -u Fix critical bug`
 
 **Steps:**
 ```bash
-plorp inbox add -u Fix critical bug
+brainplorp inbox add -u Fix critical bug
 ```
 
 **Expected Results:**
@@ -98,11 +98,11 @@ plorp inbox add -u Fix critical bug
 ---
 
 ### Test 1.4: Urgent Flag (Long Form)
-**Command:** `plorp inbox add --urgent Important meeting today`
+**Command:** `brainplorp inbox add --urgent Important meeting today`
 
 **Steps:**
 ```bash
-plorp inbox add --urgent Important meeting today
+brainplorp inbox add --urgent Important meeting today
 ```
 
 **Expected Results:**
@@ -115,11 +115,11 @@ plorp inbox add --urgent Important meeting today
 ---
 
 ### Test 1.5: Single Word Item
-**Command:** `plorp inbox add Groceries`
+**Command:** `brainplorp inbox add Groceries`
 
 **Steps:**
 ```bash
-plorp inbox add Groceries
+brainplorp inbox add Groceries
 ```
 
 **Expected Results:**
@@ -131,11 +131,11 @@ plorp inbox add Groceries
 ---
 
 ### Test 1.6: Very Long Item
-**Command:** `plorp inbox add` + 200 character text
+**Command:** `brainplorp inbox add` + 200 character text
 
 **Steps:**
 ```bash
-plorp inbox add This is a very long task description that goes on and on with lots of details about what needs to be done including multiple aspects and considerations that should all be captured in the inbox for later processing
+brainplorp inbox add This is a very long task description that goes on and on with lots of details about what needs to be done including multiple aspects and considerations that should all be captured in the inbox for later processing
 ```
 
 **Expected Results:**
@@ -148,11 +148,11 @@ plorp inbox add This is a very long task description that goes on and on with lo
 ---
 
 ### Test 1.7: Special Characters
-**Command:** `plorp inbox add Buy @groceries & coffee (urgent!)`
+**Command:** `brainplorp inbox add Buy @groceries & coffee (urgent!)`
 
 **Steps:**
 ```bash
-plorp inbox add Buy @groceries & coffee (urgent!)
+brainplorp inbox add Buy @groceries & coffee (urgent!)
 ```
 
 **Expected Results:**
@@ -164,11 +164,11 @@ plorp inbox add Buy @groceries & coffee (urgent!)
 ---
 
 ### Test 1.8: Emoji in Text
-**Command:** `plorp inbox add 🎉 Celebrate project completion`
+**Command:** `brainplorp inbox add 🎉 Celebrate project completion`
 
 **Steps:**
 ```bash
-plorp inbox add 🎉 Celebrate project completion
+brainplorp inbox add 🎉 Celebrate project completion
 ```
 
 **Expected Results:**
@@ -186,9 +186,9 @@ plorp inbox add 🎉 Celebrate project completion
 3. Check order in file
 
 ```bash
-plorp inbox add First item
-plorp inbox add Second item
-plorp inbox add Third item
+brainplorp inbox add First item
+brainplorp inbox add Second item
+brainplorp inbox add Third item
 tail -5 ~/vault/inbox/2025-10.md
 ```
 
@@ -202,11 +202,11 @@ tail -5 ~/vault/inbox/2025-10.md
 ---
 
 ### Test 1.10: Help Text
-**Command:** `plorp inbox add --help`
+**Command:** `brainplorp inbox add --help`
 
 **Steps:**
 ```bash
-plorp inbox add --help
+brainplorp inbox add --help
 ```
 
 **Expected Results:**
@@ -369,11 +369,11 @@ cat ~/Library/Application\ Support/Raycast/Scripts/quick-add-inbox.sh | grep PLO
 ## Phase 3: Edge Cases & Error Handling
 
 ### Test 3.1: Empty Text
-**Command:** `plorp inbox add`
+**Command:** `brainplorp inbox add`
 
 **Steps:**
 ```bash
-plorp inbox add
+brainplorp inbox add
 ```
 
 **Expected Results:**
@@ -386,11 +386,11 @@ plorp inbox add
 ---
 
 ### Test 3.2: Whitespace Only
-**Command:** `plorp inbox add "   "`
+**Command:** `brainplorp inbox add "   "`
 
 **Steps:**
 ```bash
-plorp inbox add "   "
+brainplorp inbox add "   "
 ```
 
 **Expected Results:**
@@ -405,7 +405,7 @@ plorp inbox add "   "
 ### Test 3.3: Missing Inbox Folder
 **Steps:**
 1. Delete inbox folder: `rm -rf ~/vault/inbox/`
-2. Run: `plorp inbox add Test item`
+2. Run: `brainplorp inbox add Test item`
 
 **Expected Results:**
 - ✅ Folder auto-created
@@ -420,7 +420,7 @@ plorp inbox add "   "
 ### Test 3.4: Missing Inbox File
 **Steps:**
 1. Delete current month's inbox: `rm ~/vault/inbox/2025-10.md`
-2. Run: `plorp inbox add Test item`
+2. Run: `brainplorp inbox add Test item`
 
 **Expected Results:**
 - ✅ File auto-created
@@ -434,7 +434,7 @@ plorp inbox add "   "
 ### Test 3.5: Corrupt Inbox File
 **Steps:**
 1. Add random binary data to inbox file
-2. Run: `plorp inbox add Test item`
+2. Run: `brainplorp inbox add Test item`
 
 **Expected Results:**
 - ✅ Error message or auto-fix
@@ -448,7 +448,7 @@ plorp inbox add "   "
 ### Test 3.6: Missing Unprocessed Section
 **Steps:**
 1. Remove "## Unprocessed" header from inbox
-2. Run: `plorp inbox add Test item`
+2. Run: `brainplorp inbox add Test item`
 
 **Expected Results:**
 - ✅ Section auto-created
@@ -462,7 +462,7 @@ plorp inbox add "   "
 ### Test 3.7: Vault Path Not Configured
 **Steps:**
 1. Remove `vault_path` from config
-2. Run: `plorp inbox add Test`
+2. Run: `brainplorp inbox add Test`
 
 **Expected Results:**
 - ✅ Clear error: vault path not configured
@@ -479,12 +479,12 @@ plorp inbox add "   "
 **Steps:**
 ```bash
 # Add items
-plorp inbox add Buy groceries
-plorp inbox add Call dentist
-plorp inbox add -u Fix bug
+brainplorp inbox add Buy groceries
+brainplorp inbox add Call dentist
+brainplorp inbox add -u Fix bug
 
 # Process them
-plorp inbox process
+brainplorp inbox process
 ```
 
 **Expected Results:**
@@ -518,8 +518,8 @@ plorp inbox process
 **Steps:**
 ```bash
 # Run two adds simultaneously
-plorp inbox add "Item 1" &
-plorp inbox add "Item 2" &
+brainplorp inbox add "Item 1" &
+brainplorp inbox add "Item 2" &
 wait
 ```
 
@@ -537,7 +537,7 @@ wait
 ### Test 5.1: macOS Shortcuts (if configured)
 **Steps:**
 1. Create Shortcut with "Run Shell Script"
-2. Call: `plorp inbox add "$text"`
+2. Call: `brainplorp inbox add "$text"`
 3. Test via Siri or Shortcuts app
 
 **Expected Results:**
@@ -603,7 +603,7 @@ wait
 - ✅ Zero friction capture
 - ✅ No metadata prompts
 - ✅ Fast entry
-- ✅ Processing happens later via `plorp inbox process`
+- ✅ Processing happens later via `brainplorp inbox process`
 
 **Pass/Fail:** ______
 
@@ -614,14 +614,14 @@ wait
 
 **Capture Phase:**
 ```bash
-plorp inbox add Buy milk
-plorp inbox add Schedule meeting
-plorp inbox add Review PR
+brainplorp inbox add Buy milk
+brainplorp inbox add Schedule meeting
+brainplorp inbox add Review PR
 ```
 
 **Processing Phase:**
 ```bash
-plorp inbox process
+brainplorp inbox process
 # Now assign projects, dates, etc.
 ```
 
@@ -693,7 +693,7 @@ Throughout one workday:
 - [ ] Can capture from anywhere on macOS (⌘⌥I)
 - [ ] Capture takes <3 seconds
 - [ ] No metadata required during capture
-- [ ] Processing happens separately via `plorp inbox process`
+- [ ] Processing happens separately via `brainplorp inbox process`
 - [ ] No thoughts lost due to friction
 - [ ] Separation of capture (fast) from organization (thoughtful)
 
@@ -719,7 +719,7 @@ Throughout one workday:
 **Solution:**
 1. Edit script: `vim ~/Library/Application\ Support/Raycast/Scripts/quick-add-inbox.sh`
 2. Update `PLORP_PATH` to correct location
-3. Verify: `which plorp` or `find ~ -name plorp -type f`
+3. Verify: `which plorp` or `find ~ -name brainplorp -type f`
 
 ### Issue: Permission Denied
 **Solution:**

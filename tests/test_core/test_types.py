@@ -6,7 +6,7 @@ and accept/reject appropriate values.
 """
 
 import pytest
-from plorp.core.types import (
+from brainplorp.core.types import (
     TaskInfo,
     TaskSummary,
     DailyStartResult,

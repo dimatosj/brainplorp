@@ -3,10 +3,10 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "plorp"
+name = "brainplorp"
 version = "1.5.3"
 description = "Workflow automation for TaskWarrior + Obsidian"
-authors = [{name = "plorp contributors"}]
+authors = [{name = "brainplorp contributors"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -18,8 +18,8 @@ dependencies = [
 ]
 
 [project.scripts]
-plorp = "plorp.cli:cli"
-plorp-mcp = "plorp.mcp.server:main"
+brainplorp = "brainplorp.cli:cli"
+brainplorp-mcp = "brainplorp.mcp.server:main"
 
 [project.optional-dependencies]
 dev = [
@@ -43,7 +43,7 @@ markers = [
 ]
 
 [tool.setuptools.package-data]
-plorp = ["slash_commands/*.md"]
+brainplorp = ["slash_commands/*.md"]
 
 [tool.mypy]
 python_version = "3.10"

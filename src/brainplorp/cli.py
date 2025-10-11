@@ -12,9 +12,9 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from plorp import __version__
-from plorp.config import load_config
-from plorp.core import (
+from brainplorp import __version__
+from brainplorp.config import load_config
+from brainplorp.core import (
     start_day,
     get_review_tasks,
     add_review_notes,
@@ -38,10 +38,10 @@ from plorp.core import (
     TaskNotFoundError,
     InboxNotFoundError,
 )
-from plorp.core.process import process_daily_note_step1, process_daily_note_step2
-from plorp.integrations.taskwarrior import get_tasks
-from plorp.utils.dates import format_date
-from plorp.utils.prompts import confirm, prompt
+from brainplorp.core.process import process_daily_note_step1, process_daily_note_step2
+from brainplorp.integrations.taskwarrior import get_tasks
+from brainplorp.utils.dates import format_date
+from brainplorp.utils.prompts import confirm, prompt
 
 console = Console()
 
@@ -248,7 +248,7 @@ def inbox_add(ctx, text, urgent):
 
     All project assignment, tagging, and due dates happen during 'plorp inbox process'.
     """
-    from plorp.core.inbox import quick_add_to_inbox
+    from brainplorp.core.inbox import quick_add_to_inbox
 
     try:
         config = load_config()
@@ -335,14 +335,14 @@ def inbox_fetch(ctx, limit, label, dry_run, verbose):
       3. Generate password for "plorp"
       4. Copy 16-char password to config
     """
-    from plorp.integrations.email_imap import (
+    from brainplorp.integrations.email_imap import (
         connect_gmail,
         fetch_unread_emails,
         convert_email_body_to_bullets,
         mark_emails_as_seen,
         disconnect,
     )
-    from plorp.core.inbox import append_emails_to_inbox
+    from brainplorp.core.inbox import append_emails_to_inbox
 
     try:
         config = load_config()
@@ -798,7 +798,7 @@ def project(ctx):
 @click.pass_context
 def project_create(ctx, name, domain, workstream, state, description):
     """Create a new project."""
-    from plorp.core.projects import create_project
+    from brainplorp.core.projects import create_project
 
     try:
         project = create_project(
@@ -821,7 +821,7 @@ def project_create(ctx, name, domain, workstream, state, description):
 @click.pass_context
 def project_list(ctx, domain, state):
     """List projects."""
-    from plorp.core.projects import list_projects
+    from brainplorp.core.projects import list_projects
 
     result = list_projects(domain=domain, state=state)
 
@@ -841,7 +841,7 @@ def project_list(ctx, domain, state):
 @click.pass_context
 def project_info(ctx, full_path):
     """Show project details."""
-    from plorp.core.projects import get_project_info
+    from brainplorp.core.projects import get_project_info
 
     project = get_project_info(full_path)
 
@@ -873,7 +873,7 @@ def project_sync_all(ctx):
     config = load_config()
     vault_path = Path(config["vault_path"]).expanduser().resolve()
 
-    from plorp.core.projects import sync_all_projects
+    from brainplorp.core.projects import sync_all_projects
 
     try:
         console.print("[yellow]🔄 Syncing all project notes...[/yellow]")
@@ -904,7 +904,7 @@ def focus(ctx):
 @click.pass_context
 def focus_set(ctx, domain):
     """Set focused domain."""
-    from plorp.core.projects import set_focused_domain_cli
+    from brainplorp.core.projects import set_focused_domain_cli
 
     set_focused_domain_cli(domain)
     click.echo(f"✓ Focused on domain: {domain}")
@@ -914,7 +914,7 @@ def focus_set(ctx, domain):
 @click.pass_context
 def focus_get(ctx):
     """Get current focused domain."""
-    from plorp.core.projects import get_focused_domain_cli
+    from brainplorp.core.projects import get_focused_domain_cli
 
     domain = get_focused_domain_cli()
     click.echo(f"Current focus: {domain}")

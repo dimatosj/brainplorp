@@ -3,7 +3,7 @@
 """Tests for file utilities."""
 import pytest
 from pathlib import Path
-from plorp.utils.files import read_file, write_file, ensure_directory
+from brainplorp.utils.files import read_file, write_file, ensure_directory
 
 
 def test_write_and_read_file(tmp_path):

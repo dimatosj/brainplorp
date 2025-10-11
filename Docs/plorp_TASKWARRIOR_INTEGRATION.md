@@ -1,4 +1,4 @@
-# plorp - TaskWarrior Integration Guide
+# brainplorp - TaskWarrior Integration Guide
 
 **Date:** October 6, 2025
 **Purpose:** Comprehensive guide to TaskWarrior 3.x integration

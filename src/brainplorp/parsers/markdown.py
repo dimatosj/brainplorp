@@ -200,7 +200,7 @@ def mark_item_processed(inbox_path: Path, item_text: str, action: str) -> None:
         ...     'Created task (uuid: abc-123)'
         ... )
     """
-    from plorp.utils.files import read_file, write_file
+    from brainplorp.utils.files import read_file, write_file
 
     content = read_file(inbox_path)
 
@@ -308,8 +308,8 @@ def add_task_to_note_frontmatter(note_path: Path, task_uuid: str) -> None:
         >>> add_task_to_note_frontmatter(Path('notes/meeting.md'), 'abc-123')
         # Note now has tasks: [abc-123] in front matter
     """
-    from plorp.utils.files import read_file, write_file
-    from plorp.integrations.taskwarrior import get_task_info
+    from brainplorp.utils.files import read_file, write_file
+    from brainplorp.integrations.taskwarrior import get_task_info
 
     # Validate task exists (per Q3 answer)
     task = get_task_info(task_uuid)
@@ -346,7 +346,7 @@ def remove_task_from_note_frontmatter(note_path: Path, task_uuid: str) -> None:
     Example:
         >>> remove_task_from_note_frontmatter(Path('notes/meeting.md'), 'abc-123')
     """
-    from plorp.utils.files import read_file, write_file
+    from brainplorp.utils.files import read_file, write_file
 
     content = read_file(note_path)
     fm = parse_frontmatter(content)

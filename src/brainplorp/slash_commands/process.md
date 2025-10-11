@@ -1,4 +1,4 @@
-Use plorp MCP tools to process informal tasks in my daily note. Two-step workflow to convert informal checkboxes into TaskWarrior tasks.
+Use brainplorp MCP tools to process informal tasks in my daily note. Two-step workflow to convert informal checkboxes into TaskWarrior tasks.
 
 Steps:
 1. Call `plorp_process_daily_note` to start the workflow

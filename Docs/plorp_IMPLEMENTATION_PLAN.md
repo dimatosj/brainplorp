@@ -1,4 +1,4 @@
-# plorp Implementation Plan
+# brainplorp Implementation Plan
 
 **Date:** October 6, 2025
 **Purpose:** Phase-by-phase build plan for plorp
@@ -116,7 +116,7 @@ dependencies = [
 ]
 
 [project.scripts]
-plorp = "plorp.cli:cli"
+brainplorp = "plorp.cli:cli"
 
 [project.optional-dependencies]
 dev = [
@@ -153,13 +153,13 @@ pip install -e .
 
 ```bash
 # Generate daily note
-plorp start
+brainplorp start
 
 # Review incomplete tasks
-plorp review
+brainplorp review
 
 # Process inbox
-plorp inbox process
+brainplorp inbox process
 ```
 
 ## Documentation
@@ -188,7 +188,7 @@ git commit -m "Initial project structure for plorp"
 
 **Duration:** 2-3 days
 
-**Goal:** `plorp start` generates daily note from TaskWarrior
+**Goal:** `brainplorp start` generates daily note from TaskWarrior
 
 ### Tasks
 
@@ -273,7 +273,7 @@ def start(config)
 **Test:**
 ```bash
 # Manual test
-plorp start
+brainplorp start
 
 # Should output:
 # ✅ Daily note generated
@@ -307,8 +307,8 @@ task add "Test task 1" due:today
 task add "Test task 2" due:yesterday
 task add "Test recurring" due:today recur:daily
 
-# Run plorp start
-plorp start
+# Run brainplorp start
+brainplorp start
 
 # Verify daily note exists
 ls ~/vault/daily/$(date +%Y-%m-%d).md
@@ -324,7 +324,7 @@ task "Test recurring" delete
 
 ### Deliverables
 
-- ✅ `plorp start` command works
+- ✅ `brainplorp start` command works
 - ✅ Queries TaskWarrior for tasks
 - ✅ Generates daily note in vault/daily/
 - ✅ Tests pass
@@ -334,7 +334,7 @@ task "Test recurring" delete
 
 ```bash
 # User can run:
-plorp start
+brainplorp start
 
 # And get:
 # - vault/daily/YYYY-MM-DD.md created
@@ -350,7 +350,7 @@ plorp start
 
 **Duration:** 2-3 days
 
-**Goal:** `plorp review` processes incomplete tasks interactively
+**Goal:** `brainplorp review` processes incomplete tasks interactively
 
 ### Tasks
 
@@ -457,10 +457,10 @@ def review(config)
 # Setup
 task add "Test review 1" due:today
 task add "Test review 2" due:today
-plorp start
+brainplorp start
 
 # Run review (manually mark done, defer, etc.)
-plorp review
+brainplorp review
 
 # Verify TaskWarrior updated
 task list
@@ -471,7 +471,7 @@ cat ~/vault/daily/$(date +%Y-%m-%d).md | grep "Review Section"
 
 ### Deliverables
 
-- ✅ `plorp review` command works
+- ✅ `brainplorp review` command works
 - ✅ Parses daily note for uncompleted tasks
 - ✅ Interactive prompts for each task
 - ✅ Updates TaskWarrior based on decisions
@@ -481,7 +481,7 @@ cat ~/vault/daily/$(date +%Y-%m-%d).md | grep "Review Section"
 
 ```bash
 # User can run:
-plorp review
+brainplorp review
 
 # And get:
 # - Interactive prompts for each uncompleted task
@@ -496,7 +496,7 @@ plorp review
 
 **Duration:** 3-4 days
 
-**Goal:** `plorp inbox process` converts inbox items to tasks/notes
+**Goal:** `brainplorp inbox process` converts inbox items to tasks/notes
 
 ### Tasks
 
@@ -578,7 +578,7 @@ def inbox(config, subcommand)
 ```python
 #!/usr/bin/env python3
 """
-Email capture script for plorp inbox.
+Email capture script for brainplorp inbox.
 Run via cron: */30 * * * * ~/plorp/scripts/email_to_inbox.py
 """
 import imaplib
@@ -622,7 +622,7 @@ cat > ~/vault/inbox/2025-10.md << 'EOF'
 EOF
 
 # Run inbox processing
-plorp inbox process
+brainplorp inbox process
 # Interactively choose: task, note, discard
 
 # Verify tasks created
@@ -637,7 +637,7 @@ cat ~/vault/inbox/2025-10.md | grep "Processed"
 
 ### Deliverables
 
-- ✅ `plorp inbox process` command works
+- ✅ `brainplorp inbox process` command works
 - ✅ Reads monthly inbox file
 - ✅ Interactive prompts for each item
 - ✅ Creates tasks in TaskWarrior
@@ -649,7 +649,7 @@ cat ~/vault/inbox/2025-10.md | grep "Processed"
 
 ```bash
 # User can run:
-plorp inbox process
+brainplorp inbox process
 
 # And get:
 # - Interactive prompts for each unprocessed item
@@ -749,13 +749,13 @@ if notes:
 
 ```bash
 # Create task
-task add "Write documentation" project:plorp due:today
+task add "Write documentation" project:brainplorp due:today
 
 # Get UUID (assuming it's abc-123)
 TASK_UUID=$(task export | jq -r '.[0].uuid')
 
 # Create linked note
-plorp note "Documentation Plan" --task $TASK_UUID
+brainplorp note "Documentation Plan" --task $TASK_UUID
 
 # Verify note has UUID in front matter
 cat ~/vault/notes/documentation-plan-*.md | grep $TASK_UUID
@@ -764,21 +764,21 @@ cat ~/vault/notes/documentation-plan-*.md | grep $TASK_UUID
 task $TASK_UUID info | grep "Note:"
 
 # Link existing note
-plorp link $TASK_UUID ~/vault/notes/existing-note.md
+brainplorp link $TASK_UUID ~/vault/notes/existing-note.md
 
 # Verify bidirectional link
 task $TASK_UUID info
 cat ~/vault/notes/existing-note.md | head -10
 
 # Test in review workflow
-plorp review
+brainplorp review
 # Should show linked notes for task
 ```
 
 ### Deliverables
 
-- ✅ `plorp note` command creates notes
-- ✅ `plorp link` command links existing notes
+- ✅ `brainplorp note` command creates notes
+- ✅ `brainplorp link` command links existing notes
 - ✅ Bidirectional linking works
 - ✅ Note front matter includes task UUIDs
 - ✅ TaskWarrior annotations include note paths
@@ -789,13 +789,13 @@ plorp review
 ```bash
 # User can:
 # 1. Create note linked to task
-plorp note "Meeting Notes" --task abc-123
+brainplorp note "Meeting Notes" --task abc-123
 
 # 2. Link existing note to task
-plorp link abc-123 vault/notes/existing.md
+brainplorp link abc-123 vault/notes/existing.md
 
 # 3. See links in review
-plorp review
+brainplorp review
 # Shows: "Linked notes: vault/notes/meeting-notes.md"
 
 # 4. Verify in TaskWarrior
@@ -860,7 +860,7 @@ def start(config):
     Creates: vault/daily/YYYY-MM-DD.md
 
     Example:
-        plorp start
+        brainplorp start
     """
     # ...
 ```
@@ -890,9 +890,9 @@ def config(subcommand, key, value):
     Show or edit configuration.
 
     Examples:
-        plorp config show
-        plorp config set vault_path ~/Documents/vault
-        plorp config get vault_path
+        brainplorp config show
+        brainplorp config set vault_path ~/Documents/vault
+        brainplorp config get vault_path
     """
     cfg = load_config()
 
@@ -917,7 +917,7 @@ def config(subcommand, key, value):
 #!/bin/bash
 set -e
 
-echo "🚀 plorp Installation"
+echo "🚀 brainplorp Installation"
 echo "========================"
 echo ""
 
@@ -944,19 +944,19 @@ pip install -e .
 # Create config
 echo ""
 echo "Creating config..."
-plorp config set vault_path ~/vault
+brainplorp config set vault_path ~/vault
 
 # Test installation
 echo ""
 echo "Testing installation..."
-plorp --version
+brainplorp --version
 
 echo ""
 echo "✅ Installation complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Run: plorp config show"
-echo "  2. Run: plorp start"
+echo "  1. Run: brainplorp config show"
+echo "  2. Run: brainplorp start"
 echo "  3. Read: docs/GETTING_STARTED.md"
 ```
 
@@ -969,7 +969,7 @@ echo "  3. Read: docs/GETTING_STARTED.md"
 pytest tests/ -v
 
 # Coverage
-pytest tests/ --cov=src/plorp --cov-report=html
+pytest tests/ --cov=src/brainplorp --cov-report=html
 
 # Manual integration tests
 ./tests/integration/test_full_workflow.sh
@@ -982,7 +982,7 @@ pytest tests/ --cov=src/plorp --cov-report=html
 **Tag release:**
 
 ```bash
-git tag -a v1.0.0 -m "plorp v1.0.0 - Workflow layer on TaskWarrior + Obsidian"
+git tag -a v1.0.0 -m "brainplorp v1.0.0 - Workflow layer on TaskWarrior + Obsidian"
 git push origin v1.0.0
 ```
 
@@ -1003,17 +1003,17 @@ git push origin v1.0.0
 ./scripts/install.sh
 
 # 2. Configure
-plorp config show
-plorp config set vault_path ~/my-vault
+brainplorp config show
+brainplorp config set vault_path ~/my-vault
 
 # 3. Use
-plorp start
-plorp review
-plorp inbox process
+brainplorp start
+brainplorp review
+brainplorp inbox process
 
 # 4. Get help
-plorp --help
-plorp start --help
+brainplorp --help
+brainplorp start --help
 
 # 5. Troubleshoot
 cat docs/TROUBLESHOOTING.md
@@ -1094,14 +1094,14 @@ def test_create_and_query_task(mock_run):
 #!/bin/bash
 set -e
 
-echo "Testing full plorp workflow..."
+echo "Testing full brainplorp workflow..."
 
 # Setup
 task add "Integration test 1" due:today project:test
 task add "Integration test 2" due:yesterday project:test
 
 # Test start
-plorp start
+brainplorp start
 TODAY=$(date +%Y-%m-%d)
 if [ ! -f ~/vault/daily/$TODAY.md ]; then
     echo "❌ Daily note not created"
@@ -1110,7 +1110,7 @@ fi
 echo "✅ Daily note created"
 
 # Test review (automated input)
-echo -e "1\n1\nq\n" | plorp review
+echo -e "1\n1\nq\n" | brainplorp review
 echo "✅ Review completed"
 
 # Cleanup
@@ -1152,7 +1152,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests/ --cov=src/plorp --cov-report=xml
+        pytest tests/ --cov=src/brainplorp --cov-report=xml
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
@@ -1194,8 +1194,8 @@ jobs:
 
 | Phase | Duration | Focus |
 |-------|----------|-------|
-| Phase 0+1 | 1 day | Setup + plorp start |
-| Phase 2 | 1 day | plorp review (basic) |
+| Phase 0+1 | 1 day | Setup + brainplorp start |
+| Phase 2 | 1 day | brainplorp review (basic) |
 | Test | 1 day | Use in real workflow |
 
 **MVP: 3 days** (start + review only)
@@ -1212,7 +1212,7 @@ Then iterate:
 ### Phase 1 Success
 
 ```bash
-✅ plorp start works
+✅ brainplorp start works
 ✅ Daily note generated
 ✅ Contains tasks from TaskWarrior
 ✅ I can use it every morning
@@ -1221,7 +1221,7 @@ Then iterate:
 ### Phase 2 Success
 
 ```bash
-✅ plorp review works
+✅ brainplorp review works
 ✅ Processes incomplete tasks
 ✅ Updates TaskWarrior
 ✅ I can use it every evening
@@ -1230,7 +1230,7 @@ Then iterate:
 ### Phase 3 Success
 
 ```bash
-✅ plorp inbox process works
+✅ brainplorp inbox process works
 ✅ Converts inbox items to tasks/notes
 ✅ I can process inbox weekly
 ```
@@ -1257,24 +1257,24 @@ Then iterate:
 
 ```bash
 # Morning
-plorp start
+brainplorp start
 # → Daily note generated
 
 # During day
 # → Work in Obsidian, check off tasks
 
 # Evening
-plorp review
+brainplorp review
 # → Process incomplete items
 
 # Weekly
-plorp inbox process
+brainplorp inbox process
 # → Convert inbox to tasks/notes
 ```
 
 **Integration works:**
 - Tasks in TaskWarrior show in plorp
-- Tasks created in plorp show in TaskWarrior
+- Tasks created in brainplorp show in TaskWarrior
 - Notes link to tasks bidirectionally
 - Native TaskWarrior commands still work
 
@@ -1295,7 +1295,7 @@ plorp inbox process
 1. **Review implementation plan**
 2. **Start Phase 0** - Set up project structure
 3. **Begin Phase 1** - Build core daily workflow
-4. **Test with real workflow** - Use plorp for actual daily work
+4. **Test with real workflow** - Use brainplorp for actual daily work
 5. **Iterate** - Add features based on real usage
 
 ---

@@ -10,10 +10,10 @@
 
 ## Prerequisites
 
-- plorp v1.5.0 installed
+- brainplorp v1.5.0 installed
 - Obsidian vault configured at `~/.config/plorp/config.yaml`
 - Test vault with sample notes in multiple folders
-- Claude Desktop with plorp MCP server configured
+- Claude Desktop with brainplorp MCP server configured
 
 ---
 
@@ -21,7 +21,7 @@
 
 ```bash
 # Verify version
-plorp --version  # Should show 1.5.0
+brainplorp --version  # Should show 1.5.0
 
 # Check MCP server is configured
 cat ~/.config/claude/config.json | grep plorp-mcp

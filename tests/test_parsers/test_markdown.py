@@ -4,7 +4,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import patch
-from plorp.parsers.markdown import (
+from brainplorp.parsers.markdown import (
     parse_daily_note_tasks,
     parse_frontmatter,
     extract_task_uuids_from_note,
@@ -425,7 +425,7 @@ def test_add_frontmatter_field_create_frontmatter():
     assert "# Just a title" in updated
 
 
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_add_task_to_note_frontmatter_new(mock_task_info, tmp_path):
     """Test adding task UUID to note without tasks field."""
     mock_task_info.return_value = {"uuid": "abc-123", "description": "Test task"}
@@ -446,7 +446,7 @@ title: Meeting Notes
     assert "- abc-123" in updated
 
 
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_add_task_to_note_frontmatter_existing(mock_task_info, tmp_path):
     """Test adding task UUID to note with existing tasks."""
     mock_task_info.return_value = {"uuid": "abc-123", "description": "Test task"}
@@ -469,7 +469,7 @@ Content
     assert "- def-456" in updated
 
 
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_add_task_to_note_frontmatter_duplicate(mock_task_info, tmp_path):
     """Test that duplicate UUIDs are not added."""
     mock_task_info.return_value = {"uuid": "abc-123", "description": "Test task"}

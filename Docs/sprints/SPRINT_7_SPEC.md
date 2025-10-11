@@ -33,7 +33,7 @@
 
 ## Overview
 
-Add `/process` command to plorp that identifies freeform tasks anywhere in daily notes, proposes TaskWarrior metadata in a review section, and creates formal tasks after user approval.
+Add `/process` command to brainplorp that identifies freeform tasks anywhere in daily notes, proposes TaskWarrior metadata in a review section, and creates formal tasks after user approval.
 
 ## Goals
 
@@ -66,7 +66,7 @@ Had a thought during standup
 
 ### Step 2: User Runs `/process` (First Time)
 
-plorp scans entire document, finds 3 informal tasks, creates proposals:
+brainplorp scans entire document, finds 3 informal tasks, creates proposals:
 
 ```markdown
 # 2025-10-07 Monday
@@ -339,7 +339,7 @@ class ProcessError(TypedDict):
 - Preserve rejected tasks in original locations
 
 ### Phase 6: CLI & MCP Integration
-- Add `plorp process` CLI command
+- Add `brainplorp process` CLI command
 - Add `plorp_process_daily_note` MCP tool
 - Create `/process` slash command
 - Add comprehensive error handling
@@ -408,7 +408,7 @@ If creating task fails during Step 2:
   - <!-- NEEDS_REVIEW: TaskWarrior error: Could not create task. Reason: [error message] -->
 ```
 
-plorp continues processing other tasks, marks this one for review, keeps TBD section.
+brainplorp continues processing other tasks, marks this one for review, keeps TBD section.
 
 ### Batch Processing with Error Pause
 
@@ -512,7 +512,7 @@ Adding new metadata just extends the parsers, not the core types.
 
 ```bash
 # Step 1: Generate proposals
-plorp process
+brainplorp process
 
 # Output:
 # ✅ Found 3 informal tasks
@@ -523,7 +523,7 @@ plorp process
 # User edits daily note...
 
 # Step 2: Create tasks
-plorp process
+brainplorp process
 
 # Output:
 # ✅ Created 2 tasks in TaskWarrior
@@ -747,7 +747,7 @@ def test_full_workflow_with_errors(tmp_path):
 - [ ] Keeps `## TBD Processing` section when NEEDS_REVIEW items exist
 - [ ] Removes `## TBD Processing` section when all tasks processed successfully
 - [ ] Handles errors gracefully (NEEDS_REVIEW markers, batch processing continues)
-- [ ] Works via both CLI (`plorp process`) and MCP (`/process`)
+- [ ] Works via both CLI (`brainplorp process`) and MCP (`/process`)
 - [ ] Batch processes with error pause
 - [ ] No technical debt for future project/tag features
 - [ ] Comprehensive test coverage for all date patterns
@@ -779,7 +779,7 @@ All questions answered by PM review.
 ---
 
 ### Q2: Should `/process` work on arbitrary dates or only today?
-**Answer:** Start with today only (`plorp process` defaults to today's note). Add `--date` flag in future if needed.
+**Answer:** Start with today only (`brainplorp process` defaults to today's note). Add `--date` flag in future if needed.
 
 **Rationale:** Primary use case is processing today's informal tasks. Arbitrary dates add complexity without clear benefit.
 
@@ -1440,7 +1440,7 @@ proposal_text = f"Original location: {section} (line {task.line_number + 1})"
 - ✅ Phase 0: Types and exceptions
 - ✅ Phase 1: NLP parser (dates, priority, clean descriptions)
 - ✅ Phase 2: Core process functions (Step 1 AND Step 2)
-- ✅ Phase 3: CLI integration (`plorp process` with auto step detection)
+- ✅ Phase 3: CLI integration (`brainplorp process` with auto step detection)
 - ✅ Phase 4: MCP integration (`plorp_process_daily_note` tool + `/process` slash command)
 
 **Deviations from Spec:**
@@ -1571,7 +1571,7 @@ When implementing Step 2, you'll need:
 - ✅ Preserve rejected [N] tasks in original locations
 
 ### CLI Integration (✅ Complete)
-- ✅ `plorp process` command with automatic step detection
+- ✅ `brainplorp process` command with automatic step detection
 - ✅ Step 1: Runs when no TBD section exists
 - ✅ Step 2: Runs when TBD section detected
 - ✅ Rich console output with status messages
@@ -1627,4 +1627,4 @@ When implementing Step 2, you'll need:
 
 **Sprint 7: COMPLETE AND DEPLOYED**
 
-Both CLI (`plorp process`) and MCP (`/process` in Claude Desktop) are fully functional and production-ready.
+Both CLI (`brainplorp process`) and MCP (`/process` in Claude Desktop) are fully functional and production-ready.

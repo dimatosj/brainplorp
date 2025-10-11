@@ -9,13 +9,13 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from plorp.integrations.obsidian import create_note, get_vault_path
-from plorp.integrations.taskwarrior import (
+from brainplorp.integrations.obsidian import create_note, get_vault_path
+from brainplorp.integrations.taskwarrior import (
     add_annotation,
     get_task_info,
     get_task_annotations,
 )
-from plorp.parsers.markdown import (
+from brainplorp.parsers.markdown import (
     add_task_to_note_frontmatter,
     extract_task_uuids_from_note,
 )
@@ -161,7 +161,7 @@ def unlink_note_from_task(note_path: Path, task_uuid: str) -> None:
     Example:
         >>> unlink_note_from_task(Path('notes/old-meeting.md'), 'abc-123')
     """
-    from plorp.parsers.markdown import remove_task_from_note_frontmatter
+    from brainplorp.parsers.markdown import remove_task_from_note_frontmatter
 
     if not note_path.exists():
         raise FileNotFoundError(f"Note not found: {note_path}")

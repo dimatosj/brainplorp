@@ -9,7 +9,7 @@ from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from plorp.core.daily import (
+from brainplorp.core.daily import (
     start_day,
     _normalize_task,
     _is_overdue,
@@ -18,7 +18,7 @@ from plorp.core.daily import (
     _format_daily_note,
     _format_task_checkbox,
 )
-from plorp.core.exceptions import VaultNotFoundError, DailyNoteExistsError
+from brainplorp.core.exceptions import VaultNotFoundError, DailyNoteExistsError
 
 
 def test_start_day_creates_note(tmp_path):
@@ -26,7 +26,7 @@ def test_start_day_creates_note(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.daily.get_tasks") as mock_tasks:
+    with patch("brainplorp.core.daily.get_tasks") as mock_tasks:
         mock_tasks.return_value = [
             {
                 "uuid": "abc-123",
@@ -70,7 +70,7 @@ def test_start_day_raises_on_existing_note(tmp_path):
     existing_note = daily_dir / "2025-10-06.md"
     existing_note.write_text("# Existing")
 
-    from plorp.core.exceptions import DailyNoteExistsError
+    from brainplorp.core.exceptions import DailyNoteExistsError
 
     with pytest.raises(DailyNoteExistsError) as exc:
         start_day(date(2025, 10, 6), vault)
@@ -94,7 +94,7 @@ def test_start_day_empty_task_list(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.daily.get_tasks") as mock_tasks:
+    with patch("brainplorp.core.daily.get_tasks") as mock_tasks:
         mock_tasks.return_value = []
 
         result = start_day(date(2025, 10, 6), vault)
@@ -112,7 +112,7 @@ def test_start_day_categorizes_overdue_tasks(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.daily.get_tasks") as mock_tasks:
+    with patch("brainplorp.core.daily.get_tasks") as mock_tasks:
         mock_tasks.return_value = [
             {
                 "uuid": "overdue-1",
@@ -138,7 +138,7 @@ def test_start_day_recurring_only_when_due(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.daily.get_tasks") as mock_tasks:
+    with patch("brainplorp.core.daily.get_tasks") as mock_tasks:
         # Recurring task not due today should not appear
         mock_tasks.return_value = [
             {

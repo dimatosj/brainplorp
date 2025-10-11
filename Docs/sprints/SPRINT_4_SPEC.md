@@ -23,7 +23,7 @@
 
 ### Goal
 
-Implement the `plorp inbox process` command that provides an interactive workflow for processing captured inbox items (typically from email) and converting them into TaskWarrior tasks or Obsidian notes.
+Implement the `brainplorp inbox process` command that provides an interactive workflow for processing captured inbox items (typically from email) and converting them into TaskWarrior tasks or Obsidian notes.
 
 ### What You're Building
 
@@ -34,7 +34,7 @@ The inbox processing system with:
 - Task creation from inbox items
 - Note creation from inbox items
 - Marking items as processed in the inbox file
-- CLI command wiring for `plorp inbox process`
+- CLI command wiring for `brainplorp inbox process`
 
 ### What You're NOT Building
 
@@ -51,7 +51,7 @@ The inbox processing system with:
 You are implementing Sprint 4 for plorp, a workflow automation tool for TaskWarrior and Obsidian.
 
 PROJECT CONTEXT:
-- plorp is a Python CLI tool that bridges TaskWarrior and Obsidian
+- brainplorp is a Python CLI tool that bridges TaskWarrior and Obsidian
 - This is Sprint 4: You're building the inbox processing workflow
 - Sprint 0 is complete: Project structure and test infrastructure ready
 - Sprint 1 is complete: TaskWarrior integration available
@@ -1100,7 +1100,7 @@ def inbox(ctx, subcommand):
     """Process inbox items."""
     if subcommand != 'process':
         click.echo(f"❌ Unknown inbox subcommand: {subcommand}")
-        click.echo("💡 Available: plorp inbox process")
+        click.echo("💡 Available: brainplorp inbox process")
         ctx.exit(1)
 
     config = load_config()
@@ -1227,7 +1227,7 @@ cat > ~/vault/inbox/$(date +%Y-%m).md << 'EOF'
 EOF
 
 # 5. Run inbox processing (interactive)
-plorp inbox process
+brainplorp inbox process
 # → Shows items
 # → Prompts for actions
 # → Creates tasks/notes
@@ -1240,7 +1240,7 @@ cat ~/vault/inbox/$(date +%Y-%m).md
 
 # 7. Test empty inbox
 # Process all items first, then:
-plorp inbox process
+brainplorp inbox process
 # → Shows "Inbox is empty!"
 ```
 
@@ -1301,7 +1301,7 @@ head -2 src/plorp/workflows/inbox.py
 
 1. **Sprint 3 dependency made required (Q1):** Updated from "optional but helpful" to hard dependency. Removed try/except ImportError handling for prompts module.
 
-2. **Inbox file auto-creation (Q3):** Implemented automatic creation of inbox file with proper structure when user runs `plorp inbox process` for the first time.
+2. **Inbox file auto-creation (Q3):** Implemented automatic creation of inbox file with proper structure when user runs `brainplorp inbox process` for the first time.
 
 3. **Shorter timestamp format (Q7):** Used date-only format for note filenames (`YYYY-MM-DD`) instead of full timestamp. Counter suffix for same-day duplicates.
 
@@ -1324,7 +1324,7 @@ source venv/bin/activate
 pytest tests/test_integrations/test_obsidian.py tests/test_workflows/test_inbox.py tests/test_parsers/test_markdown.py -v
 
 # Check coverage
-pytest tests/ --cov=src/plorp --cov-report=term
+pytest tests/ --cov=src/brainplorp --cov-report=term
 
 # Format check
 black --check src/plorp/integrations/obsidian.py src/plorp/workflows/inbox.py src/plorp/parsers/markdown.py
@@ -1339,7 +1339,7 @@ python3 -c "from plorp.integrations.obsidian import create_note, generate_slug, 
 - Sprint 4 modules: obsidian (100%), inbox (90%), markdown (98%)
 - All code properly formatted with black
 - All imports successful
-- CLI command `plorp inbox process` works end-to-end
+- CLI command `brainplorp inbox process` works end-to-end
 
 ### Known Issues
 
@@ -1451,9 +1451,9 @@ Q: The spec assumes inbox files exist with the correct structure (## Unprocessed
    a) Provide a helper function to create/initialize inbox files
    b) Have process() auto-create the structure if file exists but sections are missing
    c) Require users to manually create files with correct structure
-   d) Add a `plorp inbox init` command to create the current month's file
+   d) Add a `brainplorp inbox init` command to create the current month's file
 
-Context: User experience - if they run `plorp inbox process` and the file doesn't
+Context: User experience - if they run `brainplorp inbox process` and the file doesn't
 exist, the error message suggests creating it manually. Should we make this easier?
 
 Status: PENDING
@@ -1614,7 +1614,7 @@ Q: Should we auto-create inbox structure?
 A: Yes, auto-create on first use.
 
    Implementation:
-   When user runs `plorp inbox process`:
+   When user runs `brainplorp inbox process`:
    1. Check if inbox file exists (vault/inbox/YYYY-MM.md)
    2. If not exists, auto-create with proper structure:
       ```markdown

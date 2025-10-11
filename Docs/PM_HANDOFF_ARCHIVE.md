@@ -171,7 +171,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 - Created initial Sprint 8.6 spec v1.0.0 (1,541 lines)
 - **ARCHITECTURAL FLAW IDENTIFIED:**
   - Had "Task Rendering" as manual user feature
-  - Included `plorp project render` command
+  - Included `brainplorp project render` command
   - This was feature compensation for incomplete State Sync
 
 **Phase 3: Architectural Correction (17:00-17:30)**
@@ -204,7 +204,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
   - For debugging and recovery
   - For scheduled maintenance (optional cron)
 - **Implementation:**
-  - `plorp sync-all` CLI command
+  - `brainplorp sync-all` CLI command
   - `plorp_sync_all_projects()` MCP tool
   - Iterates all projects, calls `_sync_project_task_section()` for each
   - Idempotent (safe to run multiple times)
@@ -269,7 +269,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 **Next Session Must:**
 1. Oversee Sprint 8.6 implementation (13-18 hours)
 2. Verify State Sync pattern enforced (all three surfaces in sync)
-3. Test `plorp sync-all` command (idempotent, error handling)
+3. Test `brainplorp sync-all` command (idempotent, error handling)
 4. After 8.6 complete, kick off Sprint 9 (general note management)
 
 **Notes for Next PM:**
@@ -289,7 +289,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 
 **Phase 1: Sprint 8 Interaction Review (13:00-13:30)**
 - User asked: "where and how does v1.4.0 interact with obsidian bases?"
-- Explained file-based integration: plorp writes markdown with YAML frontmatter, Obsidian Bases reads it
+- Explained file-based integration: brainplorp writes markdown with YAML frontmatter, Obsidian Bases reads it
 - No direct API calls - clean separation of concerns
 
 **Phase 2: Obsidian Bases Configuration Attempt (13:30-13:45)**
@@ -313,7 +313,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 - Examples: "read all docs in folder", "update readme", "read all SEO notes and report back"
 - **Critical question answered:** MCP tool results DO enter Claude's context (just like Claude Code)
 - Created comprehensive Sprint 9 spec (1,214 lines)
-  - Vision: Transform plorp from task manager → general vault interface
+  - Vision: Transform brainplorp from task manager → general vault interface
   - MCP-first architecture with context management strategy
   - 12 new MCP tools, 80+ tests
   - 3-phase implementation (Core I/O, Pattern Matching, Workflows)
@@ -390,7 +390,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 1. MCP tool results enter Claude's context (200k token budget) - works like Claude Code's Read tool
 2. Obsidian Bases queries note-level properties (YAML frontmatter), cannot track inline checkboxes
 3. TaskWarrior's urgency algorithm (15+ coefficients) cannot be easily replicated
-4. File-based integration (plorp → markdown → Obsidian) is clean separation of concerns
+4. File-based integration (brainplorp → markdown → Obsidian) is clean separation of concerns
 
 **Open Questions for Sprint 8.5:**
 - Q1: Checkbox sync always-on vs opt-in? (Recommendation: Always-on)
@@ -679,7 +679,7 @@ This file contains historical sessions from PM_HANDOFF.md that have been archive
 **Sprint 8 Deliverables:**
 - Full project management via Obsidian Bases
 - 9 MCP tools (`create_project`, `list_projects`, `get_project_info`, `update_project_state`, `delete_project`, `create_task_in_project`, `list_project_tasks`, `set_focused_domain`, `get_focused_domain`)
-- CLI commands (`plorp project create/list/info`, `plorp focus set/get`)
+- CLI commands (`brainplorp project create/list/info`, `brainplorp focus set/get`)
 - Domain focus mechanism (persistent across sessions)
 - TaskWarrior native filtering integration
 - 38 tests passing, ~2,158 lines code

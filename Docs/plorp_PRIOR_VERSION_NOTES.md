@@ -1,4 +1,4 @@
-# plorp - Prior Version Notes
+# brainplorp - Prior Version Notes
 
 **Purpose:** Reference documentation for features from a prior iteration that were intentionally not carried forward into the current implementation.
 
@@ -6,7 +6,7 @@
 
 ## Context
 
-This is plorp V1 - a fresh start. These notes capture what existed in a previous system to inform future decisions if needed.
+This is brainplorp V1 - a fresh start. These notes capture what existed in a previous system to inform future decisions if needed.
 
 ---
 
@@ -63,12 +63,12 @@ This is plorp V1 - a fresh start. These notes capture what existed in a previous
 
 **Previous approach:** Custom SQLite database (`plorp_claude.db` or similar)
 
-**Current decision:** No plorp database
+**Current decision:** No brainplorp database
 
 **Rationale:**
 - TaskWarrior already has SQLite database
 - Obsidian stores notes in markdown
-- plorp is stateless orchestration layer
+- brainplorp is stateless orchestration layer
 - Eliminates sync/consistency issues
 
 ### 3. Domain Switching - Not Implemented

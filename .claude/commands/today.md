@@ -1,3 +1,3 @@
-Run the command: `plorp tasks --due today`
+Run the command: `brainplorp tasks --due today`
 
 Display tasks due today.

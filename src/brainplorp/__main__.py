@@ -3,7 +3,7 @@
 """
 Entry point for python -m plorp
 """
-from plorp.cli import cli
+from brainplorp.cli import cli
 
 if __name__ == "__main__":
     cli()

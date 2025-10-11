@@ -23,7 +23,7 @@
 
 ### Goal
 
-Implement the `plorp start` command that queries TaskWarrior and generates a formatted daily note in Obsidian with all relevant tasks. This is the first core workflow and will be used daily by plorp users.
+Implement the `brainplorp start` command that queries TaskWarrior and generates a formatted daily note in Obsidian with all relevant tasks. This is the first core workflow and will be used daily by brainplorp users.
 
 ### What You're Building
 
@@ -33,7 +33,7 @@ The daily note generation system with:
 - Daily workflow (query tasks, generate markdown)
 - Markdown generation with YAML front matter
 - Task formatting as checkboxes with UUIDs
-- CLI command wiring for `plorp start`
+- CLI command wiring for `brainplorp start`
 - Comprehensive tests with mocked TaskWarrior
 
 ### What You're NOT Building
@@ -51,7 +51,7 @@ The daily note generation system with:
 You are implementing Sprint 2 for plorp, a workflow automation tool for TaskWarrior and Obsidian.
 
 PROJECT CONTEXT:
-- plorp is a Python CLI tool that bridges TaskWarrior and Obsidian
+- brainplorp is a Python CLI tool that bridges TaskWarrior and Obsidian
 - This is Sprint 2: You're building the daily note generation workflow
 - Sprint 0 is complete: Project structure and test infrastructure ready
 - Sprint 1 is complete: TaskWarrior integration available
@@ -100,7 +100,7 @@ When done, fill out the Completion Report Template section in this document with
 **File:** `src/plorp/config.py`
 
 ```python
-# ABOUTME: Configuration management for plorp - loads user settings from YAML config file
+# ABOUTME: Configuration management for brainplorp - loads user settings from YAML config file
 # ABOUTME: Handles default config creation, loading, saving, and merging with defaults
 """
 Configuration management for plorp.
@@ -721,7 +721,7 @@ plorp_version: 1.0
         content += "\n"
 
     content += "---\n\n## Notes\n\n[Your thoughts, observations, decisions during the day]\n\n"
-    content += "---\n\n## Review Section\n\n<!-- Auto-populated by `plorp review` -->\n"
+    content += "---\n\n## Review Section\n\n<!-- Auto-populated by `brainplorp review` -->\n"
 
     return content
 
@@ -1105,10 +1105,10 @@ pytest tests/test_config.py tests/test_utils/ tests/test_workflows/test_daily.py
 
 ```bash
 # 4. CLI command works
-plorp --help
+brainplorp --help
 # → Shows updated help with start command
 
-plorp start --help
+brainplorp start --help
 # → Shows start command help
 
 # 5. Start command runs (requires config)
@@ -1116,7 +1116,7 @@ plorp start --help
 mkdir -p ~/vault/daily
 
 # Run start command
-plorp start
+brainplorp start
 # → Creates daily note
 # → Prints summary
 # → Exit code 0
@@ -1212,7 +1212,7 @@ pytest tests/test_config.py tests/test_utils/ tests/test_workflows/test_daily.py
 
 # CLI test
 mkdir -p ~/vault/daily
-plorp start
+brainplorp start
 ls ~/vault/daily/
 cat ~/vault/daily/$(date +%Y-%m-%d).md
 ```
@@ -1325,7 +1325,7 @@ Q: If a daily note already exists for today, should start() command:
    c) Refuse to overwrite and show error
    d) Back up existing file and create new one
 
-Context: Users might run `plorp start` multiple times per day if tasks change.
+Context: Users might run `brainplorp start` multiple times per day if tasks change.
 
 Status: PENDING
 ```
@@ -1470,7 +1470,7 @@ A: Create daily note with warning message in both stderr and the file.
    2. Still create the daily note file (users can add manual notes)
    3. Don't fail - just warn and continue
 
-   This allows plorp to work even if TaskWarrior has issues.
+   This allows brainplorp to work even if TaskWarrior has issues.
 
 Status: RESOLVED
 ```

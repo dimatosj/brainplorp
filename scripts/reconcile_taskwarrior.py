@@ -39,7 +39,7 @@ def get_taskwarrior_db() -> Path:
 
 def get_vault_path() -> Path:
     """Get vault path from plorp config."""
-    from plorp.config import load_config
+    from brainplorp.config import load_config
     config = load_config()
     return Path(config["vault_path"]).expanduser().resolve()
 
@@ -155,7 +155,7 @@ def remove_uuids_from_projects(vault_path: Path, uuids: Set[str]):
         uuids: Set of UUIDs to remove
     """
     # Import the State Sync function from Item 1
-    from plorp.core.projects import remove_task_from_all_projects
+    from brainplorp.core.projects import remove_task_from_all_projects
 
     for uuid in uuids:
         remove_task_from_all_projects(vault_path, uuid)

@@ -34,7 +34,7 @@ When we update front matter in notes, how should the YAML be formatted?
    # Flow style (more compact)
    tasks: [abc-123, def-456]
    ```
-   **Question:** Which format should plorp use?
+   **Question:** Which format should brainplorp use?
 
 2. **Field ordering**
    - `sort_keys=False` preserves the order fields were added
@@ -145,7 +145,7 @@ We're using `tasks:` to store task UUIDs. Is this the right name?
 2. **Conflict risk**
    - Other Obsidian plugins might use `tasks:` field
    - User might already have their own `tasks:` convention
-   - Could plorp accidentally overwrite their data?
+   - Could brainplorp accidentally overwrite their data?
 
    **Question:** Should we namespace with `plorp_` prefix?
 
@@ -427,7 +427,7 @@ After unlinking:
 
 **B. Print warning**
 ```bash
-$ plorp unlink abc-123 meeting.md
+$ brainplorp unlink abc-123 meeting.md
 ✅ Removed from note
 ⚠️  Note: TaskWarrior annotation cannot be removed automatically
 💡 To remove manually: task abc-123 edit
@@ -451,19 +451,19 @@ Engineer wants to research this.
 ### Q11: CLI Title Parsing and Validation
 
 **What they're asking:**
-The `plorp note` command accepts multi-word titles. How should this work exactly?
+The `brainplorp note` command accepts multi-word titles. How should this work exactly?
 
 **The issues:**
 
 1. **Both forms work:**
    ```bash
    # Without quotes (using nargs=-1)
-   $ plorp note Meeting Notes
+   $ brainplorp note Meeting Notes
    # title = ('Meeting', 'Notes')
    # Joined: "Meeting Notes"
 
    # With quotes
-   $ plorp note "Meeting Notes"
+   $ brainplorp note "Meeting Notes"
    # title = ('Meeting Notes',)
    # Joined: "Meeting Notes"
    ```
@@ -471,26 +471,26 @@ The `plorp note` command accepts multi-word titles. How should this work exactly
 
 2. **Edge cases:**
    ```bash
-   $ plorp note ""
+   $ brainplorp note ""
    # Joined: "" (empty string)
 
-   $ plorp note "   "
+   $ brainplorp note "   "
    # Joined: "   " (whitespace)
 
-   $ plorp note
+   $ brainplorp note
    # Error: Missing argument (Click handles this)
    ```
    **Question:** Validate title is not empty/whitespace after joining?
 
 3. **Filesystem-unsafe characters:**
    ```bash
-   $ plorp note "Meeting: Q4 Planning"
+   $ brainplorp note "Meeting: Q4 Planning"
    # On Windows: Colon (:) not allowed in filename
 
-   $ plorp note "Project/Feature"
+   $ brainplorp note "Project/Feature"
    # Creates subdirectory (probably not intended)
 
-   $ plorp note "Report?.md"
+   $ brainplorp note "Report?.md"
    # Windows doesn't allow ? in filenames
    ```
 
@@ -507,7 +507,7 @@ The `plorp note` command accepts multi-word titles. How should this work exactly
 
 **Why it matters:**
 - Cross-platform compatibility (Windows vs Mac/Linux)
-- User confusion if `plorp note ""` silently succeeds
+- User confusion if `brainplorp note ""` silently succeeds
 - Filesystem errors are cryptic
 
 ---
@@ -547,7 +547,7 @@ note_type='banana'    # ✅ ? ❌ ?
 
 3. **Should CLI validate?**
    ```bash
-   $ plorp note "Test" --type banana
+   $ brainplorp note "Test" --type banana
    # Should this:
    # A) Accept it and pass to create_note()
    # B) Show error: "Invalid type. Valid types: general, meeting, project"

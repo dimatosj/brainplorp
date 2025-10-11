@@ -314,9 +314,9 @@ def _strip_html_tags(html: str) -> str:
    - Test HTML fallback (when html2text fails)
 
 3. **CLI Command Structure Fix:**
-   - Must be `plorp inbox fetch` (subcommand of inbox group)
+   - Must be `brainplorp inbox fetch` (subcommand of inbox group)
    - Verify if inbox group exists, if not create it
-   - Alternative: `plorp inbox-fetch` if group doesn't exist
+   - Alternative: `brainplorp inbox-fetch` if group doesn't exist
 
 **Spec Updates:**
 1. Fixed line 169: `from imapclient import IMAPClient` → correct stdlib imports
@@ -402,7 +402,7 @@ def _strip_html_tags(html: str) -> str:
 6. **Verify Raycast Integration:**
    - Read `raycast/quick-add-inbox.sh` - 34 lines, executable ✅
    - Raycast metadata headers for system-wide keyboard shortcut (⌘⌥I)
-   - Calls plorp CLI correctly: `"$PLORP_PATH" inbox add "$ITEM"`
+   - Calls brainplorp CLI correctly: `"$PLORP_PATH" inbox add "$ITEM"`
    - Path configured: `/Users/jsd/Documents/plorp/.venv/bin/plorp`
    - Error handling for empty input
 
@@ -420,7 +420,7 @@ def _strip_html_tags(html: str) -> str:
 - ✅ Documentation Requirements (2/2) - CLAUDE.md and QUICK_ADD_FRONTENDS.md updated
 
 **Architecture Compliance:**
-- ✅ Pure Capture Philosophy: Quick-add for capture only, processing happens during `plorp inbox process`
+- ✅ Pure Capture Philosophy: Quick-add for capture only, processing happens during `brainplorp inbox process`
 - ✅ Simplicity First: No metadata during capture (no projects, tags, due dates)
 - ✅ Three-Tier Pattern: Raycast (instant) → CLI (direct) → Core function (reusable)
 - ✅ GTD Ubiquitous Capture: Keyboard-driven anywhere on macOS
@@ -505,7 +505,7 @@ def _strip_html_tags(html: str) -> str:
 
 **What Was Delivered:**
 - ✅ Core function: `quick_add_to_inbox()` in `src/plorp/core/inbox.py`
-- ✅ CLI command: `plorp inbox add` with multi-word support and `--urgent` flag
+- ✅ CLI command: `brainplorp inbox add` with multi-word support and `--urgent` flag
 - ✅ Raycast integration: `raycast/quick-add-inbox.sh` for ⌘⌥I capture
 - ✅ Tests: 4 comprehensive tests (simple, urgent, existing file, multi-word)
 - ✅ Documentation: CLAUDE.md section + QUICK_ADD_FRONTENDS.md guide
@@ -516,7 +516,7 @@ def _strip_html_tags(html: str) -> str:
 - 5 documentation files (specs, prompts, CLAUDE.md)
 
 **Key Architectural Decisions:**
-1. **Pure Capture Philosophy:** No metadata during capture (projects, tags, due dates added during `plorp inbox process`)
+1. **Pure Capture Philosophy:** No metadata during capture (projects, tags, due dates added during `brainplorp inbox process`)
 2. **Multi-Word CLI Args:** `nargs=-1` pattern eliminates need for quotes
 3. **Urgent Flag:** Simple `--urgent` / `-u` flag adds 🔴 emoji prefix
 4. **Raycast-First:** Recommended frontend (fastest, best UX), with 3 alternatives documented
@@ -567,8 +567,8 @@ def _strip_html_tags(html: str) -> str:
    - Both files match (PATCH bump from 1.5.0 → 1.5.1 correct for minor sprint)
 
 4. **Verify CLI Implementation:**
-   - Ran `plorp tasks --help` - All options present ✅
-   - Ran `plorp tasks --limit 5` - Works perfectly, rich table with emojis ✅
+   - Ran `brainplorp tasks --help` - All options present ✅
+   - Ran `brainplorp tasks --limit 5` - Works perfectly, rich table with emojis ✅
    - Human-readable dates ("2d ago", "tomorrow", "1d ago") ✅
    - All filter options functional (--urgent, --important, --project, --due, --limit, --format)
 
@@ -637,7 +637,7 @@ def _strip_html_tags(html: str) -> str:
 **Status:** ✅ COMPLETE - All Tests Passing (501/501)
 
 **What Was Delivered:**
-- ✅ Phase 1: CLI Command (`plorp tasks` with all filter options)
+- ✅ Phase 1: CLI Command (`brainplorp tasks` with all filter options)
 - ✅ Phase 2: Slash Commands (5 commands for Claude Desktop)
 - ✅ Phase 3: Tests (13 comprehensive tests, 501 total passing)
 - ✅ Phase 4: Documentation (CLAUDE.md, MCP_ARCHITECTURE_GUIDE.md, MCP_USER_MANUAL.md)
@@ -649,7 +649,7 @@ def _strip_html_tags(html: str) -> str:
 
 **Performance Impact:**
 - Before: "show me urgent tasks" = 5-8 seconds (agent reasoning)
-- After CLI: `plorp tasks --urgent` = <100ms (50-80x faster)
+- After CLI: `brainplorp tasks --urgent` = <100ms (50-80x faster)
 - After Slash: `/urgent` = 1-2 seconds (3-4x faster)
 
 **Key Architectural Decisions:**
@@ -748,7 +748,7 @@ def _strip_html_tags(html: str) -> str:
 **Follow-Up Work (Same Session):**
 
 **User Question: Performance Analysis**
-- User asked: "why are the plorp MCP tools so slow in claude desktop?"
+- User asked: "why are the brainplorp MCP tools so slow in claude desktop?"
 - PM analysis provided:
   - MCP tools execute instantly (<50ms)
   - Bottleneck is agent reasoning loop (5-8s total)
@@ -760,7 +760,7 @@ def _strip_html_tags(html: str) -> str:
 - User asked: "for things like 'show me my tasks' or 'show me urgent tasks in work' can we make it faster?"
 - PM confirmed: YES! This is perfect for three-tier approach
 - Proposed solution:
-  - Tier 1 (CLI): `plorp tasks --urgent --project work` (<100ms)
+  - Tier 1 (CLI): `brainplorp tasks --urgent --project work` (<100ms)
   - Tier 2 (Slash): `/urgent-work` (1-2s)
   - Tier 3 (Natural): "analyze task distribution" (5-8s, expected for intelligence)
 
@@ -1065,7 +1065,7 @@ def _strip_html_tags(html: str) -> str:
 - Analyzed Sprint 9 candidate items against Sprint 8.5/8.6 completions
 - **Findings:**
   1. ✅ Hybrid workstream validation - Complete (Sprint 8.5)
-  2. ✅ Project sync command - Complete (Sprint 8.6 `plorp project sync-all`)
+  2. ✅ Project sync command - Complete (Sprint 8.6 `brainplorp project sync-all`)
   3. ✅ Orphaned project review - Complete (Sprint 8.5)
   4. ✅ Orphaned task review - Complete (Sprint 8.5)
   5. ✅ /process vs /review boundaries - Resolved (Sprint 8.6 checkbox sync)
@@ -1282,11 +1282,11 @@ grep "Status:" /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
 
 ## PROJECT CONTEXT (Background)
 
-**Project:** plorp v1.5.0 - MCP-first task management and vault interface
+**Project:** brainplorp v1.5.0 - MCP-first task management and vault interface
 **Stack:** Python 3.8+, TaskWarrior 3.4.1, Obsidian (markdown vault)
 **Architecture:** Core modules (TypedDict) → MCP/CLI wrappers
 
-**What plorp does:**
+**What brainplorp does:**
 - Workflow automation layer between TaskWarrior and Obsidian
 - Daily notes with tasks from TaskWarrior
 - Inbox processing (email → tasks/notes)

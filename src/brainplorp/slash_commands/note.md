@@ -1,4 +1,4 @@
-Help me create a note in Obsidian using plorp MCP tools.
+Help me create a note in Obsidian using brainplorp MCP tools.
 
 Steps:
 1. Ask me for note details:

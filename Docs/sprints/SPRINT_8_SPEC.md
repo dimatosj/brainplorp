@@ -35,7 +35,7 @@
 
 Sprint 8 implements project management using **Obsidian Bases** as the storage layer, creating an elegant integration between plorp, TaskWarrior, and Obsidian. Instead of storing project metadata in separate YAML files, projects become markdown notes in the vault with YAML frontmatter, queryable via Obsidian's native Bases plugin.
 
-**Key Innovation:** Projects are first-class notes in Obsidian, not just metadata. Users can add context, documentation, and links directly to project notes while plorp manages the TaskWarrior integration.
+**Key Innovation:** Projects are first-class notes in Obsidian, not just metadata. Users can add context, documentation, and links directly to project notes while brainplorp manages the TaskWarrior integration.
 
 **What's New:**
 - Project notes in `vault/projects/` with rich frontmatter
@@ -162,10 +162,10 @@ Sees interactive table:
 **Via CLI:**
 ```bash
 # Set domain focus
-plorp focus work
+brainplorp focus work
 
 # Create task in project (uses focused domain)
-plorp add "Design homepage mockups" project:marketing.website-redesign --due friday --priority H
+brainplorp add "Design homepage mockups" project:marketing.website-redesign --due friday --priority H
 
 # Created task: abc-123
 # Added to project: work.marketing.website-redesign
@@ -202,16 +202,16 @@ Here are the 5 tasks for work.marketing.website-redesign:
 **Via CLI with flags:**
 ```bash
 # All tasks in work domain
-plorp tasks --domain work
+brainplorp tasks --domain work
 
 # Orphaned tasks (no project)
-plorp tasks --orphaned
+brainplorp tasks --orphaned
 
 # Tasks with workstream but no project (2 segments)
-plorp tasks --workstream-only
+brainplorp tasks --workstream-only
 
 # Sort by urgency
-plorp tasks --domain work --sort urgency
+brainplorp tasks --domain work --sort urgency
 ```
 
 **Translates to TaskWarrior:**
@@ -1214,69 +1214,69 @@ async def plorp_get_focused_domain() -> dict:
 
 ## CLI Commands
 
-### Command Group: `plorp project`
+### Command Group: `brainplorp project`
 
 ```bash
 # Create project
-plorp project create <name> --domain <domain> --workstream <workstream> [--state <state>] [--description <desc>]
+brainplorp project create <name> --domain <domain> --workstream <workstream> [--state <state>] [--description <desc>]
 
 # List projects
-plorp project list [--domain <domain>] [--state <state>]
+brainplorp project list [--domain <domain>] [--state <state>]
 
 # Show project
-plorp project show <full-path>
+brainplorp project show <full-path>
 
 # Update project state
-plorp project set-state <full-path> <state>
+brainplorp project set-state <full-path> <state>
 
 # Delete project
-plorp project delete <full-path>
+brainplorp project delete <full-path>
 ```
 
-### Command Group: `plorp focus`
+### Command Group: `brainplorp focus`
 
 ```bash
 # Set focused domain (CLI persistent)
-plorp focus <domain>
+brainplorp focus <domain>
 
 # Show current focus
-plorp focus
+brainplorp focus
 
 # Clear focus (back to default)
-plorp focus clear
+brainplorp focus clear
 ```
 
-### Enhanced: `plorp add`
+### Enhanced: `brainplorp add`
 
 ```bash
 # Add task to project (uses focused domain if not specified)
-plorp add "<description>" project:<project-path> [--due <date>] [--priority <H|M|L>]
+brainplorp add "<description>" project:<project-path> [--due <date>] [--priority <H|M|L>]
 
 # Examples:
-plorp add "Design mockups" project:marketing.website --due friday --priority H
+brainplorp add "Design mockups" project:marketing.website --due friday --priority H
 # → Creates in work.marketing.website (if work is focused)
 
-plorp add "Buy groceries"
+brainplorp add "Buy groceries"
 # → Creates orphaned task (no project)
 ```
 
-### Enhanced: `plorp tasks`
+### Enhanced: `brainplorp tasks`
 
 ```bash
 # List tasks with filters
-plorp tasks [--domain <domain>] [--project <full-path>] [--orphaned] [--sort <field>]
+brainplorp tasks [--domain <domain>] [--project <full-path>] [--orphaned] [--sort <field>]
 
 # Examples:
-plorp tasks --domain work
+brainplorp tasks --domain work
 # → All tasks in work.* projects
 
-plorp tasks --project work.marketing.website
+brainplorp tasks --project work.marketing.website
 # → Tasks in specific project
 
-plorp tasks --orphaned
+brainplorp tasks --orphaned
 # → Tasks with no project
 
-plorp tasks --domain work --sort urgency
+brainplorp tasks --domain work --sort urgency
 # → Work tasks sorted by urgency
 ```
 
@@ -1383,10 +1383,10 @@ plorp tasks --domain work --sort urgency
 ### Phase 5: CLI Commands (2.5h)
 
 **Tasks:**
-- Add `plorp project` command group
-- Add `plorp focus` command group
-- Enhance `plorp add` for project support
-- Enhance `plorp tasks` for filtering
+- Add `brainplorp project` command group
+- Add `brainplorp focus` command group
+- Enhance `brainplorp add` for project support
+- Enhance `brainplorp tasks` for filtering
 
 **Testing:**
 - CLI command tests
@@ -1797,7 +1797,7 @@ def validate_full_path(full_path: str) -> None:
 **Question:** Should we:
 - A: Ignore orphaned UUIDs (they just become dead references)
 - B: Periodically validate UUIDs and remove dead ones (requires periodic sync job)
-- C: Add a `plorp project sync <full-path>` command to clean up orphaned UUIDs on demand
+- C: Add a `brainplorp project sync <full-path>` command to clean up orphaned UUIDs on demand
 - D: Warn in MCP/CLI output when listing project tasks (e.g., "3 of 5 tasks found, 2 missing")
 
 **Answer:** ✅ **Option D: Warn in output** + **Option C: Add sync command (future sprint)**
@@ -1817,13 +1817,13 @@ def list_project_tasks(project_full_path: str) -> List[TaskInfo]:
     if expected_count != len(tasks):
         print(f"⚠️  Project has {expected_count} task references, "
               f"but only {len(tasks)} found in TaskWarrior. "
-              f"Run 'plorp project sync {project_full_path}' to clean up.")
+              f"Run 'brainplorp project sync {project_full_path}' to clean up.")
 
     return tasks
 ```
 
 **Defer to Sprint 9:**
-- `plorp project sync <full-path>` command
+- `brainplorp project sync <full-path>` command
 - Validates all UUIDs, removes orphaned ones from frontmatter
 
 **Rationale:**
@@ -2001,7 +2001,7 @@ If implementing now:
 - **Future sprint**: Can add validation workflow later when we have clearer patterns
 
 **For Sprint 9:**
-- CLI: `plorp project create website --workstream marketing-new`
+- CLI: `brainplorp project create website --workstream marketing-new`
   → "Workstream 'marketing-new' not in suggested list. Create anyway? [Y/n]"
 - MCP: Claude can warn user if workstream looks unusual, suggest correction
   → "Did you mean 'marketing' instead of 'marketing-new'?"
@@ -2132,7 +2132,7 @@ TypedDict is the right choice for plorp's architecture.
 - C: Document manual creation in VAULT_SETUP.md (user's responsibility)
 - D: Create `.base` files in test fixtures only (not production code)
 
-The spec shows templates but doesn't specify creation mechanism. What's the plorp pattern?
+The spec shows templates but doesn't specify creation mechanism. What's the brainplorp pattern?
 
 **Answer:** ✅ **Option C: Document in VAULT_SETUP.md** (user's vault, user's responsibility)
 
@@ -2163,7 +2163,7 @@ Create `vault/_bases/projects.base` with this content:
 - **Documentation**: VAULT_SETUP.md is the right place for setup instructions
 - **Examples**: Providing templates for copy-paste is helpful without being invasive
 
-**Future enhancement**: Could add `plorp init-bases` command to copy templates if users request it.
+**Future enhancement**: Could add `brainplorp init-bases` command to copy templates if users request it.
 
 **Status:** ✅ RESOLVED
 
@@ -2393,7 +2393,7 @@ def get_project_info(full_path: str):
 
 **Context:** Spec mentions filtering tasks by workstream:
 ```bash
-plorp tasks --workstream-only
+brainplorp tasks --workstream-only
 # → task project.any: export + filter for 2-segment projects
 ```
 
@@ -2448,10 +2448,10 @@ def list_tasks_with_filters(
 **CLI usage:**
 ```bash
 # Show all 2-segment projects (domain.workstream, no project name)
-plorp tasks --workstream-only
+brainplorp tasks --workstream-only
 
 # Show 2-segment projects in work domain
-plorp tasks --domain work --workstream-only
+brainplorp tasks --domain work --workstream-only
 ```
 
 **Rationale:**
@@ -2511,8 +2511,8 @@ plorp tasks --domain work --workstream-only
 9 new project management tools added and tested
 
 #### 6. CLI Commands (`src/plorp/cli.py`)
-- `plorp project create/list/info` commands
-- `plorp focus set/get` commands
+- `brainplorp project create/list/info` commands
+- `brainplorp focus set/get` commands
 
 **Total:** ~2,158 lines of code + tests implemented
 
@@ -2564,7 +2564,7 @@ plorp tasks --domain work --workstream-only
    - **Options to evaluate**:
      - A: Keep workflows separate (current design - `/process` = conversion, `/review` = sync)
      - B: Extend `/process` Step 2 to also sync checkbox state for formal tasks
-     - C: Create new `plorp sync` command specifically for checkbox → TaskWarrior sync
+     - C: Create new `brainplorp sync` command specifically for checkbox → TaskWarrior sync
      - D: Make checkbox sync automatic on daily note read (background process)
    - **UX impact**: User checked 3 tasks in daily note, expected TaskWarrior to update, but tasks remained pending
    - **Decision needed**: Clarify workflow responsibilities and determine if duplication is acceptable
@@ -2576,7 +2576,7 @@ plorp tasks --domain work --workstream-only
    - MCP: Claude warns about unusual workstreams
 
 4. **Project sync command** (Q3 answer)
-   - `plorp project sync <full-path>` to clean up orphaned task UUIDs
+   - `brainplorp project sync <full-path>` to clean up orphaned task UUIDs
    - Validates all task_uuids, removes deleted tasks from frontmatter
 
 5. **Orphaned project review workflow**
@@ -2589,7 +2589,7 @@ plorp tasks --domain work --workstream-only
 
 ### Sprint 10+ Candidates (Enhancement):
 1. **Base file templates in code**
-   - `plorp init-bases` command to copy `.base` templates to vault
+   - `brainplorp init-bases` command to copy `.base` templates to vault
    - Currently documented in VAULT_SETUP.md (user manual creation)
 
 2. **Project state audit trail** (Q13 future enhancement)
@@ -2640,7 +2640,7 @@ plorp tasks --domain work --workstream-only
 
 The `create_task()` function has a race condition when retrieving the UUID of a newly created task. After calling `task add`, it immediately queries `task <id> export` to get the UUID. However, TaskWarrior's SQLite database may not have fully committed the transaction yet, causing the query to return empty even though the task was successfully created.
 
-This results in plorp returning an error to the user, even though the task was actually created in TaskWarrior.
+This results in brainplorp returning an error to the user, even though the task was actually created in TaskWarrior.
 
 #### Evidence
 
@@ -2706,7 +2706,7 @@ else:
 3. Immediate `task <id> export` query reads from database
 4. Database hasn't committed yet → empty result
 5. Function returns `None`, caller thinks creation failed
-6. Task actually exists, but plorp reports error
+6. Task actually exists, but brainplorp reports error
 
 **Race Condition Factors:**
 - TaskChampion (TaskWarrior 3.x) uses SQLite with transaction batching
@@ -3276,7 +3276,7 @@ def test_generate_proposal_no_date():
 - [ ] **Code Fix:** Change `task["field"]` to `task.get("field")` at 7 locations
 - [ ] **Add Unit Tests:** All 3 test cases above
 - [ ] **Run Full Test Suite:** Ensure no breakage (`pytest tests/`)
-- [ ] **Test via CLI:** Run `plorp process` with task that has no due date
+- [ ] **Test via CLI:** Run `brainplorp process` with task that has no due date
 - [ ] **Test via MCP:** Verify `/process` works in Claude Desktop
 - [ ] **Update Mock Tests:** Fix existing tests to omit keys (match real behavior)
 - [ ] **Document Resolution:** Update this section with implementation notes
@@ -3371,7 +3371,7 @@ Project management with Obsidian Bases integration delivered. An elegant, unifie
 **Key Deliverables:**
 - Obsidian Bases integration (projects as markdown notes) ✅
 - 9 MCP tools for project management ✅
-- CLI commands (`plorp project`, `plorp focus`) ✅
+- CLI commands (`brainplorp project`, `brainplorp focus`) ✅
 - Domain focus mechanism (persistent across sessions) ✅
 - Bidirectional task-project linking ✅ (Bug #1 FIXED with retry logic)
 - 41 tests total (38 original + 3 regression), 370 passing ✅

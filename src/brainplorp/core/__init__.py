@@ -12,7 +12,7 @@ The core layer is used by both MCP server and CLI interfaces.
 """
 
 # Types
-from plorp.core.types import (
+from brainplorp.core.types import (
     TaskInfo,
     TaskSummary,
     DailyStartResult,
@@ -29,7 +29,7 @@ from plorp.core.types import (
 )
 
 # Exceptions
-from plorp.core.exceptions import (
+from brainplorp.core.exceptions import (
     PlorpError,
     VaultNotFoundError,
     DailyNoteExistsError,
@@ -41,17 +41,17 @@ from plorp.core.exceptions import (
 )
 
 # Workflow functions
-from plorp.core.daily import start_day
-from plorp.core.review import get_review_tasks, add_review_notes
-from plorp.core.tasks import mark_completed, defer_task, drop_task, set_priority
-from plorp.core.inbox import (
+from brainplorp.core.daily import start_day
+from brainplorp.core.review import get_review_tasks, add_review_notes
+from brainplorp.core.tasks import mark_completed, defer_task, drop_task, set_priority
+from brainplorp.core.inbox import (
     get_inbox_items,
     create_task_from_inbox,
     create_note_from_inbox,
     create_both_from_inbox,
     discard_inbox_item,
 )
-from plorp.core.notes import (
+from brainplorp.core.notes import (
     create_note_standalone,
     create_note_linked_to_task,
     link_note_to_task,

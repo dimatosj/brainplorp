@@ -159,13 +159,13 @@ cat ~/.config/plorp/config.yaml
 ls -la /Users/jsd/vault/projects/
 
 # 3. Test project creation
-plorp project create --name "test-verify" --domain "personal"
+brainplorp project create --name "test-verify" --domain "personal"
 
 # 4. Verify it went to correct vault
 ls /Users/jsd/vault/projects/personal.test-verify.md
 
 # 5. Clean up test
-plorp project delete personal.test-verify
+brainplorp project delete personal.test-verify
 ```
 
 Expected: All operations should use `/Users/jsd/vault/`, not `plorp_obsidian/`.

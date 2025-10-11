@@ -9,9 +9,9 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, Optional
 
-from plorp.core.types import TaskCompleteResult, TaskDeferResult, TaskDropResult, TaskPriorityResult
-from plorp.core.exceptions import TaskNotFoundError
-from plorp.integrations.taskwarrior import (
+from brainplorp.core.types import TaskCompleteResult, TaskDeferResult, TaskDropResult, TaskPriorityResult
+from brainplorp.core.exceptions import TaskNotFoundError
+from brainplorp.integrations.taskwarrior import (
     get_task_info,
     mark_done,
     defer_task as tw_defer_task,
@@ -51,7 +51,7 @@ def mark_completed(uuid: str, vault_path: Optional[Path] = None) -> TaskComplete
 
     # 2. State Sync: Update Obsidian (Sprint 8.5 Item 1)
     if vault_path:
-        from plorp.core.projects import remove_task_from_all_projects
+        from brainplorp.core.projects import remove_task_from_all_projects
         remove_task_from_all_projects(vault_path, uuid)
 
     return {
@@ -127,7 +127,7 @@ def drop_task(uuid: str, vault_path: Optional[Path] = None) -> TaskDropResult:
 
     # 2. State Sync: Update Obsidian (Sprint 8.5 Item 1)
     if vault_path:
-        from plorp.core.projects import remove_task_from_all_projects
+        from brainplorp.core.projects import remove_task_from_all_projects
         remove_task_from_all_projects(vault_path, uuid)
 
     return {

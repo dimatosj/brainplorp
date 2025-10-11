@@ -10,7 +10,7 @@
 
 ## Prerequisites
 
-- plorp v1.5.2 installed
+- brainplorp v1.5.2 installed
 - Gmail account with 2FA enabled
 - Gmail App Password generated
 - Test emails in Gmail inbox/label
@@ -71,11 +71,11 @@ cat ~/vault/inbox/2025-10.md
 ## Phase 1: Basic Fetch Operations
 
 ### Test 1.1: First Fetch (Dry Run)
-**Command:** `plorp inbox fetch --dry-run`
+**Command:** `brainplorp inbox fetch --dry-run`
 
 **Steps:**
 ```bash
-plorp inbox fetch --dry-run
+brainplorp inbox fetch --dry-run
 ```
 
 **Expected Results:**
@@ -95,11 +95,11 @@ plorp inbox fetch --dry-run
 ---
 
 ### Test 1.2: First Real Fetch
-**Command:** `plorp inbox fetch`
+**Command:** `brainplorp inbox fetch`
 
 **Steps:**
 ```bash
-plorp inbox fetch
+brainplorp inbox fetch
 ```
 
 **Expected Results:**
@@ -117,13 +117,13 @@ plorp inbox fetch
 ---
 
 ### Test 1.3: Verify No Duplicates
-**Command:** `plorp inbox fetch` (run twice)
+**Command:** `brainplorp inbox fetch` (run twice)
 
 **Steps:**
 ```bash
-plorp inbox fetch
+brainplorp inbox fetch
 # Wait 5 seconds
-plorp inbox fetch
+brainplorp inbox fetch
 ```
 
 **Expected Results:**
@@ -136,11 +136,11 @@ plorp inbox fetch
 ---
 
 ### Test 1.4: Fetch with Limit
-**Command:** `plorp inbox fetch --limit 5`
+**Command:** `brainplorp inbox fetch --limit 5`
 
 **Steps:**
 1. Mark 20 emails as unread in Gmail
-2. Run: `plorp inbox fetch --limit 5`
+2. Run: `brainplorp inbox fetch --limit 5`
 
 **Expected Results:**
 - ✅ Only 5 emails fetched
@@ -154,12 +154,12 @@ plorp inbox fetch
 ---
 
 ### Test 1.5: Fetch from Specific Label
-**Command:** `plorp inbox fetch --label work`
+**Command:** `brainplorp inbox fetch --label work`
 
 **Steps:**
 1. Create label "work" in Gmail
 2. Add emails to that label
-3. Run: `plorp inbox fetch --label work`
+3. Run: `brainplorp inbox fetch --label work`
 
 **Expected Results:**
 - ✅ Only emails from "work" label fetched
@@ -171,11 +171,11 @@ plorp inbox fetch
 ---
 
 ### Test 1.6: Fetch from Gmail System Folder
-**Command:** `plorp inbox fetch --label "[Gmail]/Sent"`
+**Command:** `brainplorp inbox fetch --label "[Gmail]/Sent"`
 
 **Steps:**
 ```bash
-plorp inbox fetch --label "[Gmail]/Sent" --limit 3
+brainplorp inbox fetch --label "[Gmail]/Sent" --limit 3
 ```
 
 **Expected Results:**
@@ -188,11 +188,11 @@ plorp inbox fetch --label "[Gmail]/Sent" --limit 3
 ---
 
 ### Test 1.7: Verbose Output
-**Command:** `plorp inbox fetch --verbose`
+**Command:** `brainplorp inbox fetch --verbose`
 
 **Steps:**
 ```bash
-plorp inbox fetch --verbose --limit 3
+brainplorp inbox fetch --verbose --limit 3
 ```
 
 **Expected Results:**
@@ -218,7 +218,7 @@ plorp inbox fetch --verbose --limit 3
 
 **Steps:**
 1. Send email with above content
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 3. Check inbox file
 
 **Expected Results:**
@@ -244,7 +244,7 @@ plorp inbox fetch --verbose --limit 3
 
 **Steps:**
 1. Send HTML email with list
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 3. Check inbox file
 
 **Expected Results:**
@@ -269,7 +269,7 @@ This is the third paragraph.
 
 **Steps:**
 1. Send plain text email with paragraphs
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 3. Check inbox file
 
 **Expected Results:**
@@ -294,7 +294,7 @@ Sent from my iPhone
 
 **Steps:**
 1. Send email with signature
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 3. Check inbox file
 
 **Expected Results:**
@@ -317,7 +317,7 @@ Sent from my Android device
 
 **Steps:**
 1. Send email with mobile signature
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ "Sent from" signature removed
@@ -332,7 +332,7 @@ Sent from my Android device
 
 **Steps:**
 1. Send multipart email
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ HTML part processed if available
@@ -348,7 +348,7 @@ Sent from my Android device
 
 **Steps:**
 1. Send email with subject but no body
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Email processed without error
@@ -365,7 +365,7 @@ Sent from my Android device
 
 **Steps:**
 1. Send very long email
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Entire body processed (no length limit per Q8)
@@ -381,7 +381,7 @@ Sent from my Android device
 ### Test 3.1: Invalid Credentials
 **Steps:**
 1. Change password in config to wrong value
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Clear authentication error message
@@ -396,7 +396,7 @@ Sent from my Android device
 ### Test 3.2: Network Disconnected
 **Steps:**
 1. Disconnect network/WiFi
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Connection error message
@@ -425,7 +425,7 @@ Sent from my Android device
 ### Test 3.4: Missing Inbox Folder
 **Steps:**
 1. Delete `~/vault/inbox/` folder
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Folder auto-created
@@ -440,7 +440,7 @@ Sent from my Android device
 ### Test 3.5: Corrupt Inbox File
 **Steps:**
 1. Add random binary data to inbox file
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ File validated/corrected if possible
@@ -454,7 +454,7 @@ Sent from my Android device
 ### Test 3.6: Label Doesn't Exist
 **Steps:**
 ```bash
-plorp inbox fetch --label nonexistent
+brainplorp inbox fetch --label nonexistent
 ```
 
 **Expected Results:**
@@ -469,7 +469,7 @@ plorp inbox fetch --label nonexistent
 ### Test 3.7: Email Encoding Issues
 **Steps:**
 1. Send email with special characters (emoji, unicode)
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Special characters handled correctly
@@ -485,7 +485,7 @@ plorp inbox fetch --label nonexistent
 ### Test 4.1: Disabled Email Fetching
 **Steps:**
 1. Set `email.enabled: false` in config
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Clear message: email fetching disabled
@@ -499,7 +499,7 @@ plorp inbox fetch --label nonexistent
 ### Test 4.2: Missing Configuration
 **Steps:**
 1. Remove entire `email:` section from config
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Clear error: configuration missing
@@ -513,7 +513,7 @@ plorp inbox fetch --label nonexistent
 ### Test 4.3: App Password with Whitespace
 **Steps:**
 1. Add spaces/newlines to app password in config
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Whitespace stripped automatically (per Q10)
@@ -529,8 +529,8 @@ plorp inbox fetch --label nonexistent
 ### Test 5.1: Fetch + Process Workflow
 **Steps:**
 ```bash
-plorp inbox fetch
-plorp inbox process
+brainplorp inbox fetch
+brainplorp inbox process
 ```
 
 **Expected Results:**
@@ -547,7 +547,7 @@ plorp inbox process
 ```bash
 # Run every minute for 5 minutes
 for i in {1..5}; do
-  plorp inbox fetch
+  brainplorp inbox fetch
   sleep 60
 done
 ```
@@ -565,7 +565,7 @@ done
 ### Test 5.3: Shell Redirection for Logging
 **Steps:**
 ```bash
-plorp inbox fetch >> /tmp/plorp-fetch.log 2>&1
+brainplorp inbox fetch >> /tmp/plorp-fetch.log 2>&1
 cat /tmp/plorp-fetch.log
 ```
 
@@ -582,7 +582,7 @@ cat /tmp/plorp-fetch.log
 
 ### Test 6.1: Verify Bullet Format
 **Steps:**
-1. Run: `plorp inbox fetch`
+1. Run: `brainplorp inbox fetch`
 2. Open inbox file
 
 **Expected Results:**
@@ -598,7 +598,7 @@ cat /tmp/plorp-fetch.log
 ### Test 6.2: Mixed Format Handling
 **Steps:**
 1. Manually add checkboxes to inbox
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 3. Check result
 
 **Expected Results:**
@@ -613,7 +613,7 @@ cat /tmp/plorp-fetch.log
 ### Test 6.3: Section Auto-Creation
 **Steps:**
 1. Delete "## Unprocessed" section from inbox
-2. Run: `plorp inbox fetch`
+2. Run: `brainplorp inbox fetch`
 
 **Expected Results:**
 - ✅ Section auto-created (per Q16)
@@ -629,7 +629,7 @@ cat /tmp/plorp-fetch.log
 ### Test P1: Fetch Speed (5 emails)
 **Steps:**
 ```bash
-time plorp inbox fetch --limit 5
+time brainplorp inbox fetch --limit 5
 ```
 
 **Expected Results:**
@@ -645,7 +645,7 @@ time plorp inbox fetch --limit 5
 ### Test P2: Fetch Speed (20 emails)
 **Steps:**
 ```bash
-time plorp inbox fetch --limit 20
+time brainplorp inbox fetch --limit 20
 ```
 
 **Expected Results:**

@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
-from plorp.parsers.markdown import parse_inbox_items, mark_item_processed
-from plorp.integrations.taskwarrior import create_task
-from plorp.integrations.obsidian import create_note, get_vault_path
-from plorp.utils.prompts import prompt_choice, prompt, confirm
-from plorp.utils.files import write_file, ensure_directory
+from brainplorp.parsers.markdown import parse_inbox_items, mark_item_processed
+from brainplorp.integrations.taskwarrior import create_task
+from brainplorp.integrations.obsidian import create_note, get_vault_path
+from brainplorp.utils.prompts import prompt_choice, prompt, confirm
+from brainplorp.utils.files import write_file, ensure_directory
 
 
 def process(config: Dict[str, Any]) -> None:

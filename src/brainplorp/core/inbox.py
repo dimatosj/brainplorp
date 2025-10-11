@@ -9,11 +9,11 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from plorp.core.types import InboxData, InboxProcessResult
-from plorp.core.exceptions import VaultNotFoundError, InboxNotFoundError
-from plorp.parsers.markdown import parse_inbox_items, mark_item_processed
-from plorp.integrations.taskwarrior import create_task
-from plorp.integrations.obsidian import create_note
+from brainplorp.core.types import InboxData, InboxProcessResult
+from brainplorp.core.exceptions import VaultNotFoundError, InboxNotFoundError
+from brainplorp.parsers.markdown import parse_inbox_items, mark_item_processed
+from brainplorp.integrations.taskwarrior import create_task
+from brainplorp.integrations.obsidian import create_note
 
 
 def get_inbox_items(vault_path: Path, target_date: Optional[date] = None) -> InboxData:
@@ -189,7 +189,7 @@ def create_both_from_inbox(
 
     # Create note linked to task
     # Import here to avoid circular dependency
-    from plorp.core.notes import create_note_linked_to_task
+    from brainplorp.core.notes import create_note_linked_to_task
 
     result = create_note_linked_to_task(
         vault_path=vault_path,
@@ -266,7 +266,7 @@ def append_emails_to_inbox(emails: list, vault_path: Path) -> dict:
             "total_unprocessed": 15
         }
     """
-    from plorp.integrations.email_imap import convert_email_body_to_bullets
+    from brainplorp.integrations.email_imap import convert_email_body_to_bullets
 
     # Get current month's inbox file
     today = date.today()

@@ -1,4 +1,4 @@
-# plorp MCP Server - User Manual
+# brainplorp MCP Server - User Manual
 
 **Version:** 1.5.1
 **Last Updated:** 2025-10-09
@@ -26,7 +26,7 @@
 
 ## Overview
 
-The plorp MCP (Model Context Protocol) server enables Claude Desktop to interact with your TaskWarrior tasks and Obsidian vault through natural language.
+The brainplorp MCP (Model Context Protocol) server enables Claude Desktop to interact with your TaskWarrior tasks and Obsidian vault through natural language.
 
 **What You Can Do:**
 - Generate daily notes with your tasks
@@ -69,7 +69,7 @@ TaskWarrior (tasks) + Obsidian (notes)
    ~/.config/plorp/config.yaml
    ```
 
-3. **plorp installed**
+3. **brainplorp installed**
    ```bash
    pip install -e /path/to/plorp
    # or
@@ -101,7 +101,7 @@ which plorp-mcp
 ### Verify Installation
 
 1. Restart Claude Desktop
-2. In Claude, say: "List the plorp MCP tools available"
+2. In Claude, say: "List the brainplorp MCP tools available"
 3. You should see 38 tools listed
 
 ---
@@ -778,11 +778,11 @@ Sprint 9.1 introduced instant task queries to solve the "MCP slowness problem" -
 
 ### The Three-Tier Query Architecture
 
-plorp offers three ways to query your tasks, each with different speed/flexibility tradeoffs:
+brainplorp offers three ways to query your tasks, each with different speed/flexibility tradeoffs:
 
 | Tier | Interface | Speed | Use Case |
 |------|-----------|-------|----------|
-| **1. CLI** | `plorp tasks` | <100ms | Terminal workflows, scripts, instant queries |
+| **1. CLI** | `brainplorp tasks` | <100ms | Terminal workflows, scripts, instant queries |
 | **2. Slash Commands** | `/urgent`, `/today` | 1-2s | Quick Claude Desktop queries |
 | **3. Natural Language** | "show urgent tasks" | 5-8s | Complex queries with analysis |
 
@@ -794,7 +794,7 @@ Five slash commands provide instant access to common queries:
 ```
 User: /tasks
 
-Claude runs: plorp tasks
+Claude runs: brainplorp tasks
 Shows: All pending tasks in a rich table (default limit: 50)
 ```
 
@@ -802,7 +802,7 @@ Shows: All pending tasks in a rich table (default limit: 50)
 ```
 User: /urgent
 
-Claude runs: plorp tasks --urgent
+Claude runs: brainplorp tasks --urgent
 Shows: High-priority tasks only
 ```
 
@@ -810,7 +810,7 @@ Shows: High-priority tasks only
 ```
 User: /today
 
-Claude runs: plorp tasks --due today
+Claude runs: brainplorp tasks --due today
 Shows: Tasks with due date = today
 ```
 
@@ -818,7 +818,7 @@ Shows: Tasks with due date = today
 ```
 User: /overdue
 
-Claude runs: plorp tasks --due overdue
+Claude runs: brainplorp tasks --due overdue
 Shows: Tasks where due < today
 ```
 
@@ -826,43 +826,43 @@ Shows: Tasks where due < today
 ```
 User: /work-tasks
 
-Claude runs: plorp tasks --project work
+Claude runs: brainplorp tasks --project work
 Shows: All tasks with project:work
 ```
 
 ### CLI Command Reference
 
-All slash commands use the `plorp tasks` CLI command. You can also use it directly in the terminal:
+All slash commands use the `brainplorp tasks` CLI command. You can also use it directly in the terminal:
 
 **Basic usage:**
 ```bash
-plorp tasks                          # All pending tasks
-plorp tasks --limit 10               # Limit to 10 tasks
+brainplorp tasks                          # All pending tasks
+brainplorp tasks --limit 10               # Limit to 10 tasks
 ```
 
 **Filters:**
 ```bash
-plorp tasks --urgent                 # Priority:H tasks
-plorp tasks --important              # Priority:M tasks
-plorp tasks --project work           # Filter by project
-plorp tasks --due today              # Due today
-plorp tasks --due overdue            # Overdue tasks
-plorp tasks --due tomorrow           # Due tomorrow
-plorp tasks --due week               # Due this week
+brainplorp tasks --urgent                 # Priority:H tasks
+brainplorp tasks --important              # Priority:M tasks
+brainplorp tasks --project work           # Filter by project
+brainplorp tasks --due today              # Due today
+brainplorp tasks --due overdue            # Overdue tasks
+brainplorp tasks --due tomorrow           # Due tomorrow
+brainplorp tasks --due week               # Due this week
 ```
 
 **Output formats:**
 ```bash
-plorp tasks --format table           # Rich table with emojis (default)
-plorp tasks --format simple          # Plain text for scripts
-plorp tasks --format json            # JSON for programmatic use
+brainplorp tasks --format table           # Rich table with emojis (default)
+brainplorp tasks --format simple          # Plain text for scripts
+brainplorp tasks --format json            # JSON for programmatic use
 ```
 
 **Combine filters:**
 ```bash
-plorp tasks --urgent --project work                    # Urgent work tasks
-plorp tasks --due today --project home                # Today's home tasks
-plorp tasks --important --due week --limit 5          # Top 5 important tasks this week
+brainplorp tasks --urgent --project work                    # Urgent work tasks
+brainplorp tasks --due today --project home                # Today's home tasks
+brainplorp tasks --important --due week --limit 5          # Top 5 important tasks this week
 ```
 
 ### When to Use Each Tier
@@ -870,10 +870,10 @@ plorp tasks --important --due week --limit 5          # Top 5 important tasks th
 **Tier 1 (CLI):** Use when working in the terminal
 ```bash
 # Quick check before starting work
-$ plorp tasks --urgent
+$ brainplorp tasks --urgent
 
 # Export for scripting
-$ plorp tasks --format json | jq '.[] | select(.project == "work")'
+$ brainplorp tasks --format json | jq '.[] | select(.project == "work")'
 ```
 
 **Tier 2 (Slash Commands):** Use for instant queries in Claude Desktop
@@ -892,7 +892,7 @@ You: "Show me urgent tasks in the API project that are due this week and analyze
 Claude: (5-8 seconds)
   1. Reasons about the query
   2. Combines multiple filters
-  3. Calls: plorp tasks --urgent --project api --due week
+  3. Calls: brainplorp tasks --urgent --project api --due week
   4. Analyzes dependencies
   5. Provides detailed breakdown
 ```
@@ -922,7 +922,7 @@ You can create your own slash commands for common queries:
 **Example:** Create `/api-tasks` for your API project
 ```bash
 # Create file: .claude/commands/api-tasks.md
-Run the command: `plorp tasks --project work.engineering.api`
+Run the command: `brainplorp tasks --project work.engineering.api`
 
 Display tasks for the API rewrite project.
 ```
@@ -930,7 +930,7 @@ Display tasks for the API rewrite project.
 **Usage:**
 ```
 You: /api-tasks
-Claude: Runs plorp tasks --project work.engineering.api
+Claude: Runs brainplorp tasks --project work.engineering.api
 ```
 
 ### Natural Language Still Works
@@ -941,7 +941,7 @@ Slash commands are a shortcut, not a replacement. Natural language queries still
 You: "Show me urgent tasks in the API project that have dependencies"
 
 Claude will:
-  1. Use plorp tasks --urgent --project work.engineering.api
+  1. Use brainplorp tasks --urgent --project work.engineering.api
   2. Fetch each task's details
   3. Analyze dependencies from annotations
   4. Present organized breakdown
@@ -1083,7 +1083,7 @@ Claude:
 
 ### MCP Server Not Appearing
 
-**Issue:** Claude doesn't show plorp tools
+**Issue:** Claude doesn't show brainplorp tools
 
 **Check:**
 1. `claude_desktop_config.json` is correct
@@ -1242,7 +1242,7 @@ All fields available in project notes:
 
 ### Configuration Files
 
-**plorp config:** `~/.config/plorp/config.yaml`
+**brainplorp config:** `~/.config/plorp/config.yaml`
 ```yaml
 vault_path: /Users/jsd/vault
 taskwarrior_data: ~/.task
@@ -1378,7 +1378,7 @@ Planning → Active → Completed
 # Check TaskWarrior status
 task diagnostics
 
-# Check plorp config
+# Check brainplorp config
 cat ~/.config/plorp/config.yaml
 
 # Test MCP server

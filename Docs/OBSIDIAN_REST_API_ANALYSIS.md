@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The [Obsidian Local REST API plugin](https://github.com/coddingtonbear/obsidian-local-rest-api) provides advanced vault operations not easily achievable via filesystem access. This document analyzes capabilities that could enhance plorp in future sprints.
+The [Obsidian Local REST API plugin](https://github.com/coddingtonbear/obsidian-local-rest-api) provides advanced vault operations not easily achievable via filesystem access. This document analyzes capabilities that could enhance brainplorp in future sprints.
 
 **Key Finding:** REST API offers **intelligent Obsidian-native operations** (search, tag parsing, section editing) that would otherwise require complex parsing logic. However, it requires Obsidian to be running.
 
@@ -300,7 +300,7 @@ POST /commands/graph:open/
 
 ### Current Approach (Sprint 9): Filesystem Primary ✅
 
-**Philosophy:** plorp works anywhere, anytime
+**Philosophy:** brainplorp works anywhere, anytime
 - ✅ No Obsidian required to be running
 - ✅ Works on headless servers, cron jobs
 - ✅ Mobile/tablet compatible
@@ -351,11 +351,11 @@ def read_note_with_metadata(path: str) -> NoteContent:
 
 ✅ **User at desktop with Obsidian open:**
 - MCP commands from Claude Desktop
-- Interactive plorp sessions
+- Interactive brainplorp sessions
 - Advanced search requirements
 
 ✅ **Automation that can "wake up" Obsidian:**
-- `plorp start --open-obsidian` (opens Obsidian, uses REST API)
+- `brainplorp start --open-obsidian` (opens Obsidian, uses REST API)
 - Scripts that assume desktop environment
 
 ❌ **When NOT to use REST API:**
@@ -708,7 +708,7 @@ obsidian_integration:
 ```
 
 **Experience:**
-- Cron job runs `plorp start` → Works fine (no Obsidian needed)
+- Cron job runs `brainplorp start` → Works fine (no Obsidian needed)
 - Server environment → No REST API dependency
 - Reliable automation
 
@@ -813,7 +813,7 @@ obsidian_integration:
 ### Decision Rules for Users
 
 **Use filesystem mode if:**
-- Running plorp in automation/cron
+- Running brainplorp in automation/cron
 - Using headless/server environments
 - Prefer Obsidian closed while working
 - Want maximum reliability
@@ -880,7 +880,7 @@ def plorp_search_semantic(query: str, limit: int = 10) -> List[NoteInfo]:
         # Returns notes about GTD, time management, focus techniques
         # Even if they don't contain exact phrase "productivity tips"
 
-    Requires: Embeddings index (run `plorp index build` first)
+    Requires: Embeddings index (run `brainplorp index build` first)
     """
     return semantic_search.search(query, limit)
 ```
@@ -1013,9 +1013,9 @@ Claude: "Found 23 untagged notes. Suggested tags for each. Apply all?"
 
 **Example use cases:**
 - User checks off task in Obsidian → TaskWarrior auto-updates
-- User modifies project frontmatter → plorp detects and syncs
-- External script creates task → plorp picks it up immediately
-- Obsidian plugin creates note → plorp indexes it instantly
+- User modifies project frontmatter → brainplorp detects and syncs
+- External script creates task → brainplorp picks it up immediately
+- Obsidian plugin creates note → brainplorp indexes it instantly
 
 **Technical approach:**
 
@@ -1053,7 +1053,7 @@ class VaultWatcher(FileSystemEventHandler):
         })
 
 class PlorpDaemon:
-    """Long-running plorp process for real-time sync."""
+    """Long-running brainplorp process for real-time sync."""
 
     def start(self):
         observer = Observer()
@@ -1077,9 +1077,9 @@ class PlorpDaemon:
 ```
 User in Obsidian: Checks off "- [x] Buy groceries (uuid: abc-123)"
 ↓ (file watcher detects change)
-plorp daemon: Detects checkbox checked
+brainplorp daemon: Detects checkbox checked
 ↓
-plorp daemon: Runs `task abc-123 done`
+brainplorp daemon: Runs `task abc-123 done`
 ↓
 TaskWarrior: Task marked complete
 ```
@@ -1088,9 +1088,9 @@ TaskWarrior: Task marked complete
 ```
 Mobile app: Creates task in TaskWarrior
 ↓ (TaskWarrior database changes)
-plorp daemon: Detects new task
+brainplorp daemon: Detects new task
 ↓
-plorp daemon: Adds task to today's daily note
+brainplorp daemon: Adds task to today's daily note
 ↓
 Obsidian: Auto-refreshes, shows new task
 ```
@@ -1100,9 +1100,9 @@ Obsidian: Auto-refreshes, shows new task
 @mcp.tool()
 def plorp_start_sync_daemon() -> str:
     """
-    Start plorp sync daemon for real-time sync.
+    Start brainplorp sync daemon for real-time sync.
 
-    This keeps plorp running in background, watching for:
+    This keeps brainplorp running in background, watching for:
     - Obsidian note changes → sync to TaskWarrior
     - TaskWarrior changes → sync to Obsidian
     - New files → auto-index for search
@@ -1110,7 +1110,7 @@ def plorp_start_sync_daemon() -> str:
     Run this once at system startup.
     """
     daemon.start()
-    return "plorp sync daemon started (PID: {daemon.pid})"
+    return "brainplorp sync daemon started (PID: {daemon.pid})"
 
 @mcp.tool()
 def plorp_sync_status() -> dict:
@@ -1125,16 +1125,16 @@ def plorp_sync_status() -> dict:
 **CLI commands:**
 ```bash
 # Start daemon
-plorp daemon start
+brainplorp daemon start
 
 # Check status
-plorp daemon status
+brainplorp daemon status
 
 # Stop daemon
-plorp daemon stop
+brainplorp daemon stop
 
 # Sync once (no daemon)
-plorp sync now
+brainplorp sync now
 ```
 
 **Infrastructure needs:**
@@ -1145,8 +1145,8 @@ plorp sync now
 - PID file, logging, graceful shutdown
 
 **Challenges:**
-- **Infinite loops:** Change in Obsidian → triggers plorp → writes file → triggers watch again
-  - Solution: Track changes plorp made, ignore those
+- **Infinite loops:** Change in Obsidian → triggers brainplorp → writes file → triggers watch again
+  - Solution: Track changes brainplorp made, ignore those
 - **Performance:** Large vaults (1000+ notes) create many watch events
   - Solution: Debounce, batch changes
 - **Conflicts:** User edits same task in Obsidian AND mobile app

@@ -1,4 +1,4 @@
-# Sprint 6 Spec: plorp v1.1 - MCP-First Rewrite
+# Sprint 6 Spec: brainplorp v1.1 - MCP-First Rewrite
 
 **Version:** 1.1.0
 **Status:** ✅ COMPLETE (2025-10-06)
@@ -23,7 +23,7 @@
 
 **Breaking Changes:**
 - `plorp.workflows.*` modules removed entirely
-- Users importing plorp as library must migrate to `plorp.core.*`
+- Users importing brainplorp as library must migrate to `plorp.core.*`
 - CLI commands remain compatible (refactored internally)
 
 ---
@@ -318,7 +318,7 @@ class NoteLinkResult(TypedDict):
 **Custom exceptions:**
 ```python
 class PlorpError(Exception):
-    """Base exception for all plorp errors."""
+    """Base exception for all brainplorp errors."""
     pass
 
 class VaultNotFoundError(PlorpError):
@@ -1204,11 +1204,11 @@ def start():
 ```
 
 **All CLI commands refactored:**
-- `plorp start` → calls `core.daily.start_day()`
-- `plorp review` → calls `core.review.get_review_tasks()` + task operations
-- `plorp inbox process` → calls `core.inbox.get_inbox_items()` + process functions
-- `plorp note` → calls `core.notes.create_note_**()`
-- `plorp link` → calls `core.notes.link_note_to_task()`
+- `brainplorp start` → calls `core.daily.start_day()`
+- `brainplorp review` → calls `core.review.get_review_tasks()` + task operations
+- `brainplorp inbox process` → calls `core.inbox.get_inbox_items()` + process functions
+- `brainplorp note` → calls `core.notes.create_note_**()`
+- `brainplorp link` → calls `core.notes.link_note_to_task()`
 
 **New command:**
 ```python
@@ -1365,7 +1365,7 @@ dev = [
 ]
 
 [project.scripts]
-plorp = "plorp.cli:cli"
+brainplorp = "plorp.cli:cli"
 plorp-mcp = "plorp.mcp_server:main"  # NEW - MCP server entry point
 
 [build-system]
@@ -1377,7 +1377,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--strict-markers --cov=src/plorp --cov-report=term-missing"
+addopts = "--strict-markers --cov=src/brainplorp --cov-report=term-missing"
 asyncio_mode = "auto"  # NEW - for async tests
 
 [tool.black]
@@ -1550,17 +1550,17 @@ async def test_plorp_start_day_error_handling():
 **1. MCP_SETUP.md** (~500 lines)
 
 ```markdown
-# plorp MCP Server Setup
+# brainplorp MCP Server Setup
 
 ## Prerequisites
-- plorp v1.1 installed
+- brainplorp v1.1 installed
 - Claude Desktop installed
 - TaskWarrior 3.x configured
-- Obsidian vault configured in plorp config
+- Obsidian vault configured in brainplorp config
 
 ## Installation
 
-1. Install plorp v1.1:
+1. Install brainplorp v1.1:
 ```bash
 cd /Users/jsd/Documents/plorp
 pip install -e .
@@ -1568,7 +1568,7 @@ pip install -e .
 
 2. Verify installation:
 ```bash
-plorp --version  # Should show 1.1.0
+brainplorp --version  # Should show 1.1.0
 plorp-mcp --help  # Should show MCP server info
 ```
 
@@ -1594,14 +1594,14 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 4. Install slash commands:
 ```bash
-plorp init-claude
+brainplorp init-claude
 ```
 
 5. Restart Claude Desktop
 
 6. Verify in Claude Desktop:
 ```
-What plorp tools do you have available?
+What brainplorp tools do you have available?
 ```
 
 Claude should list all 16 plorp_* tools.
@@ -1626,11 +1626,11 @@ Claude should list all 16 plorp_* tools.
 **2. ARCHITECTURE.md** (~300 lines)
 
 ```markdown
-# plorp v1.1 Architecture
+# brainplorp v1.1 Architecture
 
 ## Design Philosophy
 
-plorp v1.1 is built on MCP-first architecture...
+brainplorp v1.1 is built on MCP-first architecture...
 
 ## Core Principles
 
@@ -1658,7 +1658,7 @@ plorp v1.1 is built on MCP-first architecture...
 **3. MIGRATION_GUIDE.md** (~200 lines)
 
 ```markdown
-# Migrating from plorp v1.0 to v1.1
+# Migrating from brainplorp v1.0 to v1.1
 
 ## Breaking Changes
 
@@ -1690,18 +1690,18 @@ result = start_day(date.today(), Path(config["vault_path"]))
 
 All CLI commands work identically:
 ```bash
-plorp start
-plorp review
-plorp inbox process
-plorp note "Title"
-plorp link <uuid> <path>
+brainplorp start
+brainplorp review
+brainplorp inbox process
+brainplorp note "Title"
+brainplorp link <uuid> <path>
 ```
 
 ## Migration Steps
 
 1. Update plorp: `pip install --upgrade plorp`
 2. If you only use CLI: No changes needed
-3. If you import plorp in scripts: Update imports to `plorp.core.*`
+3. If you import brainplorp in scripts: Update imports to `plorp.core.*`
 4. Test your workflows
 5. Setup MCP if desired (optional)
 
@@ -1720,7 +1720,7 @@ plorp link <uuid> <path>
 **4. EXAMPLE_WORKFLOWS.md** (~200 lines)
 
 ```markdown
-# plorp Example Workflows
+# brainplorp Example Workflows
 
 ## Daily Routine Workflows
 
@@ -1728,7 +1728,7 @@ plorp link <uuid> <path>
 
 **Via CLI:**
 ```bash
-plorp start
+brainplorp start
 ```
 
 **Via Claude Desktop (slash command):**
@@ -1781,7 +1781,7 @@ Claude:
 
 ### Combining Multiple Tools
 
-[Examples of agent orchestrating multiple plorp tools]
+[Examples of agent orchestrating multiple brainplorp tools]
 
 ## Troubleshooting Common Workflows
 
@@ -1942,7 +1942,7 @@ Update existing README with:
 
 ### Phase 10: Testing
 - [ ] Run all tests: `pytest tests/`
-- [ ] Verify coverage: `pytest tests/ --cov=src/plorp --cov-report=term`
+- [ ] Verify coverage: `pytest tests/ --cov=src/brainplorp --cov-report=term`
 - [ ] Ensure coverage targets met:
   - [ ] `plorp.core.*`: 90%+
   - [ ] `plorp.mcp_server`: 85%+
@@ -1984,11 +1984,11 @@ Update existing README with:
 
 ### Phase 12: Integration Testing
 - [ ] Test full workflows end-to-end
-  - [ ] Test `plorp start` CLI command
-  - [ ] Test `plorp review` CLI command
-  - [ ] Test `plorp inbox process` CLI command
-  - [ ] Test `plorp note` and `plorp link` CLI commands
-  - [ ] Test `plorp init-claude` command
+  - [ ] Test `brainplorp start` CLI command
+  - [ ] Test `brainplorp review` CLI command
+  - [ ] Test `brainplorp inbox process` CLI command
+  - [ ] Test `brainplorp note` and `brainplorp link` CLI commands
+  - [ ] Test `brainplorp init-claude` command
 - [ ] Test MCP server manually
   - [ ] Start `plorp-mcp` server
   - [ ] Configure in Claude Desktop
@@ -2135,7 +2135,7 @@ Update existing README with:
 
 **Q8: Slash command installation - overwrite or skip existing?**
 
-**Context:** `plorp init-claude` copies slash commands to `~/.claude/commands/`.
+**Context:** `brainplorp init-claude` copies slash commands to `~/.claude/commands/`.
 
 **Options:**
 - **A)** Always overwrite - Simple, ensures latest version
@@ -2375,7 +2375,7 @@ This is already implemented in the integration layer, so core functions automati
 
 **Q20: CLI review command - Behavior change from v1.0?**
 
-**Context:** v1.0 `plorp review` is interactive (prompts for each task). v1.1 refactor should maintain same UX.
+**Context:** v1.0 `brainplorp review` is interactive (prompts for each task). v1.1 refactor should maintain same UX.
 
 **Question:** Confirm CLI `review` command should:
 1. Call `core.review.get_review_tasks()` to get task list

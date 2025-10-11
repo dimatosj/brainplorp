@@ -1,12 +1,12 @@
 # Migration Guide: v1.0 → v1.1
 
-This guide helps you migrate from plorp v1.0 to v1.1, which introduces MCP support while maintaining backward compatibility.
+This guide helps you migrate from brainplorp v1.0 to v1.1, which introduces MCP support while maintaining backward compatibility.
 
 ## What's New in v1.1
 
 ### New Features
 
-1. **MCP Server** - Expose plorp tools to Claude Desktop via Model Context Protocol
+1. **MCP Server** - Expose brainplorp tools to Claude Desktop via Model Context Protocol
 2. **Slash Commands** - Quick commands for Claude Desktop (`/start`, `/review`, `/inbox`, `/task`, `/note`)
 3. **Python 3.10+** - Upgraded from Python 3.8 for MCP SDK compatibility
 4. **Refactored Architecture** - Core layer, MCP layer, CLI layer separation
@@ -74,10 +74,10 @@ pip install --upgrade plorp
 Test existing commands:
 
 ```bash
-plorp start
-plorp review
-plorp inbox process
-plorp note "Test Note"
+brainplorp start
+brainplorp review
+brainplorp inbox process
+brainplorp note "Test Note"
 ```
 
 Everything should work exactly as before.
@@ -87,7 +87,7 @@ Everything should work exactly as before.
 If you want to use Claude Desktop integration:
 
 ```bash
-plorp init-claude
+brainplorp init-claude
 ```
 
 Then configure Claude Desktop (see [MCP_SETUP.md](MCP_SETUP.md)).
@@ -254,19 +254,19 @@ plorp_version: 1.1.0
 
 ```bash
 # Generate daily note
-plorp start
+brainplorp start
 
 # Review tasks
-plorp review
+brainplorp review
 
 # Process inbox
-plorp inbox process
+brainplorp inbox process
 
 # Create note
-plorp note "Migration Test"
+brainplorp note "Migration Test"
 
 # Link note to task
-plorp link abc-123 notes/migration-test.md
+brainplorp link abc-123 notes/migration-test.md
 ```
 
 ### 2. Test MCP (if configured)
@@ -412,7 +412,7 @@ No. v1.1+ requires Python 3.10 due to MCP SDK dependencies.
 ## Summary
 
 - ✅ Upgrade Python to 3.10+
-- ✅ Reinstall plorp with new dependencies
+- ✅ Reinstall brainplorp with new dependencies
 - ✅ Test CLI commands (should work unchanged)
 - ✅ (Optional) Set up MCP for Claude Desktop
 - ✅ Update import paths if using internal APIs

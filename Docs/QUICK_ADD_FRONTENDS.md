@@ -1,8 +1,8 @@
 # Quick Add Frontends
 
-This document describes different methods for quick-adding items to your plorp inbox from anywhere on macOS.
+This document describes different methods for quick-adding items to your brainplorp inbox from anywhere on macOS.
 
-All frontends use the same core CLI command: `plorp inbox add <text>`. Choose the method that fits your workflow.
+All frontends use the same core CLI command: `brainplorp inbox add <text>`. Choose the method that fits your workflow.
 
 ---
 
@@ -25,12 +25,12 @@ All frontends use the same core CLI command: `plorp inbox add <text>`. Choose th
    brew install --cask raycast
    ```
 
-2. **Copy the plorp Raycast script**:
+2. **Copy the brainplorp Raycast script**:
    ```bash
    # Create Raycast scripts directory
    mkdir -p ~/Documents/Raycast/Scripts
 
-   # Copy plorp quick-add script
+   # Copy brainplorp quick-add script
    cp raycast/quick-add-inbox.sh ~/Documents/Raycast/Scripts/
    chmod +x ~/Documents/Raycast/Scripts/quick-add-inbox.sh
    ```
@@ -38,7 +38,7 @@ All frontends use the same core CLI command: `plorp inbox add <text>`. Choose th
 3. **Edit script path** (if needed):
    Open `~/Documents/Raycast/Scripts/quick-add-inbox.sh` and update:
    ```bash
-   # Change this line to match your plorp installation:
+   # Change this line to match your brainplorp installation:
    PLORP_PATH="/Users/jsd/Documents/plorp/.venv/bin/plorp"
 
    # To find your path:
@@ -89,7 +89,7 @@ Press ⌘⌥I anywhere on Mac
 
 2. **Create new shortcut**:
    - Click "+" to create new shortcut
-   - Name it "plorp Quick Add"
+   - Name it "brainplorp Quick Add"
 
 3. **Add actions**:
    - Search for "Ask for Input" and add it
@@ -97,14 +97,14 @@ Press ⌘⌥I anywhere on Mac
    - Search for "Run Shell Script" and add it
    - Paste this script:
      ```bash
-     /Users/jsd/Documents/plorp/.venv/bin/plorp inbox add "$1"
+     /Users/jsd/Documents/plorp/.venv/bin/brainplorp inbox add "$1"
      ```
    - Change "Pass input" to "as arguments"
-   - Update path to match your plorp installation (`which plorp`)
+   - Update path to match your brainplorp installation (`which plorp`)
 
 4. **Add keyboard shortcut**:
    - System Settings → Keyboard → Keyboard Shortcuts → Services
-   - Find "plorp Quick Add"
+   - Find "brainplorp Quick Add"
    - Assign: **⌘⌥I** (or your preference)
 
 **Usage:**
@@ -146,7 +146,7 @@ Press ⌘⌥I anywhere on Mac
 2. **Create new workflow**:
    - Open Alfred Preferences → Workflows
    - Click "+" → Blank Workflow
-   - Name: "plorp Quick Add"
+   - Name: "brainplorp Quick Add"
 
 3. **Add Hotkey Trigger**:
    - Right-click canvas → Inputs → Hotkey
@@ -164,7 +164,7 @@ Press ⌘⌥I anywhere on Mac
    - Language: `/bin/bash`
    - Script:
      ```bash
-     /Users/jsd/Documents/plorp/.venv/bin/plorp inbox add "$1"
+     /Users/jsd/Documents/plorp/.venv/bin/brainplorp inbox add "$1"
      ```
    - Update path to match your installation
 
@@ -228,20 +228,20 @@ Method 2 (Keyword):
      ```applescript
      on run {input, parameters}
          set userInput to text returned of (display dialog "Quick add to inbox:" default answer "")
-         do shell script "/Users/jsd/Documents/plorp/.venv/bin/plorp inbox add " & quoted form of userInput
+         do shell script "/Users/jsd/Documents/plorp/.venv/bin/brainplorp inbox add " & quoted form of userInput
          return input
      end run
      ```
-   - Update path to match your plorp installation
+   - Update path to match your brainplorp installation
 
 4. **Save**:
    - File → Save
-   - Name: "plorp Quick Add"
+   - Name: "brainplorp Quick Add"
    - Location: Services folder (default)
 
 5. **Add keyboard shortcut**:
    - System Settings → Keyboard → Keyboard Shortcuts → Services
-   - Under "General", find "plorp Quick Add"
+   - Under "General", find "brainplorp Quick Add"
    - Click "add shortcut"
    - Press: **⌘⌥I**
 
@@ -281,10 +281,10 @@ Press ⌘⌥I anywhere on Mac
 
 ### "Command not found: plorp"
 
-**Problem:** The script can't find your plorp installation.
+**Problem:** The script can't find your brainplorp installation.
 
 **Solution:**
-1. Find plorp path:
+1. Find brainplorp path:
    ```bash
    which plorp
    ```
@@ -301,10 +301,10 @@ chmod +x ~/Documents/Raycast/Scripts/quick-add-inbox.sh
 
 ### "Vault not found"
 
-**Problem:** plorp can't find your Obsidian vault.
+**Problem:** brainplorp can't find your Obsidian vault.
 
 **Solution:**
-Check your plorp config:
+Check your brainplorp config:
 ```bash
 cat ~/.config/plorp/config.yaml
 ```
@@ -326,14 +326,14 @@ Ensure `vault_path` is correct.
 You can create your own frontend using any automation tool. Just call:
 
 ```bash
-/path/to/plorp inbox add "Your item text"
+/path/to/brainplorp inbox add "Your item text"
 ```
 
 **Examples:**
 - **BetterTouchTool**: Trigger on specific gesture
 - **Karabiner-Elements**: Custom keyboard mapping
 - **Hammerspoon**: Lua-based automation
-- **Shell alias**: `alias qi='plorp inbox add'`
+- **Shell alias**: `alias qi='brainplorp inbox add'`
 
 The CLI command is the universal interface - use any tool that can run a shell command.
 
@@ -344,7 +344,7 @@ The CLI command is the universal interface - use any tool that can run a shell c
 **For most users:**
 1. Install Raycast (free, modern, fast)
 2. Set up ⌘⌥I keyboard shortcut
-3. Use `plorp inbox process` daily to organize captured items
+3. Use `brainplorp inbox process` daily to organize captured items
 
 **For users without Raycast:**
 1. Use macOS Shortcuts (free, native)
@@ -363,7 +363,7 @@ The CLI command is the universal interface - use any tool that can run a shell c
 After capturing items, process them with:
 
 ```bash
-plorp inbox process
+brainplorp inbox process
 ```
 
 This is where you:

@@ -3,7 +3,7 @@
 **Purpose:** Test Sprint 8 project management through Claude Desktop MCP integration
 
 **Prerequisites:**
-- Claude Desktop with plorp MCP server configured
+- Claude Desktop with brainplorp MCP server configured
 - TaskWarrior 3.x installed
 - Vault at `/Users/jsd/vault/` configured
 
@@ -17,7 +17,7 @@
 
 **In Claude Desktop, send this message:**
 
-> "Can you check if the plorp MCP tools are available? List the project management tools."
+> "Can you check if the brainplorp MCP tools are available? List the project management tools."
 
 **Expected Response:**
 Claude should list MCP tools including:

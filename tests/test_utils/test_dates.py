@@ -3,7 +3,7 @@
 """Tests for date utilities."""
 import pytest
 from datetime import date
-from plorp.utils.dates import (
+from brainplorp.utils.dates import (
     format_date_iso,
     format_date_long,
     parse_taskwarrior_date,

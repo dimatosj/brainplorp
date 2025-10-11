@@ -1,10 +1,10 @@
-# plorp v1.1 Architecture
+# brainplorp v1.1 Architecture
 
-This document describes the architecture of plorp v1.1, which introduces an MCP-first design while maintaining backward compatibility with the CLI interface.
+This document describes the architecture of brainplorp v1.1, which introduces an MCP-first design while maintaining backward compatibility with the CLI interface.
 
 ## Design Philosophy
 
-plorp v1.1 follows a **layered architecture** that separates concerns:
+brainplorp v1.1 follows a **layered architecture** that separates concerns:
 
 1. **Core Layer** - Pure business logic, deterministic, no I/O decisions
 2. **MCP Layer** - Async wrappers, handles ambiguity and user interaction (stochastic)
@@ -25,7 +25,7 @@ plorp v1.1 follows a **layered architecture** that separates concerns:
            ▼                              ▼
   ┌─────────────────┐          ┌──────────────────┐
   │   MCP Server    │          │   CLI Commands   │
-  │  (plorp-mcp)    │          │   (plorp cli)    │
+  │  (plorp-mcp)    │          │   (brainplorp cli)    │
   └────────┬────────┘          └────────┬─────────┘
            │                            │
            │    ┌───────────────────────┘
@@ -383,7 +383,7 @@ User sees: Summary of tasks + file path
 ```
 User (Terminal)
   ↓
-  Types: plorp review
+  Types: brainplorp review
   ↓
 CLI Command
   ↓

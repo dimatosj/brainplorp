@@ -1,12 +1,12 @@
-# plorp v1.1 MCP - Manual Test User Journey
+# brainplorp v1.1 MCP - Manual Test User Journey
 
-**Purpose:** Walk through all plorp MCP functionality in Claude Desktop to verify end-to-end AI-assisted workflows.
+**Purpose:** Walk through all brainplorp MCP functionality in Claude Desktop to verify end-to-end AI-assisted workflows.
 
 **Prerequisites:**
-- plorp v1.1 installed (`pip install -e ".[dev]"` from project root)
+- brainplorp v1.1 installed (`pip install -e ".[dev]"` from project root)
 - TaskWarrior 3.x installed and configured
 - Obsidian vault configured in `~/.config/plorp/config.yaml`
-- Claude Desktop installed and configured with plorp MCP server
+- Claude Desktop installed and configured with brainplorp MCP server
 - MCP server configuration verified in `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 **Estimated Time:** 20-25 minutes
@@ -15,7 +15,7 @@
 
 ## Journey Overview
 
-You're a software engineer who wants to manage tasks and notes through natural conversation with Claude. You'll use plorp MCP tools to:
+You're a software engineer who wants to manage tasks and notes through natural conversation with Claude. You'll use brainplorp MCP tools to:
 1. Start your day with AI-generated daily notes
 2. Get intelligent task summaries and suggestions
 3. Review your day with guided reflections
@@ -54,7 +54,7 @@ tail -20 ~/Library/Logs/Claude/mcp-server-plorp.log
 
 **If missing**, run:
 ```bash
-plorp init-claude
+brainplorp init-claude
 ```
 Then restart Claude Desktop.
 
@@ -783,11 +783,11 @@ After completing all steps, verify:
 
 **Issue:** Tools listed but calls fail
 - **Check:** `~/.config/plorp/mcp.log` for errors
-- **Fix:** Verify plorp config exists: `cat ~/.config/plorp/config.yaml`
+- **Fix:** Verify brainplorp config exists: `cat ~/.config/plorp/config.yaml`
 - **Fix:** Check vault path is valid
 
 **Issue:** Slash commands don't work
-- **Run:** `plorp init-claude`
+- **Run:** `brainplorp init-claude`
 - **Fix:** Restart Claude Desktop
 - **Check:** `ls ~/.claude/commands/` for .md files
 

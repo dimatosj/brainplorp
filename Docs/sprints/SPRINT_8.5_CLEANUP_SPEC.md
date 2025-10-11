@@ -27,10 +27,10 @@ Sprint 8.5 addresses loose ends from Sprint 8's project management implementatio
 
 ### Primary Goals (Must Have)
 
-1. **Auto-sync TaskWarrior ↔ Obsidian in ALL plorp operations** ⭐ CRITICAL
+1. **Auto-sync TaskWarrior ↔ Obsidian in ALL brainplorp operations** ⭐ CRITICAL
    - When `/review` marks task done → Auto-remove UUID from project frontmatter
    - When `/process` Step 2 syncs checkboxes → Update TaskWarrior
-   - When any plorp command modifies tasks → Update related Obsidian surfaces
+   - When any brainplorp command modifies tasks → Update related Obsidian surfaces
    - **Pattern:** Every TaskWarrior write gets an Obsidian sync partner
    - Eliminates manual sync commands (user never edits frontmatter)
 
@@ -73,7 +73,7 @@ Sprint 8.5 addresses loose ends from Sprint 8's project management implementatio
 
 **The Gap: Partial State Updates**
 
-plorp is a **bridge** between TaskWarrior and Obsidian. Currently, state changes only go one direction:
+brainplorp is a **bridge** between TaskWarrior and Obsidian. Currently, state changes only go one direction:
 
 **Example 1 - Checkbox sync missing:**
 ```markdown
@@ -93,9 +93,9 @@ task_uuids:
   - abc-123  # Should be removed!
 ```
 
-**Root cause:** State changes are ONE-WAY. When plorp modifies TaskWarrior, it doesn't update Obsidian surfaces.
+**Root cause:** State changes are ONE-WAY. When brainplorp modifies TaskWarrior, it doesn't update Obsidian surfaces.
 
-### Solution: Auto-Sync in ALL plorp Operations
+### Solution: Auto-Sync in ALL brainplorp Operations
 
 **Core Principle:** Every TaskWarrior write operation gets an Obsidian sync partner.
 
@@ -224,7 +224,7 @@ User modifies TaskWarrior **outside plorp**:
 - Via mobile app
 - Via other tools (Timewarrior, sync, etc.)
 
-plorp has **no idea** this happened → Obsidian surfaces become stale.
+brainplorp has **no idea** this happened → Obsidian surfaces become stale.
 
 **Example:**
 ```yaml
@@ -232,7 +232,7 @@ plorp has **no idea** this happened → Obsidian surfaces become stale.
 ---
 task_uuids:
   - abc-123  # ✅ exists
-  - def-456  # ❌ user deleted via `task def-456 delete` (plorp doesn't know!)
+  - def-456  # ❌ user deleted via `task def-456 delete` (brainplorp doesn't know!)
   - ghi-789  # ✅ exists
 ---
 ```
@@ -261,7 +261,7 @@ task_uuids:
 **Deployment:**
 - Standalone script: `scripts/reconcile_taskwarrior.py`
 - Cron job runs every 15 minutes
-- Independent of main plorp codebase (can fail safely)
+- Independent of main brainplorp codebase (can fail safely)
 
 ### Implementation
 
@@ -439,7 +439,7 @@ if __name__ == "__main__":
 
 **Current behavior:**
 ```bash
-plorp project create "API Rewrite" work.foobar
+brainplorp project create "API Rewrite" work.foobar
 # Creates: work.foobar.api-rewrite.md ✅
 # No warning about non-standard workstream
 ```
@@ -462,7 +462,7 @@ SUGGESTED_WORKSTREAMS = {
 
 **Interactive validation (CLI):**
 ```bash
-plorp project create "API Rewrite" work.foobar
+brainplorp project create "API Rewrite" work.foobar
 
 # Output:
 # ⚠️  Warning: "foobar" is not a recognized workstream for domain "work"
@@ -558,7 +558,7 @@ if warning:
 **The issue:**
 ```bash
 # User creates project with 2 segments (missing workstream)
-plorp project create "API Rewrite" work
+brainplorp project create "API Rewrite" work
 
 # Creates: work.api-rewrite.md
 # Frontmatter has: needs_review: true
@@ -580,7 +580,7 @@ Result: Project doesn't appear in domain-filtered lists, TaskWarrior filter fail
 
 **User workflow:**
 ```bash
-plorp project review-orphaned
+brainplorp project review-orphaned
 
 # Output:
 # Found 3 projects needing workstream assignment:
@@ -716,7 +716,7 @@ Result: Tasks orphaned in TaskWarrior, forgotten.
 
 **User workflow:**
 ```bash
-plorp task review-orphaned
+brainplorp task review-orphaned
 
 # Output:
 # Found 3 tasks without domain/project:
@@ -740,7 +740,7 @@ plorp task review-orphaned
 #
 #       Choice [1-3]: 2
 #
-#       → Updated: project:work.engineering.plorp ✅
+#       → Updated: project:work.engineering.brainplorp ✅
 ```
 
 ### Implementation
@@ -840,7 +840,7 @@ def find_orphaned_tasks() -> List[Dict[str, Any]]:
 ### Order of Implementation
 
 **Day 1 (6 hours):**
-1. Item #1: Auto-sync in all plorp operations - 3 hours
+1. Item #1: Auto-sync in all brainplorp operations - 3 hours
    - **MOST CRITICAL** - Core architectural pattern
    - Update `/review` to remove UUIDs from projects when marking done
    - Update `/process` Step 2 to sync checkboxes
@@ -912,10 +912,10 @@ def find_orphaned_tasks() -> List[Dict[str, Any]]:
 
 **Manual CLI Testing:**
 - [ ] Run `/process` on daily note with checked formal tasks
-- [ ] Run `plorp project sync` on project with deleted task UUIDs
-- [ ] Run `plorp project create` with invalid workstream
-- [ ] Run `plorp project review-orphaned`
-- [ ] Run `plorp task review-orphaned`
+- [ ] Run `brainplorp project sync` on project with deleted task UUIDs
+- [ ] Run `brainplorp project create` with invalid workstream
+- [ ] Run `brainplorp project review-orphaned`
+- [ ] Run `brainplorp task review-orphaned`
 
 ### Regression Testing
 
@@ -930,7 +930,7 @@ def find_orphaned_tasks() -> List[Dict[str, Any]]:
 ### Functional Requirements
 
 - [ ] `/process` Step 2 syncs checked task checkboxes to TaskWarrior
-- [ ] `plorp project sync` removes orphaned task UUIDs
+- [ ] `brainplorp project sync` removes orphaned task UUIDs
 - [ ] Workstream validation warns about non-standard values
 - [ ] Orphaned project review assigns workstreams interactively
 - [ ] Orphaned task review assigns domains/projects interactively
@@ -1377,7 +1377,7 @@ The spec assumed TaskWarrior uses `undo.data`, but TaskWarrior 3.x uses SQLite w
 - Script adapted to parse SQLite instead of flat file
 
 **CLI Commands:**
-Core functions for Items 4 & 5 are complete and tested. Interactive CLI commands (`plorp project review-orphaned`, `plorp task review-orphaned`) are UI wrappers around core functions. Core functionality is fully operational for programmatic/MCP use.
+Core functions for Items 4 & 5 are complete and tested. Interactive CLI commands (`brainplorp project review-orphaned`, `brainplorp task review-orphaned`) are UI wrappers around core functions. Core functionality is fully operational for programmatic/MCP use.
 
 ### Post-Implementation Checklist
 

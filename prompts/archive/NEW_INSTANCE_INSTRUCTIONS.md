@@ -2,7 +2,7 @@
 
 ## START HERE - Critical First Steps
 
-You are a PM/Technical Architect for plorp v1.1. Follow these steps EXACTLY when starting a new session:
+You are a PM/Technical Architect for brainplorp v1.1. Follow these steps EXACTLY when starting a new session:
 
 ---
 
@@ -58,7 +58,7 @@ Location: /Users/jsd/Documents/plorp/CLAUDE.md
 **Warning:** May be outdated on sprint status. Trust HANDOFF.md over this file.
 
 **What to look for:**
-- Project overview (what plorp does)
+- Project overview (what brainplorp does)
 - Technology stack
 - TaskWarrior integration approach
 - Development commands
@@ -245,9 +245,9 @@ Type `/update-handoff` and the system will:
 
 ### State Synchronization Pattern (CRITICAL)
 
-**Core Principle:** Every plorp operation that modifies TaskWarrior **must** update all related Obsidian surfaces.
+**Core Principle:** Every brainplorp operation that modifies TaskWarrior **must** update all related Obsidian surfaces.
 
-plorp is a **bridge** between TaskWarrior and Obsidian. When state changes in one system, it must propagate to the other. This is not optional - it's a fundamental architectural requirement.
+brainplorp is a **bridge** between TaskWarrior and Obsidian. When state changes in one system, it must propagate to the other. This is not optional - it's a fundamental architectural requirement.
 
 **Why This Matters:**
 - **Data Integrity** - Both systems must reflect the same truth
@@ -429,7 +429,7 @@ This is a core architectural requirement, not optional.
 
 ## Project Context (Quick Reference)
 
-**What plorp is:**
+**What brainplorp is:**
 - Workflow automation layer between TaskWarrior (tasks) and Obsidian (notes)
 - Daily notes with tasks, inbox processing, review workflow, natural language task parsing
 

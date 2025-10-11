@@ -28,4 +28,4 @@ plorp_version: 1.0
 
 ## Review Section
 
-<!-- Auto-populated by `plorp review` -->
+<!-- Auto-populated by `brainplorp review` -->

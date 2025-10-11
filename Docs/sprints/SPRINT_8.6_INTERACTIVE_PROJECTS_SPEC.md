@@ -63,7 +63,7 @@ Sprint 8.6 completes the State Synchronization pattern for projects by ensuring 
    - Enable focused work sessions
 
 5. **Admin Sync-All Command** 🔧 MAINTENANCE
-   - `plorp sync-all` - Sync all project notes
+   - `brainplorp sync-all` - Sync all project notes
    - Idempotent bulk reconciliation
    - For migration, debugging, recovery
 
@@ -632,7 +632,7 @@ def process(project_path: str):
     Process project note checkboxes (sync to TaskWarrior).
 
     Example:
-        plorp project process work.engineering.api-rewrite
+        brainplorp project process work.engineering.api-rewrite
     """
     config = load_config()
     result = process_project_note(config.vault_path, project_path)
@@ -855,9 +855,9 @@ def scoped(project, domain, workstream):
     Review tasks with scope filter.
 
     Examples:
-        plorp review scoped --project work.engineering.api-rewrite
-        plorp review scoped --domain work
-        plorp review scoped --workstream work.engineering
+        brainplorp review scoped --project work.engineering.api-rewrite
+        brainplorp review scoped --domain work
+        brainplorp review scoped --workstream work.engineering
     """
     config = load_config()
 
@@ -931,7 +931,7 @@ Admin/maintenance command to ensure all project note bodies are in sync with the
 
 **CLI:**
 ```bash
-plorp sync-all
+brainplorp sync-all
 
 # Output:
 Syncing all project notes...
@@ -1077,7 +1077,7 @@ def sync_all():
     - Recovery from manual edits
 
     Example:
-        plorp sync-all
+        brainplorp sync-all
     """
     config = load_config()
 
@@ -1114,7 +1114,7 @@ def sync_all():
 **1. Initial migration (Sprint 8 → 8.6):**
 ```bash
 # After upgrading plorp
-plorp sync-all
+brainplorp sync-all
 
 # All existing projects now have task sections
 ```
@@ -1122,7 +1122,7 @@ plorp sync-all
 **2. Debugging:**
 ```bash
 # Verify entire system is in sync
-plorp sync-all
+brainplorp sync-all
 
 # Check output - should be idempotent (no changes if already synced)
 ```
@@ -1130,7 +1130,7 @@ plorp sync-all
 **3. Recovery:**
 ```bash
 # After manual edits to frontmatter
-plorp sync-all
+brainplorp sync-all
 
 # Note bodies updated to match
 ```
@@ -1138,7 +1138,7 @@ plorp sync-all
 **4. Scheduled maintenance (optional):**
 ```bash
 # Add to crontab
-0 */6 * * * /path/to/plorp sync-all
+0 */6 * * * /path/to/brainplorp sync-all
 
 # Run every 6 hours to ensure sync
 ```
@@ -1179,7 +1179,7 @@ plorp sync-all
 
 1. Implement `process_project_note()`
 2. Add MCP tool `plorp_process_project_note`
-3. Add CLI command `plorp project process`
+3. Add CLI command `brainplorp project process`
 4. Write 5 tests
 5. Verify: Check box → process → TaskWarrior done → note updated
 
@@ -1187,7 +1187,7 @@ plorp sync-all
 
 1. Implement `get_review_tasks_scoped()`
 2. Add 3 MCP tools (review project/domain/workstream)
-3. Add CLI `plorp review scoped`
+3. Add CLI `brainplorp review scoped`
 4. Write 4 tests
 5. Verify: Scoped review filters correctly
 
@@ -1195,7 +1195,7 @@ plorp sync-all
 
 1. Implement `sync_all_projects()`
 2. Add MCP tool `plorp_sync_all_projects`
-3. Add CLI command `plorp sync-all`
+3. Add CLI command `brainplorp sync-all`
 4. Write 3 tests
 5. Verify: Can sync all projects, idempotent
 
@@ -1252,15 +1252,15 @@ None (all in existing files)
 ### Integration Tests
 
 **Manual Testing:**
-1. Create project: `plorp project create "Test" work.test`
+1. Create project: `brainplorp project create "Test" work.test`
 2. Create task: Call `plorp_create_task_in_project`
 3. Verify: Open project note, Tasks section exists ✅
 4. Check box in Obsidian
-5. Process: `plorp project process work.test`
+5. Process: `brainplorp project process work.test`
 6. Verify: TaskWarrior shows done, frontmatter updated, note body updated ✅
-7. Review scoped: `plorp review scoped --project work.test`
+7. Review scoped: `brainplorp review scoped --project work.test`
 8. Verify: Only shows work.test tasks ✅
-9. Sync all: `plorp sync-all`
+9. Sync all: `brainplorp sync-all`
 10. Verify: All project notes have task sections, idempotent ✅
 
 ### State Sync Verification
@@ -1377,7 +1377,7 @@ None (all in existing files)
 
 **Mitigation:**
 - Document: "Task section is auto-managed - don't edit"
-- Consider: Add comment `<!-- Managed by plorp - changes will be overwritten -->`
+- Consider: Add comment `<!-- Managed by brainplorp - changes will be overwritten -->`
 - User can add content in other sections (preserved)
 
 ### Risk 3: Large Projects (100+ tasks)
@@ -1391,7 +1391,7 @@ None (all in existing files)
 
 ### Risk 4: Concurrent Modifications
 
-**Risk:** User edits note while plorp is syncing.
+**Risk:** User edits note while brainplorp is syncing.
 
 **Mitigation:**
 - File writes are atomic (OS-level)
@@ -1473,7 +1473,7 @@ None (all in existing files)
 
 - **v2.1.0** (2025-10-08) - Added sync-all command
   - Added Item 4: Admin sync-all command
-  - CLI: `plorp sync-all`
+  - CLI: `brainplorp sync-all`
   - MCP: `plorp_sync_all_projects`
   - For migration, debugging, recovery
   - 13-18 hours estimated effort
@@ -1511,7 +1511,7 @@ None (all in existing files)
 - [ ] State Sync verified (3 surfaces in sync)
 - [ ] CLI commands work (3 new: process, scoped review, sync-all)
 - [ ] MCP tools work (5 new)
-- [ ] `plorp sync-all` runs successfully
+- [ ] `brainplorp sync-all` runs successfully
 - [ ] Sync-all is idempotent (safe to run multiple times)
 - [ ] Documentation updated
 - [ ] Manual testing complete
@@ -1534,7 +1534,7 @@ None (all in existing files)
 - Q3: Orphaned UUID handling (Recommendation: skip gracefully)
 
 **Changes in v2.1.0:**
-- Added Item 4: Admin sync-all command (`plorp sync-all`)
+- Added Item 4: Admin sync-all command (`brainplorp sync-all`)
 - Updated effort estimate: 13-18 hours (was 12-16)
 - Updated test count: 20 new tests (was 17)
 - Updated MCP tools: 5 new tools (was 4)
@@ -2048,7 +2048,7 @@ def _format_date(date_str: str) -> str:
 ```
 
 **Answers:**
-- **Timezone conversion?** No - just strip the time component. All plorp dates are day-level granularity.
+- **Timezone conversion?** No - just strip the time component. All brainplorp dates are day-level granularity.
 - **Already formatted (`2025-10-10`)?** Return as-is (handled by the `else` branch).
 - **Missing `T` or `Z`?** Return as-is (handled by the `else` branch).
 
@@ -2192,7 +2192,7 @@ for uuid in task_uuids:
         # Orphaned UUID - skip (Sprint 8.5 reconciliation will clean)
         logger.warning(
             f"Orphaned UUID '{uuid}' in project '{project_path}' - skipping. "
-            f"Run 'plorp sync-all' to clean up."
+            f"Run 'brainplorp sync-all' to clean up."
         )
         continue
 ```
@@ -2203,7 +2203,7 @@ for uuid in task_uuids:
 
 **The warning goes to logs, not to user output.** Users can see warnings with:
 ```bash
-plorp --verbose sync-all
+brainplorp --verbose sync-all
 ```
 
 ---
@@ -2501,7 +2501,7 @@ Sprint 8.6 successfully completed the State Synchronization pattern for project 
 #### Phase 4: Sync-All CLI Command & MCP Tool ✅ COMPLETE
 **Effort:** 1-2 hours (as estimated)
 
-**CLI Command:** `plorp project sync-all`
+**CLI Command:** `brainplorp project sync-all`
 **MCP Tool:** `plorp_sync_all_projects`
 **Admin Function:** `sync_all_projects()` - Idempotent bulk reconciliation
 
@@ -2592,7 +2592,7 @@ Sprint 8.6 successfully completed the State Synchronization pattern for project 
 
 ### Next Steps for Users
 
-1. Run `plorp project sync-all` to sync all existing project notes
+1. Run `brainplorp project sync-all` to sync all existing project notes
 2. Create tasks in projects - note bodies auto-update
 3. Check boxes in project notes - tasks auto-complete
 

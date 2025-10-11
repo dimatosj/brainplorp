@@ -9,8 +9,8 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from plorp.core.review import get_review_tasks, add_review_notes, _normalize_task
-from plorp.core.exceptions import VaultNotFoundError, DailyNoteNotFoundError
+from brainplorp.core.review import get_review_tasks, add_review_notes, _normalize_task
+from brainplorp.core.exceptions import VaultNotFoundError, DailyNoteNotFoundError
 
 
 def test_get_review_tasks_returns_uncompleted(tmp_path):
@@ -32,7 +32,7 @@ def test_get_review_tasks_returns_uncompleted(tmp_path):
 """
     )
 
-    with patch("plorp.core.review.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.review.get_task_info") as mock_get_task:
         mock_get_task.side_effect = lambda uuid: {
             "abc-123": {
                 "uuid": "abc-123",
@@ -80,7 +80,7 @@ def test_get_review_tasks_handles_missing_tasks(tmp_path):
 """
     )
 
-    with patch("plorp.core.review.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.review.get_task_info") as mock_get_task:
         # First task returns None (deleted), second exists
         mock_get_task.side_effect = lambda uuid: (
             None

@@ -13,7 +13,7 @@ Sprint 5 successfully implemented bidirectional linking between Obsidian notes a
 
 1. **Front Matter Editing** - YAML front matter manipulation functions
 2. **Notes Workflow** - Note creation and task-note linking functions
-3. **CLI Commands** - `plorp note` and `plorp link` commands
+3. **CLI Commands** - `brainplorp note` and `brainplorp link` commands
 
 All functionality has been implemented following TDD methodology with comprehensive test coverage.
 
@@ -89,7 +89,7 @@ All functionality has been implemented following TDD methodology with comprehens
 
 **Commands Added** (2):
 
-#### `plorp note <title>`
+#### `brainplorp note <title>`
 Create a new note with optional task linking.
 
 **Options**:
@@ -98,16 +98,16 @@ Create a new note with optional task linking.
 
 **Examples**:
 ```bash
-plorp note "Sprint Planning"
-plorp note "Meeting Notes" --task abc-123 --type meeting
+brainplorp note "Sprint Planning"
+brainplorp note "Meeting Notes" --task abc-123 --type meeting
 ```
 
-#### `plorp link <task_uuid> <note_path>`
+#### `brainplorp link <task_uuid> <note_path>`
 Link an existing note to a task.
 
 **Example**:
 ```bash
-plorp link abc-123 ~/vault/notes/meeting.md
+brainplorp link abc-123 ~/vault/notes/meeting.md
 ```
 
 **Tests Added** (4):
@@ -193,11 +193,11 @@ All 13 clarifying questions were answered and implemented:
 ## Sprint 5 Acceptance Criteria
 
 ✅ **AC1**: User can create a new note linked to a task
-- Implemented via `plorp note <title> --task <uuid>`
+- Implemented via `brainplorp note <title> --task <uuid>`
 - Test: `test_note_command_with_task`
 
 ✅ **AC2**: User can link an existing note to a task
-- Implemented via `plorp link <task_uuid> <note_path>`
+- Implemented via `brainplorp link <task_uuid> <note_path>`
 - Test: `test_link_command`
 
 ✅ **AC3**: Bidirectional linking is maintained

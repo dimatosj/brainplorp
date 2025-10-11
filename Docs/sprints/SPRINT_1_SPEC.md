@@ -64,7 +64,7 @@ The TaskWarrior integration is complete and tested. Sprint 2 can now use:
 
 ### Goal
 
-Create a comprehensive Python wrapper around the TaskWarrior CLI that provides clean, testable interfaces for all task operations needed by plorp. This integration layer will be the foundation for all plorp workflows.
+Create a comprehensive Python wrapper around the TaskWarrior CLI that provides clean, testable interfaces for all task operations needed by plorp. This integration layer will be the foundation for all brainplorp workflows.
 
 ### What You're Building
 
@@ -93,7 +93,7 @@ A complete TaskWarrior integration module with:
 You are implementing Sprint 1 for plorp, a workflow automation tool for TaskWarrior and Obsidian.
 
 PROJECT CONTEXT:
-- plorp is a Python CLI tool that bridges TaskWarrior (task management) and Obsidian (note-taking)
+- brainplorp is a Python CLI tool that bridges TaskWarrior (task management) and Obsidian (note-taking)
 - This is Sprint 1: You're creating the TaskWarrior integration layer
 - Sprint 0 is complete: Project structure, test infrastructure, and fixtures are ready
 

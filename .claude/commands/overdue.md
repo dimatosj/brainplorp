@@ -1,3 +1,3 @@
-Run the command: `plorp tasks --due overdue`
+Run the command: `brainplorp tasks --due overdue`
 
 Display overdue tasks that need attention.

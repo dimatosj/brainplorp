@@ -8,12 +8,12 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from plorp.core.notes import (
+from brainplorp.core.notes import (
     create_note_standalone,
     create_note_linked_to_task,
     link_note_to_task,
 )
-from plorp.core.exceptions import (
+from brainplorp.core.exceptions import (
     VaultNotFoundError,
     TaskNotFoundError,
     NoteNotFoundError,
@@ -26,7 +26,7 @@ def test_create_note_standalone(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.notes.create_note") as mock_create_note:
+    with patch("brainplorp.core.notes.create_note") as mock_create_note:
         mock_note_path = vault / "notes" / "test-note-2025-10-06.md"
         mock_create_note.return_value = mock_note_path
 
@@ -57,9 +57,9 @@ def test_create_note_linked_to_task(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
-        with patch("plorp.core.notes.create_note") as mock_create_note:
-            with patch("plorp.core.notes.link_note_to_task") as mock_link:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.notes.create_note") as mock_create_note:
+            with patch("brainplorp.core.notes.link_note_to_task") as mock_link:
                 mock_get_task.return_value = {
                     "uuid": "abc-123",
                     "description": "Test task",
@@ -92,7 +92,7 @@ def test_create_note_linked_to_task_not_found(tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
         mock_get_task.return_value = None
 
         with pytest.raises(TaskNotFoundError):
@@ -108,10 +108,10 @@ def test_link_note_to_task_success(tmp_path):
     note_path = notes_dir / "existing-note.md"
     note_path.write_text("# Existing Note")
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
-        with patch("plorp.core.notes.add_task_to_note_frontmatter") as mock_add_fm:
-            with patch("plorp.core.notes.get_task_annotations") as mock_get_ann:
-                with patch("plorp.core.notes.add_annotation") as mock_add_ann:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.notes.add_task_to_note_frontmatter") as mock_add_fm:
+            with patch("brainplorp.core.notes.get_task_annotations") as mock_get_ann:
+                with patch("brainplorp.core.notes.add_annotation") as mock_add_ann:
                     mock_get_task.return_value = {
                         "uuid": "abc-123",
                         "description": "Test task",
@@ -140,10 +140,10 @@ def test_link_note_to_task_prevents_duplicates(tmp_path):
     note_path = notes_dir / "existing-note.md"
     note_path.write_text("# Existing Note")
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
-        with patch("plorp.core.notes.add_task_to_note_frontmatter") as mock_add_fm:
-            with patch("plorp.core.notes.get_task_annotations") as mock_get_ann:
-                with patch("plorp.core.notes.add_annotation") as mock_add_ann:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.notes.add_task_to_note_frontmatter") as mock_add_fm:
+            with patch("brainplorp.core.notes.get_task_annotations") as mock_get_ann:
+                with patch("brainplorp.core.notes.add_annotation") as mock_add_ann:
                     mock_get_task.return_value = {
                         "uuid": "abc-123",
                         "description": "Test task",
@@ -168,7 +168,7 @@ def test_link_note_to_task_not_found(tmp_path):
     note_path = notes_dir / "note.md"
     note_path.write_text("# Note")
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
         mock_get_task.return_value = None
 
         with pytest.raises(TaskNotFoundError):
@@ -182,7 +182,7 @@ def test_link_note_to_task_note_not_found(tmp_path):
 
     missing_note = vault / "notes" / "missing.md"
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
         mock_get_task.return_value = {"uuid": "abc-123", "description": "Test"}
 
         with pytest.raises(NoteNotFoundError):
@@ -198,7 +198,7 @@ def test_link_note_to_task_outside_vault(tmp_path):
     outside_note.parent.mkdir()
     outside_note.write_text("# Outside Note")
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
         mock_get_task.return_value = {"uuid": "abc-123", "description": "Test"}
 
         with pytest.raises(NoteOutsideVaultError):
@@ -214,10 +214,10 @@ def test_link_note_to_task_normalizes_path(tmp_path):
     note_path = notes_dir / "team-meeting.md"
     note_path.write_text("# Meeting")
 
-    with patch("plorp.core.notes.get_task_info") as mock_get_task:
-        with patch("plorp.core.notes.add_task_to_note_frontmatter") as mock_add_fm:
-            with patch("plorp.core.notes.get_task_annotations") as mock_get_ann:
-                with patch("plorp.core.notes.add_annotation") as mock_add_ann:
+    with patch("brainplorp.core.notes.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.notes.add_task_to_note_frontmatter") as mock_add_fm:
+            with patch("brainplorp.core.notes.get_task_annotations") as mock_get_ann:
+                with patch("brainplorp.core.notes.add_annotation") as mock_add_ann:
                     mock_get_task.return_value = {"uuid": "abc-123", "description": "Test"}
                     mock_get_ann.return_value = []
 

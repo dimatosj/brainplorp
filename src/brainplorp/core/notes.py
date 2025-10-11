@@ -8,16 +8,16 @@ No I/O decisions - returns structured data for callers to format.
 from datetime import datetime
 from pathlib import Path
 
-from plorp.core.types import NoteCreateResult, NoteLinkResult
-from plorp.core.exceptions import (
+from brainplorp.core.types import NoteCreateResult, NoteLinkResult
+from brainplorp.core.exceptions import (
     VaultNotFoundError,
     TaskNotFoundError,
     NoteNotFoundError,
     NoteOutsideVaultError,
 )
-from plorp.integrations.taskwarrior import get_task_info, add_annotation, get_task_annotations
-from plorp.integrations.obsidian import create_note
-from plorp.parsers.markdown import add_task_to_note_frontmatter
+from brainplorp.integrations.taskwarrior import get_task_info, add_annotation, get_task_annotations
+from brainplorp.integrations.obsidian import create_note
+from brainplorp.parsers.markdown import add_task_to_note_frontmatter
 
 
 def create_note_standalone(

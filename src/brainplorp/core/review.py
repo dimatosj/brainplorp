@@ -9,10 +9,10 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Dict
 
-from plorp.core.types import ReviewData, ReviewResult, TaskInfo
-from plorp.core.exceptions import VaultNotFoundError, DailyNoteNotFoundError
-from plorp.parsers.markdown import parse_daily_note_tasks
-from plorp.integrations.taskwarrior import get_task_info
+from brainplorp.core.types import ReviewData, ReviewResult, TaskInfo
+from brainplorp.core.exceptions import VaultNotFoundError, DailyNoteNotFoundError
+from brainplorp.parsers.markdown import parse_daily_note_tasks
+from brainplorp.integrations.taskwarrior import get_task_info
 
 
 def get_review_tasks(target_date: date, vault_path: Path) -> ReviewData:

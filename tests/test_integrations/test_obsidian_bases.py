@@ -4,7 +4,7 @@
 import pytest
 from pathlib import Path
 from datetime import datetime
-from plorp.integrations.obsidian_bases import (
+from brainplorp.integrations.obsidian_bases import (
     parse_project_note,
     create_project_note,
     list_projects,
@@ -14,7 +14,7 @@ from plorp.integrations.obsidian_bases import (
     delete_project,
     get_projects_dir,
 )
-from plorp.core.types import ProjectInfo, ProjectListResult
+from brainplorp.core.types import ProjectInfo, ProjectListResult
 
 
 def test_parse_project_note_valid(tmp_path, monkeypatch):

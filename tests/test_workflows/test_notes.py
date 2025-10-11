@@ -4,7 +4,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from plorp.workflows.notes import (
+from brainplorp.workflows.notes import (
     create_note_with_task_link,
     link_note_to_task,
     unlink_note_from_task,
@@ -21,12 +21,12 @@ def test_vault(tmp_path):
     return vault
 
 
-@patch("plorp.workflows.notes.get_task_info")
-@patch("plorp.integrations.taskwarrior.get_task_info")
-@patch("plorp.workflows.notes.add_annotation")
-@patch("plorp.workflows.notes.get_task_annotations")
-@patch("plorp.workflows.notes.create_note")
-@patch("plorp.workflows.notes.get_vault_path")
+@patch("brainplorp.workflows.notes.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.workflows.notes.add_annotation")
+@patch("brainplorp.workflows.notes.get_task_annotations")
+@patch("brainplorp.workflows.notes.create_note")
+@patch("brainplorp.workflows.notes.get_vault_path")
 def test_create_note_with_task_link(
     mock_vault_path,
     mock_create_note,
@@ -62,7 +62,7 @@ def test_create_note_with_task_link(
     mock_add_annotation.assert_called_once()
 
 
-@patch("plorp.workflows.notes.get_task_info")
+@patch("brainplorp.workflows.notes.get_task_info")
 def test_create_note_with_invalid_task(mock_task_info, test_vault):
     """Test creating note with non-existent task."""
     mock_task_info.return_value = None  # Task not found
@@ -73,8 +73,8 @@ def test_create_note_with_invalid_task(mock_task_info, test_vault):
         create_note_with_task_link(config, "Note", task_uuid="invalid-uuid")
 
 
-@patch("plorp.workflows.notes.create_note")
-@patch("plorp.workflows.notes.get_vault_path")
+@patch("brainplorp.workflows.notes.create_note")
+@patch("brainplorp.workflows.notes.get_vault_path")
 def test_create_note_without_task(mock_vault_path, mock_create_note, test_vault):
     """Test creating note without task link."""
     mock_vault_path.return_value = test_vault
@@ -94,10 +94,10 @@ def test_create_note_without_task(mock_vault_path, mock_create_note, test_vault)
     assert "tasks:" not in content or "tasks: []" in content
 
 
-@patch("plorp.workflows.notes.get_task_info")
-@patch("plorp.integrations.taskwarrior.get_task_info")
-@patch("plorp.workflows.notes.add_annotation")
-@patch("plorp.workflows.notes.get_task_annotations")
+@patch("brainplorp.workflows.notes.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.workflows.notes.add_annotation")
+@patch("brainplorp.workflows.notes.get_task_annotations")
 def test_link_note_to_task(
     mock_annotations, mock_add_ann, mock_tw_task_info, mock_task_info, test_vault
 ):
@@ -131,7 +131,7 @@ Content
     assert "test-note.md" in annotation
 
 
-@patch("plorp.workflows.notes.get_task_info")
+@patch("brainplorp.workflows.notes.get_task_info")
 def test_link_note_to_invalid_task(mock_task_info, test_vault):
     """Test linking note to non-existent task."""
     mock_task_info.return_value = None
@@ -143,7 +143,7 @@ def test_link_note_to_invalid_task(mock_task_info, test_vault):
         link_note_to_task(note_path, "invalid-uuid", test_vault)
 
 
-@patch("plorp.workflows.notes.get_task_info")
+@patch("brainplorp.workflows.notes.get_task_info")
 def test_link_note_not_found(mock_task_info, test_vault):
     """Test linking non-existent note."""
     mock_task_info.return_value = {"uuid": "abc-123"}
@@ -154,10 +154,10 @@ def test_link_note_not_found(mock_task_info, test_vault):
         link_note_to_task(note_path, "abc-123", test_vault)
 
 
-@patch("plorp.workflows.notes.get_task_info")
-@patch("plorp.integrations.taskwarrior.get_task_info")
-@patch("plorp.workflows.notes.add_annotation")
-@patch("plorp.workflows.notes.get_task_annotations")
+@patch("brainplorp.workflows.notes.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.workflows.notes.add_annotation")
+@patch("brainplorp.workflows.notes.get_task_annotations")
 def test_link_note_to_task_already_linked(
     mock_annotations, mock_add_ann, mock_tw_task_info, mock_task_info, test_vault
 ):
@@ -196,7 +196,7 @@ Content
     assert "def-456" in updated  # Other task preserved
 
 
-@patch("plorp.workflows.notes.get_task_annotations")
+@patch("brainplorp.workflows.notes.get_task_annotations")
 def test_get_linked_notes(mock_annotations, test_vault):
     """Test getting notes linked to task."""
     # Create some notes
@@ -219,7 +219,7 @@ def test_get_linked_notes(mock_annotations, test_vault):
     assert note2 in notes
 
 
-@patch("plorp.workflows.notes.get_task_annotations")
+@patch("brainplorp.workflows.notes.get_task_annotations")
 def test_get_linked_notes_nonexistent(mock_annotations, test_vault):
     """Test getting linked notes when note files don't exist."""
     mock_annotations.return_value = ["plorp:note:notes/deleted-note.md"]

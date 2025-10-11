@@ -3,7 +3,7 @@
 """Tests for configuration management."""
 import pytest
 from pathlib import Path
-from plorp.config import get_config_path, load_config, save_config, DEFAULT_CONFIG
+from brainplorp.config import get_config_path, load_config, save_config, DEFAULT_CONFIG
 
 
 def test_default_config_structure():

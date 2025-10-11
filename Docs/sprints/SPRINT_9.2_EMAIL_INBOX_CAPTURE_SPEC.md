@@ -17,11 +17,11 @@ Sprint 9.2 implements the email capture component of plorp's inbox workflow. Use
 **Problem:**
 - Users manually copy-paste emails into inbox files
 - Email → Inbox workflow is broken/incomplete
-- No automated email capture from original plorp vision
+- No automated email capture from original brainplorp vision
 
 **Solution:**
 ```bash
-$ plorp inbox fetch
+$ brainplorp inbox fetch
 📧 Fetching emails from Gmail...
 ✓ Found 3 new emails
 ✓ Appended to vault/inbox/2025-10.md
@@ -29,7 +29,7 @@ $ plorp inbox fetch
 ```
 
 **What's New:**
-- `plorp inbox fetch` - CLI command to fetch emails via IMAP
+- `brainplorp inbox fetch` - CLI command to fetch emails via IMAP
 - Gmail IMAP client with App Password authentication
 - Email body → markdown bullet conversion (preserves lists, converts paragraphs)
 - HTML email support (converts `<ul>/<ol>/<li>` to markdown)
@@ -102,10 +102,10 @@ email:
 **Usage:**
 ```bash
 # Manual usage
-plorp inbox fetch
+brainplorp inbox fetch
 
 # Cron usage (every 15 minutes)
-*/15 * * * * cd /Users/jsd/Documents/plorp && .venv/bin/plorp inbox fetch >> ~/.plorp_email.log 2>&1
+*/15 * * * * cd /Users/jsd/Documents/brainplorp && .venv/bin/brainplorp inbox fetch >> ~/.plorp_email.log 2>&1
 ```
 
 ---
@@ -124,7 +124,7 @@ plorp inbox fetch
 
 **Result:** 2-3 minutes of manual copying, context switching, and formatting.
 
-### Original plorp Vision (Partially Implemented)
+### Original brainplorp Vision (Partially Implemented)
 
 From `CLAUDE.md`:
 > **Inbox workflow** - Email → Markdown → TaskWarrior/Obsidian
@@ -143,7 +143,7 @@ From `CLAUDE.md`:
 
 **User Expectations:**
 - Email capture should be **automatic** (cron job)
-- Or at least **one command** (`plorp inbox fetch`)
+- Or at least **one command** (`brainplorp inbox fetch`)
 - Emails should appear in inbox file **ready to process**
 
 ---
@@ -189,7 +189,7 @@ from email.parser import BytesParser
 ### CLI Command
 
 ```bash
-plorp inbox fetch [OPTIONS]
+brainplorp inbox fetch [OPTIONS]
 
 Options:
   --limit INTEGER    Max emails to fetch per run (default: 20)
@@ -909,15 +909,15 @@ def test_append_emails_with_html_body(tmp_path):
 **Email → Inbox (Automated):**
 ```bash
 # Fetch emails from Gmail
-plorp inbox fetch
+brainplorp inbox fetch
 
 # Cron job (every 15 minutes)
-*/15 * * * * cd /path/to/plorp && .venv/bin/plorp inbox fetch
+*/15 * * * * cd /path/to/brainplorp && .venv/bin/brainplorp inbox fetch
 ```
 
 **Inbox → Tasks (Interactive):**
 ```bash
-plorp inbox process
+brainplorp inbox process
 ```
 ```
 
@@ -945,7 +945,7 @@ plorp inbox process
 
 ### CLI Requirements
 
-- [ ] `plorp inbox fetch` command works
+- [ ] `brainplorp inbox fetch` command works
 - [ ] `--limit` option restricts email count
 - [ ] `--label` option specifies Gmail folder
 - [ ] `--dry-run` shows emails without appending
@@ -1007,29 +1007,29 @@ Users must:
 
 ### Story 1: One-Command Email Fetch
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** to fetch my emails with one command
 **So that** I can quickly move emails into my inbox file
 
 **Acceptance Criteria:**
-- Run `plorp inbox fetch` and see "✓ Appended 3 emails to inbox"
+- Run `brainplorp inbox fetch` and see "✓ Appended 3 emails to inbox"
 - Emails appear in `vault/inbox/YYYY-MM.md` under Unprocessed
 - Emails are marked as read in Gmail (won't re-fetch)
 
 ### Story 2: Automated Email Capture
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** emails to automatically appear in my inbox file
 **So that** I don't have to manually copy-paste them
 
 **Acceptance Criteria:**
-- Set up cron job: `*/15 * * * * plorp inbox fetch`
+- Set up cron job: `*/15 * * * * brainplorp inbox fetch`
 - Emails appear in inbox file every 15 minutes
 - No manual intervention needed
 
 ### Story 3: Selective Email Capture
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** to only fetch emails from a specific Gmail label
 **So that** I don't clutter my inbox with all emails
 
@@ -1075,7 +1075,7 @@ Users must:
 4. Error handling and user feedback
 
 **Deliverables:**
-- `plorp inbox fetch` works end-to-end
+- `brainplorp inbox fetch` works end-to-end
 - Clear success/error messages
 
 ### Phase 4: Tests & Documentation (1 hour)
@@ -1127,7 +1127,7 @@ Users must:
 - (B) Single file: `inbox/inbox.md`
 - (C) Daily files: `inbox/YYYY-MM-DD.md`
 
-**Decision:** (A) Monthly files - Matches existing plorp inbox format from Sprint 1-2.
+**Decision:** (A) Monthly files - Matches existing brainplorp inbox format from Sprint 1-2.
 
 ### Q5: Email Body Format
 
@@ -1200,8 +1200,8 @@ Users must:
 - [ ] Have test emails in Gmail
 
 ### After Implementation
-- [ ] Test `plorp inbox fetch` with valid credentials
-- [ ] Test `plorp inbox fetch` with invalid credentials (should fail gracefully)
+- [ ] Test `brainplorp inbox fetch` with valid credentials
+- [ ] Test `brainplorp inbox fetch` with invalid credentials (should fail gracefully)
 - [ ] Test with no unread emails (should say "No new emails")
 - [ ] Test with 1 unread email (should append correctly)
 - [ ] Test with 25 unread emails, limit 20 (should fetch 20)
@@ -1400,7 +1400,7 @@ inbox_label: "[Gmail]/plorp" # Gmail-prefixed label
 
 ### Q7: Email ID Deduplication
 
-**Question:** What prevents duplicate emails if `plorp inbox fetch` is run twice before emails are marked as seen?
+**Question:** What prevents duplicate emails if `brainplorp inbox fetch` is run twice before emails are marked as seen?
 
 **Impact:** Duplicate prevention
 **Severity:** Low
@@ -1460,12 +1460,12 @@ inbox_label: "[Gmail]/plorp" # Gmail-prefixed label
 
 ### Q11: CLI Command Structure
 
-**Question:** The command is `plorp inbox fetch` (line 613), but should this be consistent with existing `plorp inbox process` command structure?
+**Question:** The command is `brainplorp inbox fetch` (line 613), but should this be consistent with existing `brainplorp inbox process` command structure?
 
 **Impact:** CLI consistency
 **Severity:** Very Low
 
-**Context:** Both are subcommands under `inbox`. Spec shows `@cli.command("fetch")` which would create `plorp fetch`, not `plorp inbox fetch`.
+**Context:** Both are subcommands under `inbox`. Spec shows `@cli.command("fetch")` which would create `brainplorp fetch`, not `brainplorp inbox fetch`.
 
 **Suggested Answer:** The command should be structured as a subcommand of `inbox` group, similar to how `process` works. Verify the Click group structure in cli.py.
 
@@ -1564,7 +1564,7 @@ Add these to `test_integrations/test_email_imap.py`.
 
 ### Q18: Cron Job Error Reporting
 
-**Question:** Line 108 shows cron job redirecting to `~/.plorp_email.log`. Should plorp have built-in logging to a file?
+**Question:** Line 108 shows cron job redirecting to `~/.plorp_email.log`. Should brainplorp have built-in logging to a file?
 
 **Impact:** Error monitoring
 **Severity:** Low
@@ -1580,7 +1580,7 @@ Add these to `test_integrations/test_email_imap.py`.
 
 ### Q19: Return Value Consistency
 
-**Question:** `append_emails_to_inbox()` returns a dict (line 528-547). Is this consistent with other plorp core functions?
+**Question:** `append_emails_to_inbox()` returns a dict (line 528-547). Is this consistent with other brainplorp core functions?
 
 **Impact:** Code consistency
 **Severity:** Very Low
@@ -1828,7 +1828,7 @@ No changes needed.
 
 **Rationale:**
 1. Users should use Gmail labels to filter only actionable emails
-2. Marketing emails shouldn't be labeled for plorp capture
+2. Marketing emails shouldn't be labeled for brainplorp capture
 3. If user labels a huge email, they probably want it captured
 4. Truncation could lose important context
 5. Markdown files can handle large content
@@ -1891,7 +1891,7 @@ if password and len(password) != 16:
 
 ### A11: CLI Command Structure (Q11)
 
-**Answer:** **Command must be `plorp inbox fetch` (subcommand of `inbox` group)**
+**Answer:** **Command must be `brainplorp inbox fetch` (subcommand of `inbox` group)**
 
 **Correct Implementation:**
 The spec shows `@cli.command("fetch")` which is incorrect. It should be:
@@ -1921,7 +1921,7 @@ def fetch(ctx, limit, label, dry_run, verbose):
 
 **Alternative (if inbox group doesn't exist):**
 ```python
-@cli.command("inbox-fetch")  # Creates `plorp inbox-fetch`
+@cli.command("inbox-fetch")  # Creates `brainplorp inbox-fetch`
 ```
 
 But subcommand grouping is preferred for consistency.
@@ -2123,7 +2123,7 @@ if unprocessed_section_start == -1:
 
 **Cron Example (line 108):**
 ```bash
-*/15 * * * * cd /Users/jsd/Documents/plorp && .venv/bin/plorp inbox fetch >> ~/.plorp_email.log 2>&1
+*/15 * * * * cd /Users/jsd/Documents/brainplorp && .venv/bin/brainplorp inbox fetch >> ~/.plorp_email.log 2>&1
 ```
 
 **Success Output (should be minimal for cron):**
@@ -2152,7 +2152,7 @@ No changes needed.
 3. If they return TypedDict or plain dict, `append_emails_to_inbox()` is consistent
 4. If they return other types, adjust accordingly
 
-**Best Practice (plorp architecture):**
+**Best Practice (brainplorp architecture):**
 - Core functions return TypedDict (defined in `core/types.py`)
 - MCP tools serialize to JSON dicts
 - CLI commands use dicts for result formatting
@@ -2253,7 +2253,7 @@ def append_emails_to_inbox(
 - `pyproject.toml`: Added `html2text>=2020.1.16` dependency, version 1.5.2
 - `src/plorp/config.py`: Added email config schema with defaults
 - `src/plorp/core/inbox.py`: Added `append_emails_to_inbox()` function
-- `src/plorp/cli.py`: Added `plorp inbox fetch` command with options
+- `src/plorp/cli.py`: Added `brainplorp inbox fetch` command with options
 - `tests/test_core/test_inbox.py`: Added 5 email appending tests
 - `src/plorp/__init__.py`: Version bumped to 1.5.2
 - `tests/test_cli.py`: Version assertion updated to 1.5.2
@@ -2314,16 +2314,16 @@ email:
 
 ```bash
 # Manual fetch
-plorp inbox fetch
+brainplorp inbox fetch
 
 # With options
-plorp inbox fetch --limit 10 --label work --verbose
+brainplorp inbox fetch --limit 10 --label work --verbose
 
 # Dry run (preview)
-plorp inbox fetch --dry-run
+brainplorp inbox fetch --dry-run
 
 # Cron job (every 15 minutes)
-*/15 * * * * cd /path/to/plorp && .venv/bin/plorp inbox fetch >> ~/.plorp_email.log 2>&1
+*/15 * * * * cd /path/to/brainplorp && .venv/bin/brainplorp inbox fetch >> ~/.plorp_email.log 2>&1
 ```
 
 ### Outstanding Tasks

@@ -3,7 +3,7 @@
 """Tests for Obsidian integration."""
 import pytest
 from pathlib import Path
-from plorp.integrations.obsidian import create_note, generate_slug, get_vault_path
+from brainplorp.integrations.obsidian import create_note, generate_slug, get_vault_path
 
 
 def test_generate_slug_basic():

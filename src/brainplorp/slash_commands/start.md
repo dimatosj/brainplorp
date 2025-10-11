@@ -1,4 +1,4 @@
-Use plorp MCP tools to start my day. Generate today's daily note with tasks from TaskWarrior.
+Use brainplorp MCP tools to start my day. Generate today's daily note with tasks from TaskWarrior.
 
 Steps:
 1. Call `plorp_start_day` to create today's daily note

@@ -7,7 +7,7 @@ Comprehensive test coverage for date and priority keyword parsing.
 """
 from datetime import date
 import pytest
-from plorp.parsers.nlp import (
+from brainplorp.parsers.nlp import (
     parse_due_date,
     parse_priority_keywords,
     extract_clean_description,

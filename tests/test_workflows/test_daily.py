@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import date
 from unittest.mock import patch, MagicMock
 
-from plorp.workflows.daily import (
+from brainplorp.workflows.daily import (
     start,
     generate_daily_note_content,
     format_task_checkbox,
@@ -95,9 +95,9 @@ def test_generate_daily_note_content_with_tasks(sample_tasks):
     assert "Morning meditation" in content
 
 
-@patch("plorp.workflows.daily.get_overdue_tasks")
-@patch("plorp.workflows.daily.get_due_today")
-@patch("plorp.workflows.daily.get_recurring_today")
+@patch("brainplorp.workflows.daily.get_overdue_tasks")
+@patch("brainplorp.workflows.daily.get_due_today")
+@patch("brainplorp.workflows.daily.get_recurring_today")
 def test_start_creates_note(
     mock_recurring, mock_due, mock_overdue, mock_config, sample_tasks, capsys
 ):
@@ -127,9 +127,9 @@ def test_start_creates_note(
     assert "1 recurring tasks" in captured.out
 
 
-@patch("plorp.workflows.daily.get_overdue_tasks")
-@patch("plorp.workflows.daily.get_due_today")
-@patch("plorp.workflows.daily.get_recurring_today")
+@patch("brainplorp.workflows.daily.get_overdue_tasks")
+@patch("brainplorp.workflows.daily.get_due_today")
+@patch("brainplorp.workflows.daily.get_recurring_today")
 def test_start_creates_directory(mock_recurring, mock_due, mock_overdue, mock_config):
     """Test start() creates daily directory if not exists."""
     mock_overdue.return_value = []
@@ -144,9 +144,9 @@ def test_start_creates_directory(mock_recurring, mock_due, mock_overdue, mock_co
     assert daily_dir.exists()
 
 
-@patch("plorp.workflows.daily.get_overdue_tasks")
-@patch("plorp.workflows.daily.get_due_today")
-@patch("plorp.workflows.daily.get_recurring_today")
+@patch("brainplorp.workflows.daily.get_overdue_tasks")
+@patch("brainplorp.workflows.daily.get_due_today")
+@patch("brainplorp.workflows.daily.get_recurring_today")
 def test_start_refuses_to_overwrite(mock_recurring, mock_due, mock_overdue, mock_config, capsys):
     """Test start() refuses to overwrite existing daily note."""
     mock_overdue.return_value = []
@@ -166,9 +166,9 @@ def test_start_refuses_to_overwrite(mock_recurring, mock_due, mock_overdue, mock
     assert "already exists" in str(exc_info.value).lower()
 
 
-@patch("plorp.workflows.daily.get_overdue_tasks")
-@patch("plorp.workflows.daily.get_due_today")
-@patch("plorp.workflows.daily.get_recurring_today")
+@patch("brainplorp.workflows.daily.get_overdue_tasks")
+@patch("brainplorp.workflows.daily.get_due_today")
+@patch("brainplorp.workflows.daily.get_recurring_today")
 def test_start_warns_on_no_tasks(mock_recurring, mock_due, mock_overdue, mock_config, capsys):
     """Test start() warns when TaskWarrior returns no tasks."""
     # All empty - could indicate TW error
@@ -246,9 +246,9 @@ Made good progress today.
     return vault, note_path
 
 
-@patch("plorp.utils.prompts.prompt_choice")
-@patch("plorp.integrations.taskwarrior.mark_done")
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.utils.prompts.prompt_choice")
+@patch("brainplorp.integrations.taskwarrior.mark_done")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_review_mark_task_done(
     mock_get_task,
     mock_mark_done,
@@ -259,7 +259,7 @@ def test_review_mark_task_done(
 ):
     """Test review workflow marking task as done."""
     from datetime import date
-    from plorp.workflows.daily import review
+    from brainplorp.workflows.daily import review
 
     vault, note_path = daily_note_with_uncompleted_tasks
 
@@ -294,15 +294,15 @@ def test_review_mark_task_done(
     assert "Review completed:" in updated_content
 
 
-@patch("plorp.utils.prompts.prompt_choice")
-@patch("plorp.integrations.taskwarrior.defer_task")
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.utils.prompts.prompt_choice")
+@patch("brainplorp.integrations.taskwarrior.defer_task")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_review_defer_task(
     mock_get_task, mock_defer, mock_prompt, daily_note_with_uncompleted_tasks, monkeypatch, capsys
 ):
     """Test review workflow deferring task."""
     from datetime import date
-    from plorp.workflows.daily import review
+    from brainplorp.workflows.daily import review
 
     vault, note_path = daily_note_with_uncompleted_tasks
 
@@ -332,13 +332,13 @@ def test_review_defer_task(
     assert "📅 Buy groceries → tomorrow" in updated_content
 
 
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_review_task_not_found(
     mock_get_task, daily_note_with_uncompleted_tasks, monkeypatch, capsys
 ):
     """Test review when task not found in TaskWarrior (Q3 answer)."""
     from datetime import date
-    from plorp.workflows.daily import review
+    from brainplorp.workflows.daily import review
 
     vault, note_path = daily_note_with_uncompleted_tasks
 
@@ -354,7 +354,7 @@ def test_review_task_not_found(
     config = {"vault_path": str(vault)}
 
     # Need to mock prompt_choice to quit after first task
-    with patch("plorp.utils.prompts.prompt_choice", return_value=6):  # Quit
+    with patch("brainplorp.utils.prompts.prompt_choice", return_value=6):  # Quit
         review(config)
 
     # Per Q3 answer: warning printed, added to decisions, inline comment in note
@@ -369,7 +369,7 @@ def test_review_task_not_found(
 def test_review_no_daily_note(tmp_path, capsys, monkeypatch):
     """Test review when no daily note exists."""
     from datetime import date
-    from plorp.workflows.daily import review
+    from brainplorp.workflows.daily import review
 
     vault = tmp_path / "vault"
     vault.mkdir()
@@ -389,7 +389,7 @@ def test_review_no_daily_note(tmp_path, capsys, monkeypatch):
 def test_review_all_tasks_complete(tmp_path, capsys, monkeypatch):
     """Test review when all tasks are checked."""
     from datetime import date
-    from plorp.workflows.daily import review
+    from brainplorp.workflows.daily import review
 
     vault = tmp_path / "vault"
     daily_dir = vault / "daily"
@@ -420,7 +420,7 @@ date: 2025-10-06
 
 def test_append_review_section_new(tmp_path):
     """Test appending review section to note without one."""
-    from plorp.workflows.daily import append_review_section
+    from brainplorp.workflows.daily import append_review_section
 
     note = tmp_path / "daily.md"
     content = """# Daily Note
@@ -442,7 +442,7 @@ Some tasks here
 
 def test_append_review_section_appends_to_existing(tmp_path):
     """Test appending to existing review section (Q4 answer)."""
-    from plorp.workflows.daily import append_review_section
+    from brainplorp.workflows.daily import append_review_section
 
     note = tmp_path / "daily.md"
     content = """# Daily Note
@@ -466,10 +466,10 @@ def test_append_review_section_appends_to_existing(tmp_path):
     assert updated.count("Review completed:") == 2
 
 
-@patch("plorp.utils.prompts.prompt")
-@patch("plorp.utils.prompts.prompt_choice")
-@patch("plorp.integrations.taskwarrior.set_priority")
-@patch("plorp.integrations.taskwarrior.get_task_info")
+@patch("brainplorp.utils.prompts.prompt")
+@patch("brainplorp.utils.prompts.prompt_choice")
+@patch("brainplorp.integrations.taskwarrior.set_priority")
+@patch("brainplorp.integrations.taskwarrior.get_task_info")
 def test_review_change_priority_with_validation(
     mock_get_task,
     mock_set_priority,
@@ -481,7 +481,7 @@ def test_review_change_priority_with_validation(
 ):
     """Test review priority change with validation (Q5 answer)."""
     from datetime import date
-    from plorp.workflows.daily import review
+    from brainplorp.workflows.daily import review
 
     vault, note_path = daily_note_with_uncompleted_tasks
 

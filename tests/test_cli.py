@@ -5,7 +5,7 @@ CLI smoke tests.
 """
 from unittest.mock import patch
 from click.testing import CliRunner
-from plorp.cli import cli
+from brainplorp.cli import cli
 
 
 def test_cli_help():
@@ -33,8 +33,8 @@ def test_start_command():
 
     runner = CliRunner()
 
-    with patch("plorp.cli.load_config") as mock_load_config:
-        with patch("plorp.cli.start_day") as mock_start_day:
+    with patch("brainplorp.cli.load_config") as mock_load_config:
+        with patch("brainplorp.cli.start_day") as mock_start_day:
             with runner.isolated_filesystem() as temp_dir:
                 from pathlib import Path
 
@@ -62,12 +62,12 @@ def test_start_command():
 def test_start_command_file_exists_error():
     """Test start command handles existing file error."""
     from unittest.mock import patch
-    from plorp.core.exceptions import DailyNoteExistsError
+    from brainplorp.core.exceptions import DailyNoteExistsError
 
     runner = CliRunner()
 
-    with patch("plorp.cli.load_config") as mock_load_config:
-        with patch("plorp.cli.start_day") as mock_start_day:
+    with patch("brainplorp.cli.load_config") as mock_load_config:
+        with patch("brainplorp.cli.start_day") as mock_start_day:
             mock_load_config.return_value = {"vault_path": "/tmp/vault"}
             mock_start_day.side_effect = DailyNoteExistsError(
                 "2025-10-06", "/tmp/vault/daily/2025-10-06.md"
@@ -83,10 +83,10 @@ def test_start_command_file_exists_error():
 # Sprint 3: Review command tests
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.get_review_tasks")
-@patch("plorp.cli.add_review_notes")
-@patch("plorp.cli.prompt")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.get_review_tasks")
+@patch("brainplorp.cli.add_review_notes")
+@patch("brainplorp.cli.prompt")
 def test_review_command(mock_prompt, mock_add_notes, mock_get_tasks, mock_load_config, tmp_path):
     """Test review command with no uncompleted tasks."""
     mock_load_config.return_value = {"vault_path": str(tmp_path)}
@@ -106,8 +106,8 @@ def test_review_command(mock_prompt, mock_add_notes, mock_get_tasks, mock_load_c
     mock_get_tasks.assert_called_once()
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.get_review_tasks")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.get_review_tasks")
 def test_review_command_keyboard_interrupt(mock_get_tasks, mock_load_config):
     """Test review command handles keyboard interrupt."""
     mock_load_config.return_value = {"vault_path": "/tmp/vault"}
@@ -124,12 +124,12 @@ def test_review_command_keyboard_interrupt(mock_get_tasks, mock_load_config):
 # Inbox command tests (Sprint 4)
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.get_inbox_items")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.get_inbox_items")
 def test_inbox_command(mock_get_inbox, mock_load_config, tmp_path):
     """Test inbox command with empty inbox."""
     from click.testing import CliRunner
-    from plorp.cli import cli
+    from brainplorp.cli import cli
 
     mock_load_config.return_value = {"vault_path": str(tmp_path)}
     mock_get_inbox.return_value = {
@@ -149,7 +149,7 @@ def test_inbox_command(mock_get_inbox, mock_load_config, tmp_path):
 def test_inbox_command_invalid_subcommand():
     """Test inbox command with invalid subcommand."""
     from click.testing import CliRunner
-    from plorp.cli import cli
+    from brainplorp.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(cli, ["inbox", "invalid"])
@@ -159,15 +159,15 @@ def test_inbox_command_invalid_subcommand():
     assert "No such command" in result.output or "Error" in result.output
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.get_inbox_items")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.get_inbox_items")
 def test_inbox_command_keyboard_interrupt(mock_get_inbox, mock_load_config):
     """Test inbox command handles keyboard interrupt."""
     mock_load_config.return_value = {"vault_path": "/tmp/vault"}
     mock_get_inbox.side_effect = KeyboardInterrupt()
 
     from click.testing import CliRunner
-    from plorp.cli import cli
+    from brainplorp.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(cli, ["inbox", "process"])
@@ -180,8 +180,8 @@ def test_inbox_command_keyboard_interrupt(mock_get_inbox, mock_load_config):
 # Note and link command tests (Sprint 5)
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.create_note_standalone")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.create_note_standalone")
 def test_note_command(mock_create_note, mock_load_config, tmp_path):
     """Test note command creates note without task link."""
     note_path = str(tmp_path / "notes" / "test-note.md")
@@ -198,8 +198,8 @@ def test_note_command(mock_create_note, mock_load_config, tmp_path):
     mock_create_note.assert_called_once()
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.create_note_linked_to_task")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.create_note_linked_to_task")
 def test_note_command_with_task(mock_create_note, mock_load_config, tmp_path):
     """Test note command creates note with task link."""
     note_path = str(tmp_path / "notes" / "test-note.md")
@@ -220,8 +220,8 @@ def test_note_command_with_task(mock_create_note, mock_load_config, tmp_path):
     mock_create_note.assert_called_once()
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.link_note_to_task")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.link_note_to_task")
 def test_link_command(mock_link_note, mock_load_config, tmp_path):
     """Test link command links existing note to task."""
     vault = tmp_path / "vault"
@@ -242,8 +242,8 @@ def test_link_command(mock_link_note, mock_load_config, tmp_path):
     mock_link_note.assert_called_once()
 
 
-@patch("plorp.cli.load_config")
-@patch("plorp.cli.link_note_to_task")
+@patch("brainplorp.cli.load_config")
+@patch("brainplorp.cli.link_note_to_task")
 def test_link_command_note_not_found(mock_link_note, mock_load_config, tmp_path):
     """Test link command handles non-existent note."""
     vault = tmp_path / "vault"

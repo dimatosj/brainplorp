@@ -12,7 +12,7 @@
 
 ## Executive Summary
 
-Sprint 9 transforms plorp from a "TaskWarrior + Daily Notes bridge" into a **general Obsidian vault interface** accessible via MCP. This enables Claude Desktop to read, write, search, and organize notes throughout the vault - not just daily notes, inbox, and projects.
+Sprint 9 transforms brainplorp from a "TaskWarrior + Daily Notes bridge" into a **general Obsidian vault interface** accessible via MCP. This enables Claude Desktop to read, write, search, and organize notes throughout the vault - not just daily notes, inbox, and projects.
 
 **Key Innovation:** Provide **low-level note I/O primitives** via MCP tools, allowing Claude to apply intelligence to vault management. Users can say "read all SEO notes and summarize" or "update project doc with today's notes" - Claude combines multiple tools to accomplish complex workflows.
 
@@ -52,7 +52,7 @@ Claude: [searches tag:SEO, reads 5 notes, synthesizes summary]
 - "Update readme"
 - "Update handoff.md with everything we did in this session"
 
-**Things users want to say to Claude via plorp MCP:**
+**Things users want to say to Claude via brainplorp MCP:**
 - "Read this doc"
 - "Read the docs in this folder"
 - "Append this to this doc"
@@ -99,7 +99,7 @@ Claude: [searches tag:SEO, reads 5 notes, synthesizes summary]
    ↓
 2. Claude calls: plorp_read_note("Docs/sprints/SPRINT_9_SPEC.md")
    ↓
-3. Tool executes: plorp reads markdown file
+3. Tool executes: brainplorp reads markdown file
    ↓
 4. Tool returns: {
      "path": "Docs/sprints/SPRINT_9_SPEC.md",
@@ -119,7 +119,7 @@ Claude: [searches tag:SEO, reads 5 notes, synthesizes summary]
 
 ### Comparison: Claude Code vs MCP Tools
 
-| Aspect | Claude Code | plorp MCP Tools |
+| Aspect | Claude Code | brainplorp MCP Tools |
 |--------|-------------|-----------------|
 | **Content in context** | ✅ Yes | ✅ Yes |
 | **Can reference later** | ✅ Yes | ✅ Yes |
@@ -134,7 +134,7 @@ Claude: [searches tag:SEO, reads 5 notes, synthesizes summary]
 **This means the workflows WILL work:**
 
 ✅ **"Read all SEO notes"**
-- plorp returns all note contents (up to reasonable limit)
+- brainplorp returns all note contents (up to reasonable limit)
 - Claude sees all content in context
 - Claude can synthesize across notes
 - **Limitation**: If 10 notes × 2000 words = 20k tokens used
@@ -192,8 +192,8 @@ Claude: [searches tag:SEO, reads 5 notes, synthesizes summary]
    - Parse document structure (headers, links, tags)
 
 6. **CLI wrappers for note operations**
-   - `plorp note read <path>` for power users
-   - `plorp note search <query>` for testing
+   - `brainplorp note read <path>` for power users
+   - `brainplorp note search <query>` for testing
    - Optional - MCP is primary interface
 
 ### Non-Goals (Explicitly Out of Scope)
@@ -670,7 +670,7 @@ vault_path: /Users/jsd/vault
 
 # Note access control (Sprint 9)
 note_access:
-  # Folders plorp can read/write
+  # Folders brainplorp can read/write
   allowed_folders:
     - notes
     - projects
@@ -713,7 +713,7 @@ note_access:
    - Implementation: `src/plorp/core/projects.py:validate_workstream()`
 
 2. ✅ **Project sync command** (from Sprint 8 Q3) - **COMPLETE** (Sprint 8.6)
-   - Bulk sync via `plorp project sync-all` CLI command
+   - Bulk sync via `brainplorp project sync-all` CLI command
    - MCP tool: `plorp_sync_all_projects`
    - Validates all task_uuids, removes deleted tasks from frontmatter
    - Auto-sync also happens on every task creation/removal
@@ -738,9 +738,9 @@ note_access:
 
 6. 🔄 **Scoped review workflows** - **DEFERRED** from Sprint 8.6 Item 3
    - Interactive review filtered by project/domain/workstream
-   - `plorp review --project work.api-rewrite` (review only specific project tasks)
-   - `plorp review --domain work` (review all work tasks)
-   - `plorp review --workstream marketing` (review all marketing tasks)
+   - `brainplorp review --project work.api-rewrite` (review only specific project tasks)
+   - `brainplorp review --domain work` (review all work tasks)
+   - `brainplorp review --workstream marketing` (review all marketing tasks)
    - **Effort:** 4-6 hours
    - **Decision:** Add to Sprint 9 if time permits after General Note Management
 
@@ -1017,7 +1017,7 @@ note_access:
 
 ### Risk 2: Permission/Security Issues
 
-**Risk:** User accidentally gives plorp access to sensitive folders or files.
+**Risk:** User accidentally gives brainplorp access to sensitive folders or files.
 
 **Mitigation:**
 - Whitelist approach (allowed_folders in config)
@@ -1083,7 +1083,7 @@ allowed_folders: [notes, projects, daily, inbox, Docs, journal, ideas]
 
 ---
 
-### Q2: Should plorp cache folder structure or scan on every call?
+### Q2: Should brainplorp cache folder structure or scan on every call?
 
 **Context:** Scanning vault/notes with 500+ files might be slow.
 
@@ -1104,7 +1104,7 @@ allowed_folders: [notes, projects, daily, inbox, Docs, journal, ideas]
 
 ---
 
-### Q3: How should plorp handle notes edited outside plorp?
+### Q3: How should brainplorp handle notes edited outside plorp?
 
 **Context:** User might edit note in Obsidian while Claude has old content in context.
 
@@ -1127,7 +1127,7 @@ allowed_folders: [notes, projects, daily, inbox, Docs, journal, ideas]
 
 **Options:**
 - A: MCP-only (recommended for Sprint 9)
-- B: Add CLI wrappers: `plorp note read <path>`, `plorp note search <query>`
+- B: Add CLI wrappers: `brainplorp note read <path>`, `brainplorp note search <query>`
 - C: Add only most useful CLI commands (read, search)
 
 **Recommendation:** Option A. MCP is primary interface. Add CLI in Sprint 10 if users request.
@@ -1181,7 +1181,7 @@ Sprint 9 establishes the **filesystem-based foundation** for general vault acces
 
 **Reference:** See comprehensive analysis in [`Docs/OBSIDIAN_REST_API_ANALYSIS.md`](/Users/jsd/Documents/plorp/Docs/OBSIDIAN_REST_API_ANALYSIS.md)
 
-The [Obsidian Local REST API plugin](https://github.com/coddingtonbear/obsidian-local-rest-api) provides advanced capabilities not easily achieved via filesystem access. Sprint 10 will add **optional REST API mode** that enhances plorp when Obsidian is running.
+The [Obsidian Local REST API plugin](https://github.com/coddingtonbear/obsidian-local-rest-api) provides advanced capabilities not easily achieved via filesystem access. Sprint 10 will add **optional REST API mode** that enhances brainplorp when Obsidian is running.
 
 **What REST API adds (when Obsidian is open):**
 - 🔍 **Advanced search** - JsonLogic, DataView DQL queries (vs basic tag/field search)
@@ -1202,7 +1202,7 @@ obsidian_integration:
     api_key: "your-key-here"
     port: 27124
 
-# plorp tells user when enhanced features available
+# brainplorp tells user when enhanced features available
 plorp: "Obsidian not running. Open Obsidian for advanced search features."
 ```
 
@@ -2399,7 +2399,7 @@ def _read_note_file(vault_path, note_path, mode):
 
 ### Overview
 
-Sprint 9 successfully transformed plorp from a "TaskWarrior + Daily Notes bridge" into a **general Obsidian vault interface** accessible via MCP. All 4 implementation phases completed with comprehensive test coverage and documentation.
+Sprint 9 successfully transformed brainplorp from a "TaskWarrior + Daily Notes bridge" into a **general Obsidian vault interface** accessible via MCP. All 4 implementation phases completed with comprehensive test coverage and documentation.
 
 ---
 
@@ -2615,7 +2615,7 @@ Sprint 9 successfully transformed plorp from a "TaskWarrior + Daily Notes bridge
 11. `plorp_detect_projects_in_note` - Find project-like headers (heuristic)
 12. `plorp_extract_bullets` - Extract bullet points with optional section filter
 
-**Total MCP Tools in plorp v1.5.0:** 38 tools (26 baseline + 12 new)
+**Total MCP Tools in brainplorp v1.5.0:** 38 tools (26 baseline + 12 new)
 
 ---
 
@@ -2653,7 +2653,7 @@ Sprint 9 successfully transformed plorp from a "TaskWarrior + Daily Notes bridge
 ### User Experience Impact
 
 **Before Sprint 9:**
-- plorp could only access daily notes, inbox, and project notes
+- brainplorp could only access daily notes, inbox, and project notes
 - Limited to specific folder structures
 - No general vault operations
 
@@ -2977,7 +2977,7 @@ This implementation exemplifies high-quality software engineering:
 - Proper version management
 - Production-ready code
 
-Sprint 9 successfully transforms plorp from a task-focused tool into a general Obsidian vault interface, enabling Claude Desktop to intelligently manage notes, search content, and organize information across the entire vault.
+Sprint 9 successfully transforms brainplorp from a task-focused tool into a general Obsidian vault interface, enabling Claude Desktop to intelligently manage notes, search content, and organize information across the entire vault.
 
 **Next Steps:**
 1. Plan Sprint 10 (REST API mode - optional enhancement)

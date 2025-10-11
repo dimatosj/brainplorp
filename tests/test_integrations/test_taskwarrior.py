@@ -15,7 +15,7 @@ import concurrent.futures
 @pytest.fixture
 def mock_subprocess():
     """Fixture to mock subprocess.run calls."""
-    with patch("plorp.integrations.taskwarrior.subprocess.run") as mock:
+    with patch("brainplorp.integrations.taskwarrior.subprocess.run") as mock:
         yield mock
 
 
@@ -30,7 +30,7 @@ def test_run_task_command_with_capture(mock_subprocess):
     """Test running task command with output capture."""
     mock_subprocess.return_value = MagicMock(returncode=0, stdout='{"test": "output"}', stderr="")
 
-    from plorp.integrations.taskwarrior import run_task_command
+    from brainplorp.integrations.taskwarrior import run_task_command
 
     result = run_task_command(["export"], capture=True)
 
@@ -44,7 +44,7 @@ def test_run_task_command_without_capture(mock_subprocess):
     """Test running task command without capture (for user interaction)."""
     mock_subprocess.return_value = MagicMock(returncode=0)
 
-    from plorp.integrations.taskwarrior import run_task_command
+    from brainplorp.integrations.taskwarrior import run_task_command
 
     result = run_task_command(["done"], capture=False)
 
@@ -61,7 +61,7 @@ def test_get_tasks_success(mock_subprocess, sample_task_data):
         returncode=0, stdout=json.dumps(sample_task_data), stderr=""
     )
 
-    from plorp.integrations.taskwarrior import get_tasks
+    from brainplorp.integrations.taskwarrior import get_tasks
 
     tasks = get_tasks(["status:pending"])
 
@@ -77,7 +77,7 @@ def test_get_tasks_empty_result(mock_subprocess):
     """Test getting tasks when no matches."""
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="[]", stderr="")
 
-    from plorp.integrations.taskwarrior import get_tasks
+    from brainplorp.integrations.taskwarrior import get_tasks
 
     tasks = get_tasks(["status:pending", "project:nonexistent"])
 
@@ -90,7 +90,7 @@ def test_get_tasks_command_failure(mock_subprocess):
         returncode=1, stdout="", stderr="TaskWarrior error: invalid filter"
     )
 
-    from plorp.integrations.taskwarrior import get_tasks
+    from brainplorp.integrations.taskwarrior import get_tasks
 
     # Should print error to stderr but return empty list
     tasks = get_tasks(["invalid:filter"])
@@ -102,7 +102,7 @@ def test_get_tasks_json_parse_error(mock_subprocess):
     """Test get_tasks handles malformed JSON."""
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="not valid json", stderr="")
 
-    from plorp.integrations.taskwarrior import get_tasks
+    from brainplorp.integrations.taskwarrior import get_tasks
 
     tasks = get_tasks(["status:pending"])
 
@@ -119,7 +119,7 @@ def test_get_overdue_tasks(mock_subprocess, sample_task_data):
         returncode=0, stdout=json.dumps(overdue_task), stderr=""
     )
 
-    from plorp.integrations.taskwarrior import get_overdue_tasks
+    from brainplorp.integrations.taskwarrior import get_overdue_tasks
 
     tasks = get_overdue_tasks()
 
@@ -140,7 +140,7 @@ def test_get_due_today(mock_subprocess):
         stderr="",
     )
 
-    from plorp.integrations.taskwarrior import get_due_today
+    from brainplorp.integrations.taskwarrior import get_due_today
 
     tasks = get_due_today()
 
@@ -157,7 +157,7 @@ def test_get_recurring_today(mock_subprocess):
         stderr="",
     )
 
-    from plorp.integrations.taskwarrior import get_recurring_today
+    from brainplorp.integrations.taskwarrior import get_recurring_today
 
     tasks = get_recurring_today()
 
@@ -172,7 +172,7 @@ def test_get_task_info_found(mock_subprocess, sample_task_data):
     task_data = [sample_task_data[0]]
     mock_subprocess.return_value = MagicMock(returncode=0, stdout=json.dumps(task_data), stderr="")
 
-    from plorp.integrations.taskwarrior import get_task_info
+    from brainplorp.integrations.taskwarrior import get_task_info
 
     task = get_task_info("a1b2c3d4-e5f6-7890-1234-567890abcdef")
 
@@ -184,7 +184,7 @@ def test_get_task_info_not_found(mock_subprocess):
     """Test getting info for non-existent task."""
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="[]", stderr="")
 
-    from plorp.integrations.taskwarrior import get_task_info
+    from brainplorp.integrations.taskwarrior import get_task_info
 
     task = get_task_info("nonexistent-uuid")
 
@@ -202,7 +202,7 @@ def test_create_task_minimal(mock_subprocess, sample_task_data):
 
     mock_subprocess.side_effect = [add_result, export_result]
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task("Test task")
 
@@ -224,7 +224,7 @@ def test_create_task_with_metadata(mock_subprocess, sample_task_data):
 
     mock_subprocess.side_effect = [add_result, export_result]
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task(
         "Complete sprint",
@@ -246,7 +246,7 @@ def test_create_task_failure(mock_subprocess):
     """Test create_task handles failure."""
     mock_subprocess.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task("This will fail")
 
@@ -258,7 +258,7 @@ def test_create_task_parse_failure(mock_subprocess):
     add_result = MagicMock(returncode=0, stdout="No task ID here", stderr="")
     mock_subprocess.return_value = add_result
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task("Test task")
 
@@ -272,7 +272,7 @@ def test_create_task_export_failure(mock_subprocess):
     # With retry logic: 1 add + 3 export attempts
     mock_subprocess.side_effect = [add_result, export_result, export_result, export_result]
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task("Test task")
 
@@ -286,7 +286,7 @@ def test_create_task_export_empty(mock_subprocess):
     # With retry logic: 1 add + 3 export attempts (all return empty)
     mock_subprocess.side_effect = [add_result, export_result, export_result, export_result]
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task("Test task")
 
@@ -300,7 +300,7 @@ def test_create_task_export_json_error(mock_subprocess):
     # With retry logic: 1 add + 3 export attempts (all return invalid JSON)
     mock_subprocess.side_effect = [add_result, export_result, export_result, export_result]
 
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuid = create_task("Test task")
 
@@ -312,7 +312,7 @@ def test_mark_done_success(mock_subprocess):
     """Test marking task as done."""
     mock_subprocess.return_value = MagicMock(returncode=0)
 
-    from plorp.integrations.taskwarrior import mark_done
+    from brainplorp.integrations.taskwarrior import mark_done
 
     success = mark_done("abc-123")
 
@@ -325,7 +325,7 @@ def test_mark_done_failure(mock_subprocess):
     """Test mark_done handles failure."""
     mock_subprocess.return_value = MagicMock(returncode=1, stderr="Task not found")
 
-    from plorp.integrations.taskwarrior import mark_done
+    from brainplorp.integrations.taskwarrior import mark_done
 
     success = mark_done("invalid-uuid")
 
@@ -336,7 +336,7 @@ def test_defer_task(mock_subprocess):
     """Test deferring task to new date."""
     mock_subprocess.return_value = MagicMock(returncode=0)
 
-    from plorp.integrations.taskwarrior import defer_task
+    from brainplorp.integrations.taskwarrior import defer_task
 
     success = defer_task("abc-123", "tomorrow")
 
@@ -350,7 +350,7 @@ def test_defer_task_failure(mock_subprocess):
     """Test defer_task handles failure."""
     mock_subprocess.return_value = MagicMock(returncode=1, stderr="Task not found")
 
-    from plorp.integrations.taskwarrior import defer_task
+    from brainplorp.integrations.taskwarrior import defer_task
 
     success = defer_task("invalid-uuid", "tomorrow")
 
@@ -361,7 +361,7 @@ def test_set_priority(mock_subprocess):
     """Test setting task priority."""
     mock_subprocess.return_value = MagicMock(returncode=0)
 
-    from plorp.integrations.taskwarrior import set_priority
+    from brainplorp.integrations.taskwarrior import set_priority
 
     success = set_priority("abc-123", "H")
 
@@ -374,7 +374,7 @@ def test_set_priority_failure(mock_subprocess):
     """Test set_priority handles failure."""
     mock_subprocess.return_value = MagicMock(returncode=1, stderr="Task not found")
 
-    from plorp.integrations.taskwarrior import set_priority
+    from brainplorp.integrations.taskwarrior import set_priority
 
     success = set_priority("invalid-uuid", "H")
 
@@ -385,7 +385,7 @@ def test_delete_task(mock_subprocess):
     """Test deleting task."""
     mock_subprocess.return_value = MagicMock(returncode=0)
 
-    from plorp.integrations.taskwarrior import delete_task
+    from brainplorp.integrations.taskwarrior import delete_task
 
     success = delete_task("abc-123")
 
@@ -398,7 +398,7 @@ def test_delete_task_failure(mock_subprocess):
     """Test delete_task handles failure."""
     mock_subprocess.return_value = MagicMock(returncode=1, stderr="Task not found")
 
-    from plorp.integrations.taskwarrior import delete_task
+    from brainplorp.integrations.taskwarrior import delete_task
 
     success = delete_task("invalid-uuid")
 
@@ -410,7 +410,7 @@ def test_add_annotation(mock_subprocess):
     """Test adding annotation to task."""
     mock_subprocess.return_value = MagicMock(returncode=0)
 
-    from plorp.integrations.taskwarrior import add_annotation
+    from brainplorp.integrations.taskwarrior import add_annotation
 
     success = add_annotation("abc-123", "Note: vault/notes/meeting.md")
 
@@ -424,7 +424,7 @@ def test_add_annotation_failure(mock_subprocess):
     """Test add_annotation handles failure."""
     mock_subprocess.return_value = MagicMock(returncode=1, stderr="Task not found")
 
-    from plorp.integrations.taskwarrior import add_annotation
+    from brainplorp.integrations.taskwarrior import add_annotation
 
     success = add_annotation("invalid-uuid", "Note: test.md")
 
@@ -442,10 +442,10 @@ def test_get_task_annotations():
         ],
     }
 
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get:
         mock_get.return_value = task_with_annotations
 
-        from plorp.integrations.taskwarrior import get_task_annotations
+        from brainplorp.integrations.taskwarrior import get_task_annotations
 
         annotations = get_task_annotations("abc-123")
 
@@ -458,10 +458,10 @@ def test_get_task_annotations_no_annotations():
     """Test getting annotations from task with none."""
     task_no_annotations = {"uuid": "abc-123", "description": "Test task"}
 
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get:
         mock_get.return_value = task_no_annotations
 
-        from plorp.integrations.taskwarrior import get_task_annotations
+        from brainplorp.integrations.taskwarrior import get_task_annotations
 
         annotations = get_task_annotations("abc-123")
 
@@ -470,10 +470,10 @@ def test_get_task_annotations_no_annotations():
 
 def test_get_task_annotations_task_not_found():
     """Test getting annotations when task doesn't exist."""
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get:
         mock_get.return_value = None
 
-        from plorp.integrations.taskwarrior import get_task_annotations
+        from brainplorp.integrations.taskwarrior import get_task_annotations
 
         annotations = get_task_annotations("invalid-uuid")
 
@@ -487,7 +487,7 @@ def test_create_task_returns_uuid_reliably(mock_subprocess):
     Regression test for Bug #1: Race condition where task export fails
     immediately after creation. The retry logic should handle this.
     """
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     uuids = []
     for i in range(10):
@@ -521,7 +521,7 @@ def test_concurrent_task_creation(mock_subprocess):
     Regression test for Bug #1: Ensures retry logic works correctly
     under concurrent load.
     """
-    from plorp.integrations.taskwarrior import create_task
+    from brainplorp.integrations.taskwarrior import create_task
 
     def create_test_task(i):
         # Each thread gets its own mock responses

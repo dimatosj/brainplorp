@@ -9,14 +9,14 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from plorp.core.inbox import (
+from brainplorp.core.inbox import (
     get_inbox_items,
     create_task_from_inbox,
     create_note_from_inbox,
     create_both_from_inbox,
     discard_inbox_item,
 )
-from plorp.core.exceptions import VaultNotFoundError, InboxNotFoundError
+from brainplorp.core.exceptions import VaultNotFoundError, InboxNotFoundError
 
 
 def test_get_inbox_items_success(tmp_path):
@@ -110,8 +110,8 @@ def test_create_task_from_inbox(tmp_path):
 """
     )
 
-    with patch("plorp.core.inbox.create_task") as mock_create_task:
-        with patch("plorp.core.inbox.mark_item_processed") as mock_mark:
+    with patch("brainplorp.core.inbox.create_task") as mock_create_task:
+        with patch("brainplorp.core.inbox.mark_item_processed") as mock_mark:
             mock_create_task.return_value = "abc-123"
 
             result = create_task_from_inbox(
@@ -154,8 +154,8 @@ def test_create_note_from_inbox(tmp_path):
 """
     )
 
-    with patch("plorp.core.inbox.create_note") as mock_create_note:
-        with patch("plorp.core.inbox.mark_item_processed") as mock_mark:
+    with patch("brainplorp.core.inbox.create_note") as mock_create_note:
+        with patch("brainplorp.core.inbox.mark_item_processed") as mock_mark:
             mock_note_path = vault / "notes" / "research-2025-10-06.md"
             mock_create_note.return_value = mock_note_path
 
@@ -194,10 +194,10 @@ def test_create_both_from_inbox(tmp_path):
 """
     )
 
-    with patch("plorp.core.inbox.create_task") as mock_create_task:
+    with patch("brainplorp.core.inbox.create_task") as mock_create_task:
         # Patch where it's imported (in the notes module)
-        with patch("plorp.core.notes.create_note_linked_to_task") as mock_create_note:
-            with patch("plorp.core.inbox.mark_item_processed") as mock_mark:
+        with patch("brainplorp.core.notes.create_note_linked_to_task") as mock_create_note:
+            with patch("brainplorp.core.inbox.mark_item_processed") as mock_mark:
                 mock_create_task.return_value = "abc-123"
                 mock_create_note.return_value = {
                     "note_path": "/vault/notes/meeting.md",
@@ -242,7 +242,7 @@ def test_discard_inbox_item(tmp_path):
 """
     )
 
-    with patch("plorp.core.inbox.mark_item_processed") as mock_mark:
+    with patch("brainplorp.core.inbox.mark_item_processed") as mock_mark:
         result = discard_inbox_item(vault, "Old idea", target_date=date(2025, 10, 6))
 
         assert result["action"] == "discard"
@@ -264,7 +264,7 @@ def test_create_task_from_inbox_failure(tmp_path):
     inbox_path = inbox_dir / "2025-10.md"
     inbox_path.write_text("## Unprocessed\n\n- [ ] Test\n")
 
-    with patch("plorp.core.inbox.create_task") as mock_create_task:
+    with patch("brainplorp.core.inbox.create_task") as mock_create_task:
         mock_create_task.return_value = None  # Failure
 
         with pytest.raises(RuntimeError, match="Failed to create task"):
@@ -285,7 +285,7 @@ def test_create_both_from_inbox_failure(tmp_path):
     inbox_path = inbox_dir / "2025-10.md"
     inbox_path.write_text("## Unprocessed\n\n- [ ] Test\n")
 
-    with patch("plorp.core.inbox.create_task") as mock_create_task:
+    with patch("brainplorp.core.inbox.create_task") as mock_create_task:
         mock_create_task.return_value = None  # Failure
 
         with pytest.raises(RuntimeError, match="Failed to create task"):
@@ -320,7 +320,7 @@ def test_get_inbox_items_defaults_to_today(tmp_path):
 
 def test_append_emails_to_inbox_new_file(tmp_path):
     """Test appending emails when inbox file doesn't exist."""
-    from plorp.core.inbox import append_emails_to_inbox
+    from brainplorp.core.inbox import append_emails_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
@@ -329,7 +329,7 @@ def test_append_emails_to_inbox_new_file(tmp_path):
         {"id": "1", "body_text": "- Task 1\n- Task 2", "body_html": ""}
     ]
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = append_emails_to_inbox(emails, vault)
@@ -350,7 +350,7 @@ def test_append_emails_to_inbox_new_file(tmp_path):
 
 def test_append_emails_to_inbox_existing_file(tmp_path):
     """Test appending emails to existing inbox file."""
-    from plorp.core.inbox import append_emails_to_inbox
+    from brainplorp.core.inbox import append_emails_to_inbox
 
     vault = tmp_path / "vault"
     inbox_dir = vault / "inbox"
@@ -369,7 +369,7 @@ def test_append_emails_to_inbox_existing_file(tmp_path):
         {"id": "2", "body_text": "New task from email", "body_html": ""}
     ]
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = append_emails_to_inbox(emails, vault)
@@ -384,7 +384,7 @@ def test_append_emails_to_inbox_existing_file(tmp_path):
 
 def test_append_emails_with_html_body(tmp_path):
     """Test appending emails with HTML body."""
-    from plorp.core.inbox import append_emails_to_inbox
+    from brainplorp.core.inbox import append_emails_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
@@ -397,7 +397,7 @@ def test_append_emails_with_html_body(tmp_path):
         }
     ]
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = append_emails_to_inbox(emails, vault)
@@ -412,7 +412,7 @@ def test_append_emails_with_html_body(tmp_path):
 
 def test_append_emails_with_multiple_emails(tmp_path):
     """Test appending multiple emails at once."""
-    from plorp.core.inbox import append_emails_to_inbox
+    from brainplorp.core.inbox import append_emails_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
@@ -423,7 +423,7 @@ def test_append_emails_with_multiple_emails(tmp_path):
         {"id": "3", "body_text": "Third email task", "body_html": ""},
     ]
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = append_emails_to_inbox(emails, vault)
@@ -440,14 +440,14 @@ def test_append_emails_with_multiple_emails(tmp_path):
 
 def test_append_emails_empty_list(tmp_path):
     """Test appending empty email list."""
-    from plorp.core.inbox import append_emails_to_inbox
+    from brainplorp.core.inbox import append_emails_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
 
     emails = []
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = append_emails_to_inbox(emails, vault)
@@ -461,12 +461,12 @@ def test_append_emails_empty_list(tmp_path):
 
 def test_quick_add_to_inbox_simple(tmp_path):
     """Test simple quick add to inbox."""
-    from plorp.core.inbox import quick_add_to_inbox
+    from brainplorp.core.inbox import quick_add_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = quick_add_to_inbox("Buy milk", vault)
@@ -486,12 +486,12 @@ def test_quick_add_to_inbox_simple(tmp_path):
 
 def test_quick_add_to_inbox_urgent(tmp_path):
     """Test quick add with urgent flag."""
-    from plorp.core.inbox import quick_add_to_inbox
+    from brainplorp.core.inbox import quick_add_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = quick_add_to_inbox("Fix production bug", vault, urgent=True)
@@ -507,7 +507,7 @@ def test_quick_add_to_inbox_urgent(tmp_path):
 
 def test_quick_add_to_inbox_existing_file(tmp_path):
     """Test quick add to existing inbox file."""
-    from plorp.core.inbox import quick_add_to_inbox
+    from brainplorp.core.inbox import quick_add_to_inbox
 
     vault = tmp_path / "vault"
     inbox_dir = vault / "inbox"
@@ -522,7 +522,7 @@ def test_quick_add_to_inbox_existing_file(tmp_path):
         "## Processed\n"
     )
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = quick_add_to_inbox("New item", vault)
@@ -540,12 +540,12 @@ def test_quick_add_to_inbox_existing_file(tmp_path):
 
 def test_quick_add_to_inbox_multi_word(tmp_path):
     """Test quick add with multi-word text."""
-    from plorp.core.inbox import quick_add_to_inbox
+    from brainplorp.core.inbox import quick_add_to_inbox
 
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    with patch("plorp.core.inbox.date") as mock_date:
+    with patch("brainplorp.core.inbox.date") as mock_date:
         mock_date.today.return_value = date(2025, 10, 6)
 
         result = quick_add_to_inbox(

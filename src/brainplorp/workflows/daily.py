@@ -12,13 +12,13 @@ from pathlib import Path
 from datetime import date
 from typing import List, Dict, Any
 
-from plorp.integrations.taskwarrior import (
+from brainplorp.integrations.taskwarrior import (
     get_overdue_tasks,
     get_due_today,
     get_recurring_today,
 )
-from plorp.utils.files import write_file, ensure_directory
-from plorp.utils.dates import (
+from brainplorp.utils.files import write_file, ensure_directory
+from brainplorp.utils.dates import (
     format_date_iso,
     format_date_long,
     format_taskwarrior_date_short,
@@ -210,9 +210,9 @@ def review(config: Dict[str, Any]) -> None:
         >>> review(config)
         # Interactive prompts follow...
     """
-    from plorp.parsers.markdown import parse_daily_note_tasks
-    from plorp.utils.prompts import prompt_choice, prompt, confirm
-    from plorp.integrations.taskwarrior import (
+    from brainplorp.parsers.markdown import parse_daily_note_tasks
+    from brainplorp.utils.prompts import prompt_choice, prompt, confirm
+    from brainplorp.integrations.taskwarrior import (
         get_task_info,
         mark_done,
         defer_task,
@@ -361,7 +361,7 @@ def append_review_section(daily_path: Path, decisions: List[str]) -> None:
         >>> append_review_section(Path('daily/2025-10-06.md'), decisions)
     """
     from datetime import datetime
-    from plorp.utils.files import read_file, write_file
+    from brainplorp.utils.files import read_file, write_file
 
     content = read_file(daily_path)
 

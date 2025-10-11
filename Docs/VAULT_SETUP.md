@@ -1,7 +1,7 @@
-# plorp Vault Configuration
+# brainplorp Vault Configuration
 
 **Date:** October 6, 2025
-**Purpose:** Document the Obsidian vault location for plorp development
+**Purpose:** Document the Obsidian vault location for brainplorp development
 
 ---
 
@@ -29,7 +29,7 @@ vault/
 
 ## Configuration
 
-When running plorp during development, use this vault path in your config:
+When running brainplorp during development, use this vault path in your config:
 
 **File**: `~/.config/plorp/config.yaml`
 
@@ -52,7 +52,7 @@ When implementing sprints that interact with the vault:
    - `inbox/` - for inbox files
    - `notes/` - for general notes
    - `projects/` - for project notes
-3. **Obsidian metadata** in `.obsidian/` should be ignored by plorp code
+3. **Obsidian metadata** in `.obsidian/` should be ignored by brainplorp code
 
 ---
 

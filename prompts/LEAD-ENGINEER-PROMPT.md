@@ -39,7 +39,7 @@ YAGNI. The best code is no code. Don't add features we don't need right now.
 When it doesn't conflict with YAGNI, architect for extensibility and flexibility.
 
 State Synchronization (CRITICAL ARCHITECTURAL PATTERN)
-plorp is a BRIDGE between TaskWarrior and Obsidian. Every operation that modifies TaskWarrior MUST update all related Obsidian surfaces. This is NOT optional - it's a fundamental requirement.
+brainplorp is a BRIDGE between TaskWarrior and Obsidian. Every operation that modifies TaskWarrior MUST update all related Obsidian surfaces. This is NOT optional - it's a fundamental requirement.
 
 Core Principle: When state changes in one system, it MUST propagate to the other.
 

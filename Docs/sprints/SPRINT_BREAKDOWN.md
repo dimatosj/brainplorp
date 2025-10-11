@@ -1,4 +1,4 @@
-# plorp Sprint Breakdown
+# brainplorp Sprint Breakdown
 
 **Date:** October 6, 2025
 **Purpose:** Define implementation sprints for distributed development across Claude Code instances
@@ -64,11 +64,11 @@ pytest tests/ -v
 # → All tests pass (even if just smoke tests)
 
 # Can invoke CLI
-plorp --help
+brainplorp --help
 # → Shows help text
 
 # Coverage configured
-pytest tests/ --cov=src/plorp --cov-report=html
+pytest tests/ --cov=src/brainplorp --cov-report=html
 # → Generates coverage report
 ```
 
@@ -232,7 +232,7 @@ pytest tests/test_utils/test_files.py -v
 pytest tests/test_config.py -v
 
 # CLI works
-plorp start
+brainplorp start
 # → Creates vault/daily/YYYY-MM-DD.md
 # → Prints summary
 
@@ -246,7 +246,7 @@ cat ~/vault/daily/$(date +%Y-%m-%d).md
 ### Deliverables
 
 - All modules implemented with tests
-- `plorp start` command functional
+- `brainplorp start` command functional
 - Config system working
 - Sprint 2 completion report
 
@@ -318,7 +318,7 @@ pytest tests/test_utils/test_prompts.py -v
 pytest tests/test_workflows/test_review.py -v
 
 # CLI works (with mocked input)
-echo -e "1\n1\nq\n" | plorp review
+echo -e "1\n1\nq\n" | brainplorp review
 # → Processes uncompleted tasks
 # → Updates daily note with review section
 ```
@@ -398,7 +398,7 @@ pytest tests/test_integrations/test_obsidian.py -v
 pytest tests/test_workflows/test_inbox.py -v
 
 # CLI works
-plorp inbox process
+brainplorp inbox process
 # → Processes unprocessed items
 # → Creates tasks/notes as directed
 # → Updates inbox file
@@ -467,11 +467,11 @@ def get_linked_notes(task_uuid: str) -> List[str]
 pytest tests/test_workflows/test_notes.py -v
 
 # CLI works
-plorp note "Meeting Notes" --task abc-123
+brainplorp note "Meeting Notes" --task abc-123
 # → Creates note with task UUID in front matter
 # → Adds annotation to task
 
-plorp link abc-123 vault/notes/existing-note.md
+brainplorp link abc-123 vault/notes/existing-note.md
 # → Links existing note to task
 # → Updates both directions
 ```

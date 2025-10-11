@@ -8,14 +8,14 @@ import pytest
 from datetime import date
 from unittest.mock import patch, MagicMock
 
-from plorp.core.tasks import mark_completed, defer_task, drop_task, set_priority
-from plorp.core.exceptions import TaskNotFoundError
+from brainplorp.core.tasks import mark_completed, defer_task, drop_task, set_priority
+from brainplorp.core.exceptions import TaskNotFoundError
 
 
 def test_mark_completed_success():
     """Test marking a task as completed."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.mark_done") as mock_mark_done:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.mark_done") as mock_mark_done:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -33,7 +33,7 @@ def test_mark_completed_success():
 
 def test_mark_completed_task_not_found():
     """Test marking non-existent task raises error."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
         mock_get_task.return_value = None
 
         with pytest.raises(TaskNotFoundError) as exc:
@@ -44,8 +44,8 @@ def test_mark_completed_task_not_found():
 
 def test_mark_completed_failure():
     """Test handling TaskWarrior failure."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.mark_done") as mock_mark_done:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.mark_done") as mock_mark_done:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -58,8 +58,8 @@ def test_mark_completed_failure():
 
 def test_defer_task_success():
     """Test deferring a task to new date."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_defer_task") as mock_defer:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_defer_task") as mock_defer:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -78,8 +78,8 @@ def test_defer_task_success():
 
 def test_defer_task_no_original_due():
     """Test deferring task that had no due date."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_defer_task") as mock_defer:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_defer_task") as mock_defer:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -95,7 +95,7 @@ def test_defer_task_no_original_due():
 
 def test_defer_task_not_found():
     """Test deferring non-existent task raises error."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
         mock_get_task.return_value = None
 
         with pytest.raises(TaskNotFoundError):
@@ -104,8 +104,8 @@ def test_defer_task_not_found():
 
 def test_defer_task_failure():
     """Test handling TaskWarrior failure."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_defer_task") as mock_defer:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_defer_task") as mock_defer:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -118,8 +118,8 @@ def test_defer_task_failure():
 
 def test_drop_task_success():
     """Test dropping/deleting a task."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.delete_task") as mock_delete:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.delete_task") as mock_delete:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -136,7 +136,7 @@ def test_drop_task_success():
 
 def test_drop_task_not_found():
     """Test dropping non-existent task raises error."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
         mock_get_task.return_value = None
 
         with pytest.raises(TaskNotFoundError):
@@ -145,8 +145,8 @@ def test_drop_task_not_found():
 
 def test_drop_task_failure():
     """Test handling TaskWarrior failure."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.delete_task") as mock_delete:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.delete_task") as mock_delete:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -159,8 +159,8 @@ def test_drop_task_failure():
 
 def test_set_priority_success():
     """Test setting task priority."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_set_priority") as mock_set_priority:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_set_priority") as mock_set_priority:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -177,8 +177,8 @@ def test_set_priority_success():
 
 def test_set_priority_to_none():
     """Test removing task priority (empty string)."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_set_priority") as mock_set_priority:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_set_priority") as mock_set_priority:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -199,7 +199,7 @@ def test_set_priority_invalid_value():
 
 def test_set_priority_task_not_found():
     """Test setting priority on non-existent task raises error."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
         mock_get_task.return_value = None
 
         with pytest.raises(TaskNotFoundError):
@@ -208,8 +208,8 @@ def test_set_priority_task_not_found():
 
 def test_set_priority_failure():
     """Test handling TaskWarrior failure."""
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_set_priority") as mock_set_priority:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_set_priority") as mock_set_priority:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",
@@ -224,8 +224,8 @@ def test_set_priority_valid_values():
     """Test all valid priority values."""
     valid_priorities = ["H", "M", "L", ""]
 
-    with patch("plorp.core.tasks.get_task_info") as mock_get_task:
-        with patch("plorp.core.tasks.tw_set_priority") as mock_set_priority:
+    with patch("brainplorp.core.tasks.get_task_info") as mock_get_task:
+        with patch("brainplorp.core.tasks.tw_set_priority") as mock_set_priority:
             mock_get_task.return_value = {
                 "uuid": "abc-123",
                 "description": "Test task",

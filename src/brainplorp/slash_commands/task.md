@@ -1,4 +1,4 @@
-Help me create a task in TaskWarrior using plorp MCP tools.
+Help me create a task in TaskWarrior using brainplorp MCP tools.
 
 Steps:
 1. Ask me for the task details:

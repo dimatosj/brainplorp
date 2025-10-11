@@ -34,7 +34,7 @@ The note linking system with:
 - Bidirectional link management (note → task, task → note)
 - Front matter manipulation for adding task UUIDs to notes
 - TaskWarrior annotation for adding note paths to tasks
-- CLI commands: `plorp note` and `plorp link`
+- CLI commands: `brainplorp note` and `brainplorp link`
 - Comprehensive tests for linking operations
 
 ### What You're NOT Building
@@ -52,7 +52,7 @@ The note linking system with:
 You are implementing Sprint 5 for plorp, a workflow automation tool for TaskWarrior and Obsidian.
 
 PROJECT CONTEXT:
-- plorp is a Python CLI tool that bridges TaskWarrior and Obsidian
+- brainplorp is a Python CLI tool that bridges TaskWarrior and Obsidian
 - This is Sprint 5: You're building note-task linking functionality
 - Sprint 0 is complete: Project structure and test infrastructure ready
 - Sprint 1 is complete: TaskWarrior integration with annotations available
@@ -1037,7 +1037,7 @@ pytest tests/test_workflows/test_notes.py \
 
 ```bash
 # 4. Create note without task link
-plorp note "Simple Note"
+brainplorp note "Simple Note"
 # → Creates note
 # → Shows path
 
@@ -1046,7 +1046,7 @@ plorp note "Simple Note"
 task add "Test linking" project:plorp
 # Get the UUID from output
 
-plorp note "Meeting Notes" --task <UUID>
+brainplorp note "Meeting Notes" --task <UUID>
 # → Creates note
 # → Links to task
 # → Shows confirmation
@@ -1063,7 +1063,7 @@ cat ~/vault/notes/meeting-notes-*.md
 
 # 8. Link existing note
 echo "# Existing note" > ~/vault/notes/existing.md
-plorp link <UUID> ~/vault/notes/existing.md
+brainplorp link <UUID> ~/vault/notes/existing.md
 # → Links successfully
 # → Shows confirmation
 
@@ -1142,8 +1142,8 @@ Time: 0.08s
 - Duplicate link prevention
 
 **Module 3: CLI Commands (`cli.py`)**
-- Added `plorp note <title> [--task <uuid>] [--type <type>]` (+71 lines)
-- Added `plorp link <task_uuid> <note_path>`
+- Added `brainplorp note <title> [--task <uuid>] [--type <type>]` (+71 lines)
+- Added `brainplorp link <task_uuid> <note_path>`
 - 4 CLI tests with error handling verification
 - User-friendly output with emojis
 
@@ -1198,7 +1198,7 @@ No other issues identified. All functionality working as specified.
 **What works:**
 - Complete note-task linking system
 - Bidirectional links maintained (note front matter ↔ task annotations)
-- CLI commands functional (`plorp note`, `plorp link`)
+- CLI commands functional (`brainplorp note`, `brainplorp link`)
 - All previous sprint functionality preserved
 - Duplicate link prevention
 - Path validation (notes must be inside vault)
@@ -1213,7 +1213,7 @@ No other issues identified. All functionality working as specified.
 
 **Future enhancements:**
 - Bulk linking operations (link multiple notes/tasks at once)
-- Link verification/repair tool (`plorp verify-links`)
+- Link verification/repair tool (`brainplorp verify-links`)
 - Note templates with task-specific sections
 - Link visualization graph
 - Annotation removal via TaskWarrior API (if available)
@@ -1227,32 +1227,32 @@ None. All questions answered in Q&A section.
 
 **Suggestions for future work:**
 
-1. **Link health checker:** Create `plorp verify-links` command to check:
+1. **Link health checker:** Create `brainplorp verify-links` command to check:
    - Tasks referenced in notes still exist
    - Notes referenced in task annotations still exist
    - Bidirectional links are consistent
 
 2. **Bulk operations:** Support batch operations:
    ```bash
-   plorp link-batch <task_uuid> notes/*.md
-   plorp note-batch --task <uuid> "Note 1" "Note 2" "Note 3"
+   brainplorp link-batch <task_uuid> notes/*.md
+   brainplorp note-batch --task <uuid> "Note 1" "Note 2" "Note 3"
    ```
 
 3. **Link visualization:** Generate Obsidian-compatible graph:
    ```bash
-   plorp graph --output vault/graphs/task-links.md
+   brainplorp graph --output vault/graphs/task-links.md
    ```
 
 4. **Note templates:** Task-specific note templates:
    ```bash
-   plorp note "Sprint Planning" --task <uuid> --template sprint-planning
+   brainplorp note "Sprint Planning" --task <uuid> --template sprint-planning
    ```
 
 5. **Advanced annotation handling:** Investigate TaskChampion API for programmatic annotation removal
 
 6. **Link statistics:** Show linking metrics:
    ```bash
-   plorp stats links
+   brainplorp stats links
    # Output: 45 notes linked to 23 tasks
    ```
 
@@ -1518,13 +1518,13 @@ Q: The note command uses:
    Then joins with: `title_str = ' '.join(title)`
 
    Questions:
-   1. This works for: `plorp note Meeting Notes` → "Meeting Notes"
-      But what about quotes: `plorp note "Meeting Notes"` → also "Meeting Notes"?
+   1. This works for: `brainplorp note Meeting Notes` → "Meeting Notes"
+      But what about quotes: `brainplorp note "Meeting Notes"` → also "Meeting Notes"?
       Should we document both forms work?
 
    2. What about edge cases:
-      - `plorp note "" ` (empty string after join)
-      - `plorp note "  "` (whitespace only)
+      - `brainplorp note "" ` (empty string after join)
+      - `brainplorp note "  "` (whitespace only)
 
       Should we validate title is not empty/whitespace?
 
@@ -2016,20 +2016,20 @@ Status: RESOLVED
 
 ---
 
-## Epilogue: plorp 1.0 Complete
+## Epilogue: brainplorp 1.0 Complete
 
-With Sprint 5 complete, plorp 1.0 is fully functional. The three core workflows are operational:
+With Sprint 5 complete, brainplorp 1.0 is fully functional. The three core workflows are operational:
 
 1. **Daily workflow** (Sprints 2-3)
-   - `plorp start` - Generate daily notes
-   - `plorp review` - End-of-day task processing
+   - `brainplorp start` - Generate daily notes
+   - `brainplorp review` - End-of-day task processing
 
 2. **Inbox workflow** (Sprint 4)
-   - `plorp inbox process` - Convert inbox items to tasks/notes
+   - `brainplorp inbox process` - Convert inbox items to tasks/notes
 
 3. **Note linking** (Sprint 5)
-   - `plorp note` - Create linked notes
-   - `plorp link` - Link existing notes to tasks
+   - `brainplorp note` - Create linked notes
+   - `brainplorp link` - Link existing notes to tasks
 
 **Future enhancements** beyond Sprint 5:
 - Email capture automation (scripts/email_to_inbox.py)

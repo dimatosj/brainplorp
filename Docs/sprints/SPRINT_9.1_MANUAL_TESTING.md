@@ -10,9 +10,9 @@
 
 ## Prerequisites
 
-- plorp v1.5.1 installed
+- brainplorp v1.5.1 installed
 - TaskWarrior configured with sample tasks
-- Claude Desktop with plorp MCP server configured
+- Claude Desktop with brainplorp MCP server configured
 - Test tasks with various priorities, projects, due dates
 
 ---
@@ -21,7 +21,7 @@
 
 ```bash
 # Verify version
-plorp --version  # Should show 1.5.1
+brainplorp --version  # Should show 1.5.1
 
 # Create test tasks
 task add "Urgent API bug" priority:H project:work.api-rewrite due:today
@@ -39,11 +39,11 @@ task status:pending count  # Should show 5+
 ## Tier 1: CLI Commands (<100ms)
 
 ### Test 1.1: Basic Task List
-**Command:** `plorp tasks`
+**Command:** `brainplorp tasks`
 
 **Steps:**
 ```bash
-plorp tasks
+brainplorp tasks
 ```
 
 **Expected Results:**
@@ -58,11 +58,11 @@ plorp tasks
 ---
 
 ### Test 1.2: Urgent Tasks Filter
-**Command:** `plorp tasks --urgent`
+**Command:** `brainplorp tasks --urgent`
 
 **Steps:**
 ```bash
-plorp tasks --urgent
+brainplorp tasks --urgent
 ```
 
 **Expected Results:**
@@ -76,11 +76,11 @@ plorp tasks --urgent
 ---
 
 ### Test 1.3: Important Tasks Filter
-**Command:** `plorp tasks --important`
+**Command:** `brainplorp tasks --important`
 
 **Steps:**
 ```bash
-plorp tasks --important
+brainplorp tasks --important
 ```
 
 **Expected Results:**
@@ -93,11 +93,11 @@ plorp tasks --important
 ---
 
 ### Test 1.4: Project Filter
-**Command:** `plorp tasks --project work`
+**Command:** `brainplorp tasks --project work`
 
 **Steps:**
 ```bash
-plorp tasks --project work
+brainplorp tasks --project work
 ```
 
 **Expected Results:**
@@ -110,11 +110,11 @@ plorp tasks --project work
 ---
 
 ### Test 1.5: Due Today Filter
-**Command:** `plorp tasks --due today`
+**Command:** `brainplorp tasks --due today`
 
 **Steps:**
 ```bash
-plorp tasks --due today
+brainplorp tasks --due today
 ```
 
 **Expected Results:**
@@ -127,11 +127,11 @@ plorp tasks --due today
 ---
 
 ### Test 1.6: Due Tomorrow Filter
-**Command:** `plorp tasks --due tomorrow`
+**Command:** `brainplorp tasks --due tomorrow`
 
 **Steps:**
 ```bash
-plorp tasks --due tomorrow
+brainplorp tasks --due tomorrow
 ```
 
 **Expected Results:**
@@ -144,11 +144,11 @@ plorp tasks --due tomorrow
 ---
 
 ### Test 1.7: Overdue Filter
-**Command:** `plorp tasks --due overdue`
+**Command:** `brainplorp tasks --due overdue`
 
 **Steps:**
 ```bash
-plorp tasks --due overdue
+brainplorp tasks --due overdue
 ```
 
 **Expected Results:**
@@ -161,11 +161,11 @@ plorp tasks --due overdue
 ---
 
 ### Test 1.8: Due This Week Filter
-**Command:** `plorp tasks --due week`
+**Command:** `brainplorp tasks --due week`
 
 **Steps:**
 ```bash
-plorp tasks --due week
+brainplorp tasks --due week
 ```
 
 **Expected Results:**
@@ -178,11 +178,11 @@ plorp tasks --due week
 ---
 
 ### Test 1.9: Limit Results
-**Command:** `plorp tasks --limit 5`
+**Command:** `brainplorp tasks --limit 5`
 
 **Steps:**
 ```bash
-plorp tasks --limit 5
+brainplorp tasks --limit 5
 ```
 
 **Expected Results:**
@@ -195,11 +195,11 @@ plorp tasks --limit 5
 ---
 
 ### Test 1.10: Combined Filters
-**Command:** `plorp tasks --urgent --project work`
+**Command:** `brainplorp tasks --urgent --project work`
 
 **Steps:**
 ```bash
-plorp tasks --urgent --project work
+brainplorp tasks --urgent --project work
 ```
 
 **Expected Results:**
@@ -212,11 +212,11 @@ plorp tasks --urgent --project work
 ---
 
 ### Test 1.11: Simple Format
-**Command:** `plorp tasks --format simple`
+**Command:** `brainplorp tasks --format simple`
 
 **Steps:**
 ```bash
-plorp tasks --format simple --limit 3
+brainplorp tasks --format simple --limit 3
 ```
 
 **Expected Results:**
@@ -230,11 +230,11 @@ plorp tasks --format simple --limit 3
 ---
 
 ### Test 1.12: JSON Format
-**Command:** `plorp tasks --format json`
+**Command:** `brainplorp tasks --format json`
 
 **Steps:**
 ```bash
-plorp tasks --format json --limit 3
+brainplorp tasks --format json --limit 3
 ```
 
 **Expected Results:**
@@ -248,11 +248,11 @@ plorp tasks --format json --limit 3
 ---
 
 ### Test 1.13: Multiple Filters + Limit
-**Command:** `plorp tasks --project work --due today --limit 10`
+**Command:** `brainplorp tasks --project work --due today --limit 10`
 
 **Steps:**
 ```bash
-plorp tasks --project work --due today --limit 10
+brainplorp tasks --project work --due today --limit 10
 ```
 
 **Expected Results:**
@@ -278,7 +278,7 @@ plorp tasks --project work --due today --limit 10
 - ✅ All pending tasks displayed
 - ✅ Rich table format
 - ✅ Response time 1-2 seconds
-- ✅ Same output as `plorp tasks`
+- ✅ Same output as `brainplorp tasks`
 
 **Pass/Fail:** ______
 
@@ -294,7 +294,7 @@ plorp tasks --project work --due today --limit 10
 **Expected Results:**
 - ✅ Only priority:H tasks shown
 - ✅ Response time 1-2 seconds
-- ✅ Same output as `plorp tasks --urgent`
+- ✅ Same output as `brainplorp tasks --urgent`
 
 **Pass/Fail:** ______
 
@@ -309,7 +309,7 @@ plorp tasks --project work --due today --limit 10
 **Expected Results:**
 - ✅ Only tasks due today shown
 - ✅ Response time 1-2 seconds
-- ✅ Same output as `plorp tasks --due today`
+- ✅ Same output as `brainplorp tasks --due today`
 
 **Pass/Fail:** ______
 
@@ -324,7 +324,7 @@ plorp tasks --project work --due today --limit 10
 **Expected Results:**
 - ✅ Only overdue tasks shown
 - ✅ Response time 1-2 seconds
-- ✅ Same output as `plorp tasks --due overdue`
+- ✅ Same output as `brainplorp tasks --due overdue`
 
 **Pass/Fail:** ______
 
@@ -339,7 +339,7 @@ plorp tasks --project work --due today --limit 10
 **Expected Results:**
 - ✅ Only work project tasks shown
 - ✅ Response time 1-2 seconds
-- ✅ Same output as `plorp tasks --project work`
+- ✅ Same output as `brainplorp tasks --project work`
 
 **Pass/Fail:** ______
 
@@ -399,11 +399,11 @@ plorp tasks --project work --due today --limit 10
 ## Performance Benchmarks
 
 ### Benchmark 1: CLI Speed
-**Test:** Run `plorp tasks --limit 5` 10 times
+**Test:** Run `brainplorp tasks --limit 5` 10 times
 
 **Steps:**
 ```bash
-time plorp tasks --limit 5
+time brainplorp tasks --limit 5
 # Run 10 times, record average
 ```
 
@@ -461,7 +461,7 @@ time plorp tasks --limit 5
 ### Test E1: No Tasks Matching Filter
 **Steps:**
 ```bash
-plorp tasks --urgent --project nonexistent
+brainplorp tasks --urgent --project nonexistent
 ```
 
 **Expected Results:**
@@ -478,7 +478,7 @@ plorp tasks --urgent --project nonexistent
 ```bash
 # Create 100+ tasks
 for i in {1..100}; do task add "Test task $i"; done
-plorp tasks
+brainplorp tasks
 ```
 
 **Expected Results:**
@@ -494,7 +494,7 @@ plorp tasks
 **Steps:**
 ```bash
 task add "No due date task"
-plorp tasks --due today
+brainplorp tasks --due today
 ```
 
 **Expected Results:**
@@ -510,7 +510,7 @@ plorp tasks --due today
 **Steps:**
 ```bash
 task add "No priority task"
-plorp tasks --urgent
+brainplorp tasks --urgent
 ```
 
 **Expected Results:**
@@ -532,7 +532,7 @@ task add "Task due today" due:today
 task add "Task due tomorrow" due:tomorrow
 task add "Task due 2 days" due:2d
 task add "Task overdue 5 days" due:-5d
-plorp tasks --limit 10
+brainplorp tasks --limit 10
 ```
 
 **Expected Results:**
@@ -548,7 +548,7 @@ plorp tasks --limit 10
 ### Test UX2: Priority Emojis
 **Steps:**
 ```bash
-plorp tasks --limit 20
+brainplorp tasks --limit 20
 ```
 
 **Expected Results:**
@@ -564,7 +564,7 @@ plorp tasks --limit 20
 ### Test UX3: Help Text
 **Steps:**
 ```bash
-plorp tasks --help
+brainplorp tasks --help
 ```
 
 **Expected Results:**

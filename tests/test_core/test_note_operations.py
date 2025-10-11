@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 import yaml
 
-from plorp.core.note_operations import (
+from brainplorp.core.note_operations import (
     read_note,
     read_folder,
     append_to_note,
@@ -20,7 +20,7 @@ from plorp.core.note_operations import (
     _get_allowed_folders,
     _add_context_warnings,
 )
-from plorp.core.exceptions import HeaderNotFoundError
+from brainplorp.core.exceptions import HeaderNotFoundError
 
 
 @pytest.fixture

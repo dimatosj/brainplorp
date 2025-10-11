@@ -1,4 +1,4 @@
-# plorp Specification
+# brainplorp Specification
 
 **Date:** October 6, 2025
 **Version:** 1.0.0
@@ -24,20 +24,20 @@
 
 ### Success Criteria
 
-### plorp is successful if:
+### brainplorp is successful if:
 
 1. **Daily workflow works:**
-   - `plorp start` generates daily note with tasks
+   - `brainplorp start` generates daily note with tasks
    - User works in Obsidian (checks boxes, adds notes)
-   - `plorp review` syncs back to TaskWarrior
+   - `brainplorp review` syncs back to TaskWarrior
 
 2. **Inbox workflow works:**
    - Emails captured to inbox file automatically
-   - `plorp inbox process` converts to tasks/notes
+   - `brainplorp inbox process` converts to tasks/notes
    - No items lost in process
 
 3. **Integration works:**
-   - Tasks created via plorp show in TaskWarrior
+   - Tasks created via brainplorp show in TaskWarrior
    - Notes link to tasks bidirectionally
    - TaskWarrior native commands still work
 

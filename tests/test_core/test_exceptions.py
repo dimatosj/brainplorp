@@ -6,7 +6,7 @@ proper attributes and messages.
 """
 
 import pytest
-from plorp.core.exceptions import (
+from brainplorp.core.exceptions import (
     PlorpError,
     VaultNotFoundError,
     DailyNoteExistsError,

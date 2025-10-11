@@ -134,7 +134,7 @@ MCP servers are configured in a single JSON object with multiple server entries:
 | **Role** | Tool provider | Orchestrator |
 | **Behavior** | Executes specific functions | Makes decisions |
 | **Intelligence** | None (just code) | LLM reasoning |
-| **Your Plorp Server** | Provides plorp_* tools | Uses plorp tools strategically |
+| **Your Plorp Server** | Provides plorp_* tools | Uses brainplorp tools strategically |
 | **Complexity** | Simple, focused operations | Complex workflow coordination |
 | **Nature** | Deterministic | Stochastic |
 
@@ -149,7 +149,7 @@ MCP servers are configured in a single JSON object with multiple server entries:
 **Example:**
 
 ```python
-# plorp MCP server (NOT an agent - just provides tools)
+# brainplorp MCP server (NOT an agent - just provides tools)
 @server.call_tool()
 async def plorp_start(date: str):
     """Generate daily note"""
@@ -593,7 +593,7 @@ class ClaudeAgent:
 ### Actual Protocol Flow
 
 ```
-You: "Start my plorp daily note"
+You: "Start my brainplorp daily note"
   │
   ↓
 ┌─────────────────────────────────────────┐
@@ -1362,7 +1362,7 @@ async def plorp_start_day(date: str):
     return create_daily_note(date)
 
 # Also provide direct CLI (bypasses agent entirely)
-$ plorp start
+$ brainplorp start
 ✅ Daily note created: /path/to/vault/daily/2025-10-06.md
 
 Summary:
@@ -1422,7 +1422,7 @@ Least Predictable ←―――――――――――――――――――�
 Natural language       Explicit              System           Deterministic
 to agent              instructions          prompts          wrapper
 
-"Start my day"     "Start my day,        System prompt:    $ plorp start
+"Start my day"     "Start my day,        System prompt:    $ brainplorp start
                    just call the         "When user
 Agent interprets   tool"                 says X,           Pure CLI,
 freely                                   always do Y"      no agent
@@ -1471,13 +1471,13 @@ Varies most                              constrained       deterministic
 4. **When You Need Determinism:**
    ```bash
    # Option A: Direct CLI (bypass agent)
-   $ plorp start
+   $ brainplorp start
 
    # Option B: Cron job (scheduled)
-   0 6 * * * /usr/local/bin/plorp start
+   0 6 * * * /usr/local/bin/brainplorp start
 
    # Option C: Keyboard shortcut → script
-   alias start-day='plorp start'
+   alias start-day='brainplorp start'
 
    # 100% deterministic, no agent variability
    ```
@@ -1492,13 +1492,13 @@ Varies most                              constrained       deterministic
 
 ```bash
 # Direct CLI - 100% deterministic
-$ plorp start
-$ plorp review
-$ plorp inbox process
+$ brainplorp start
+$ brainplorp review
+$ brainplorp inbox process
 
 # Or cron/scheduled
-0 6 * * * /usr/local/bin/plorp start
-0 18 * * * /usr/local/bin/plorp review
+0 6 * * * /usr/local/bin/brainplorp start
+0 18 * * * /usr/local/bin/brainplorp review
 ```
 
 #### Tier 2: Slash Commands (High Reliability)
@@ -1531,7 +1531,7 @@ User: "What's in my inbox?"
 
 ```
 Morning (routine):
-  $ plorp start                    ← Direct CLI, instant, consistent
+  $ brainplorp start                    ← Direct CLI, instant, consistent
 
 During day (ad-hoc):
   "Create a task for 'Buy milk'"   ← Natural language to agent
@@ -1552,42 +1552,42 @@ Novel workflow:
 
 ```bash
 # Direct terminal access - instant, deterministic
-$ plorp tasks
-$ plorp tasks --urgent
-$ plorp tasks --project work
-$ plorp tasks --due today
-$ plorp tasks --due overdue
+$ brainplorp tasks
+$ brainplorp tasks --urgent
+$ brainplorp tasks --project work
+$ brainplorp tasks --due today
+$ brainplorp tasks --due overdue
 
 # Output formats for different uses
-$ plorp tasks --format table     # Rich table with emojis (default)
-$ plorp tasks --format simple    # Plain text for scripts
-$ plorp tasks --format json      # JSON for programmatic use
+$ brainplorp tasks --format table     # Rich table with emojis (default)
+$ brainplorp tasks --format simple    # Plain text for scripts
+$ brainplorp tasks --format json      # JSON for programmatic use
 ```
 
 #### Tier 2: Slash Commands (1-2s)
 
 ```markdown
 # .claude/commands/tasks.md
-Run the command: `plorp tasks`
+Run the command: `brainplorp tasks`
 
 # .claude/commands/urgent.md
-Run the command: `plorp tasks --urgent`
+Run the command: `brainplorp tasks --urgent`
 
 # .claude/commands/today.md
-Run the command: `plorp tasks --due today`
+Run the command: `brainplorp tasks --due today`
 
 # .claude/commands/overdue.md
-Run the command: `plorp tasks --due overdue`
+Run the command: `brainplorp tasks --due overdue`
 
 # .claude/commands/work-tasks.md
-Run the command: `plorp tasks --project work`
+Run the command: `brainplorp tasks --project work`
 ```
 
 Usage:
 ```
-User: /urgent           → Claude runs `plorp tasks --urgent`
-User: /today            → Claude runs `plorp tasks --due today`
-User: /work-tasks       → Claude runs `plorp tasks --project work`
+User: /urgent           → Claude runs `brainplorp tasks --urgent`
+User: /today            → Claude runs `brainplorp tasks --due today`
+User: /work-tasks       → Claude runs `brainplorp tasks --project work`
 ```
 
 #### Tier 3: Natural Language (5-8s)
@@ -1598,7 +1598,7 @@ User: "Show me urgent tasks in the API project due this week"
 Claude (agent reasoning):
   1. Interprets user intent
   2. Decides which filters to combine
-  3. Calls: plorp tasks --urgent --project api --due week
+  3. Calls: brainplorp tasks --urgent --project api --due week
   4. Formats and presents results with analysis
 ```
 
@@ -1606,7 +1606,7 @@ Claude (agent reasoning):
 
 | Tier | Interface | Latency | Use Case |
 |------|-----------|---------|----------|
-| 1 | `plorp tasks --urgent` | <100ms | Terminal workflows, scripts |
+| 1 | `brainplorp tasks --urgent` | <100ms | Terminal workflows, scripts |
 | 2 | `/urgent` | 1-2s | Claude Desktop quick queries |
 | 3 | "show urgent tasks" | 5-8s | Complex queries, analysis |
 
@@ -1652,14 +1652,14 @@ def tasks(urgent, project, due, format):
         display_task_table(tasks)
 ```
 
-This pattern can be applied to other plorp commands as they evolve.
+This pattern can be applied to other brainplorp commands as they evolve.
 
 ### Plorp MCP Server Design
 
 Tools designed for reliability:
 
 ```python
-# plorp MCP Server - tools designed for reliability
+# brainplorp MCP Server - tools designed for reliability
 
 @server.call_tool()
 async def plorp_start_day(date: str, verbose: bool = False):
@@ -1721,9 +1721,9 @@ Do not provide analysis unless I ask.
 
 ### Three Interfaces
 
-Build plorp with **three interfaces**:
+Build brainplorp with **three interfaces**:
 
-1. **CLI** (`plorp start`) - Production use, automation, maximum reliability
+1. **CLI** (`brainplorp start`) - Production use, automation, maximum reliability
 2. **MCP + Slash Commands** (`/start-day`) - Daily interactive use, high reliability
 3. **MCP + Natural Language** ("help me plan my day") - Ad-hoc, flexible
 
@@ -1761,7 +1761,7 @@ plorp/
 
 ### Compatibility with Current Spec
 
-The current plorp specification (Phases 0-5) is **highly compatible** with building an MCP server as Phase 6.
+The current brainplorp specification (Phases 0-5) is **highly compatible** with building an MCP server as Phase 6.
 
 **Strong Compatibility Factors:**
 
@@ -1821,7 +1821,7 @@ This guide has covered:
 4. **Technical Definition of Agents** - How agents actually work under the hood
 5. **Architectural Patterns** - Three patterns for multi-tool workflows, and when to use each
 6. **Reliability and Consistency** - Strategies for making daily workflows reliable
-7. **Recommended Architecture** - Three-tier approach for plorp with maximum flexibility and reliability
+7. **Recommended Architecture** - Three-tier approach for brainplorp with maximum flexibility and reliability
 
 **Key Takeaways:**
 

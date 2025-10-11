@@ -8,13 +8,13 @@ Comprehensive integration and end-to-end tests for task processing workflow.
 from datetime import date
 from pathlib import Path
 import pytest
-from plorp.core.process import (
+from brainplorp.core.process import (
     scan_for_informal_tasks,
     generate_proposal,
     process_daily_note_step1,
     process_daily_note_step2,
 )
-from plorp.core.types import InformalTask, TaskProposal
+from brainplorp.core.types import InformalTask, TaskProposal
 
 
 # ============================================================================
@@ -888,8 +888,8 @@ def test_process_step2_removes_from_projects_when_done(tmp_path, monkeypatch):
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project with task
-    from plorp.core.projects import create_project
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.core.projects import create_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
 
     create_project(name="groceries", domain="home", workstream="chores")
     add_task_to_project("home.chores.groceries", "task-xyz-789")
@@ -924,7 +924,7 @@ Some notes
         mock_mark_done.assert_called_once_with("task-xyz-789")
 
         # Assert: UUID was removed from project frontmatter
-        from plorp.core.projects import get_project_info
+        from brainplorp.core.projects import get_project_info
         project = get_project_info("home.chores.groceries")
         assert project is not None
         assert "task-xyz-789" not in project["task_uuids"]

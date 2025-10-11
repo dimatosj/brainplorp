@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-plorp is a workflow automation layer that sits on top of TaskWarrior 3.x and Obsidian. It is NOT a task manager or note-taking app itself, but rather a bridge that connects TaskWarrior and Obsidian through three core workflows:
+brainplorp is a workflow automation layer that sits on top of TaskWarrior 3.x and Obsidian. It is NOT a task manager or note-taking app itself, but rather a bridge that connects TaskWarrior and Obsidian through three core workflows:
 
 1. **Inbox workflow** - Email → Markdown → TaskWarrior/Obsidian
 2. **Daily ritual** - Generate daily notes with tasks from TaskWarrior
 3. **Review workflow** - End-of-day processing of incomplete tasks
 
-The daily note serves as the primary interface. Users work in markdown files (daily notes, inbox files), and plorp syncs these with TaskWarrior.
+The daily note serves as the primary interface. Users work in markdown files (daily notes, inbox files), and brainplorp syncs these with TaskWarrior.
 
 ## Working with This Codebase
 
@@ -18,7 +18,7 @@ The daily note serves as the primary interface. Users work in markdown files (da
 
 **This project does NOT use the Superpowers skills system.**
 
-plorp has its own robust documentation and workflow system:
+brainplorp has its own robust documentation and workflow system:
 - **PM_HANDOFF.md** - Session history and current state (source of truth)
 - **Sprint specifications** - Detailed implementation patterns with Q&A
 - **MCP_ARCHITECTURE_GUIDE.md** - Architectural patterns (TypedDict, pure functions, three-tier)
@@ -123,19 +123,19 @@ vault/
 
 ## Core Workflows
 
-### Workflow 1: Daily Start (`plorp start`)
+### Workflow 1: Daily Start (`brainplorp start`)
 1. Query TaskWarrior for overdue, due today, and recurring tasks
 2. Generate `vault/daily/YYYY-MM-DD.md` with tasks as checkboxes
 3. Print path to user
 
-### Workflow 2: Review (`plorp review`)
+### Workflow 2: Review (`brainplorp review`)
 1. Parse today's daily note for unchecked tasks
 2. For each task, show details and linked notes
 3. Interactive prompts: done, defer, change priority, skip, delete
 4. Update TaskWarrior based on decisions
 5. Append review summary to daily note
 
-### Workflow 3: Inbox - Email Fetch (`plorp inbox fetch`)
+### Workflow 3: Inbox - Email Fetch (`brainplorp inbox fetch`)
 **Sprint 9.2** - Automated email capture from Gmail via IMAP
 
 1. Connect to Gmail using IMAP (App Password authentication)
@@ -159,16 +159,16 @@ email:
 **Usage:**
 ```bash
 # Manual fetch
-plorp inbox fetch
+brainplorp inbox fetch
 
 # With options
-plorp inbox fetch --limit 10 --label work --verbose
+brainplorp inbox fetch --limit 10 --label work --verbose
 
 # Dry run (preview without appending)
-plorp inbox fetch --dry-run
+brainplorp inbox fetch --dry-run
 
 # Cron job (every 15 minutes)
-*/15 * * * * cd /path/to/plorp && .venv/bin/plorp inbox fetch
+*/15 * * * * cd /path/to/brainplorp && .venv/bin/brainplorp inbox fetch
 ```
 
 **Gmail App Password Setup:**
@@ -177,7 +177,7 @@ plorp inbox fetch --dry-run
 3. Generate password for "plorp"
 4. Copy 16-char password to config file
 
-### Workflow 4: Inbox - Process Items (`plorp inbox process`)
+### Workflow 4: Inbox - Process Items (`brainplorp inbox process`)
 1. Read current month's inbox file
 2. For each unprocessed item, prompt: create task, create note, discard, skip
 3. Create tasks in TaskWarrior or notes in Obsidian as directed
@@ -191,11 +191,11 @@ plorp inbox fetch --dry-run
 
 1. **CLI Commands** (<100ms) - Direct terminal access
    ```bash
-   plorp tasks              # All pending tasks (default limit: 50)
-   plorp tasks --urgent     # Only priority:H tasks
-   plorp tasks --project work
-   plorp tasks --due today
-   plorp tasks --due overdue
+   brainplorp tasks              # All pending tasks (default limit: 50)
+   brainplorp tasks --urgent     # Only priority:H tasks
+   brainplorp tasks --project work
+   brainplorp tasks --due today
+   brainplorp tasks --due overdue
    ```
 
 2. **Slash Commands** (1-2s) - Claude Desktop fast access
@@ -224,9 +224,9 @@ plorp inbox fetch --dry-run
 
 **Examples:**
 ```bash
-plorp tasks --urgent --project work
-plorp tasks --due today --format json
-plorp tasks --project home --limit 10
+brainplorp tasks --urgent --project work
+brainplorp tasks --due today --format json
+brainplorp tasks --project home --limit 10
 ```
 
 ### Performance
@@ -252,17 +252,17 @@ Raycast (⌘⌥I anywhere):
 
 CLI (Terminal):
 ```bash
-plorp inbox add "Buy milk"
-plorp inbox add "Call client" --urgent
-plorp inbox add Multi word items work without quotes
+brainplorp inbox add "Buy milk"
+brainplorp inbox add "Call client" --urgent
+brainplorp inbox add Multi word items work without quotes
 ```
 
 **Philosophy:**
-Quick-add is **pure capture only**. All processing (projects, tags, due dates) happens during `plorp inbox process` workflow.
+Quick-add is **pure capture only**. All processing (projects, tags, due dates) happens during `brainplorp inbox process` workflow.
 
 **Workflow:**
 1. Capture thoughts instantly with ⌘⌥I (no decisions, no metadata)
-2. Process inbox items once daily with `plorp inbox process` (assign projects, priorities, due dates)
+2. Process inbox items once daily with `brainplorp inbox process` (assign projects, priorities, due dates)
 3. This separates capture (fast, no friction) from organization (thoughtful, once daily)
 
 **Alternative Frontends:**
@@ -283,7 +283,7 @@ pip install -e .
 **Testing**:
 ```bash
 pytest tests/ -v
-pytest tests/ --cov=src/plorp --cov-report=html
+pytest tests/ --cov=src/brainplorp --cov-report=html
 ```
 
 **Formatting**:
@@ -293,12 +293,12 @@ black src/ tests/
 
 **Running plorp**:
 ```bash
-plorp start
-plorp review
-plorp inbox fetch       # Fetch emails from Gmail
-plorp inbox process     # Process inbox items
-plorp note "Title" --task <uuid>
-plorp link <uuid> <note-path>
+brainplorp start
+brainplorp review
+brainplorp inbox fetch       # Fetch emails from Gmail
+brainplorp inbox process     # Process inbox items
+brainplorp note "Title" --task <uuid>
+brainplorp link <uuid> <note-path>
 ```
 
 ## Version Management
@@ -336,22 +336,22 @@ plorp link <uuid> <note-path>
 - No custom database
 - No custom codes (m1, p1, etc.)
 - Python scripts that call `task` CLI, not complex abstractions
-- plorp is stateless - just reads/writes to TaskWarrior and Obsidian
+- brainplorp is stateless - just reads/writes to TaskWarrior and Obsidian
 
 ### Markdown-Centric
 - Daily notes, inbox files, and review annotations all in markdown
-- plorp parses markdown ↔ TaskWarrior
+- brainplorp parses markdown ↔ TaskWarrior
 
 ### UUID-Based Linking
 - Tasks reference notes via TaskWarrior annotations
 - Notes reference tasks via YAML front matter `tasks:` field
-- Bidirectional linking maintained by plorp helper commands
+- Bidirectional linking maintained by brainplorp helper commands
 
 ### State Synchronization (Critical Pattern)
 
-**Core Principle:** Every plorp operation that modifies TaskWarrior **must** update all related Obsidian surfaces.
+**Core Principle:** Every brainplorp operation that modifies TaskWarrior **must** update all related Obsidian surfaces.
 
-plorp is a **bridge** between two systems (TaskWarrior and Obsidian). When state changes in one system, it must propagate to the other. This is not optional - it's a fundamental architectural requirement.
+brainplorp is a **bridge** between two systems (TaskWarrior and Obsidian). When state changes in one system, it must propagate to the other. This is not optional - it's a fundamental architectural requirement.
 
 **The Pattern:**
 
@@ -462,11 +462,11 @@ def mark_task_done_via_review(uuid: str):
 
 **External Changes (Outside plorp):**
 
-When TaskWarrior is modified by external tools (CLI, mobile apps), plorp cannot automatically sync because it's not running. Future solutions:
+When TaskWarrior is modified by external tools (CLI, mobile apps), brainplorp cannot automatically sync because it's not running. Future solutions:
 
-- **TaskWarrior Hooks** (Sprint 10+) - Install hooks that call plorp sync handlers
-- **Reconciliation Command** - `plorp reconcile` to detect and fix drift
-- **Server Mode** (Future) - Long-running plorp daemon that monitors TaskWarrior
+- **TaskWarrior Hooks** (Sprint 10+) - Install hooks that call brainplorp sync handlers
+- **Reconciliation Command** - `brainplorp reconcile` to detect and fix drift
+- **Server Mode** (Future) - Long-running brainplorp daemon that monitors TaskWarrior
 
 **For Sprint 8.5 and beyond:** Review all TaskWarrior modification points and ensure Obsidian sync is present.
 
@@ -499,10 +499,10 @@ The specification files in `Docs/` are:
 
 When implementing, follow the phase plan in `plorp_IMPLEMENTATION_PLAN.md`:
 - Phase 0: Setup (project structure)
-- Phase 1: Core Daily Workflow (`plorp start`)
-- Phase 2: Review Workflow (`plorp review`)
-- Phase 3: Inbox Workflow (`plorp inbox process`)
-- Phase 4: Note Linking (`plorp note`, `plorp link`)
+- Phase 1: Core Daily Workflow (`brainplorp start`)
+- Phase 2: Review Workflow (`brainplorp review`)
+- Phase 3: Inbox Workflow (`brainplorp inbox process`)
+- Phase 4: Note Linking (`brainplorp note`, `brainplorp link`)
 - Phase 5: Polish & Documentation
 
 ## Key Constraints

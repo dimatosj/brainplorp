@@ -1,9 +1,9 @@
-# plorp 1.0 - Manual Test User Journey
+# brainplorp 1.0 - Manual Test User Journey
 
-**Purpose:** Walk through all plorp functionality as a user to verify end-to-end workflows.
+**Purpose:** Walk through all brainplorp functionality as a user to verify end-to-end workflows.
 
 **Prerequisites:**
-- plorp installed (`pip install -e .` from project root)
+- brainplorp installed (`pip install -e .` from project root)
 - TaskWarrior 3.x installed and configured
 - Obsidian vault configured in `~/.config/plorp/config.yaml`
 - Terminal ready
@@ -14,7 +14,7 @@
 
 ## Journey Overview
 
-You're a software engineer starting your workday. You'll use plorp to:
+You're a software engineer starting your workday. You'll use brainplorp to:
 1. Start your day with a daily note
 2. Work through tasks
 3. Review your day
@@ -28,7 +28,7 @@ You're a software engineer starting your workday. You'll use plorp to:
 ### Step 1.1: Generate Today's Daily Note
 
 ```bash
-plorp start
+brainplorp start
 ```
 
 **Expected Output:**
@@ -45,7 +45,7 @@ plorp start
 5. Each task should show: `- [ ] Task description (uuid: abc-123)`
 
 **Try:**
-Run `plorp start` again - should see error: "❌ Daily note already exists"
+Run `brainplorp start` again - should see error: "❌ Daily note already exists"
 
 ---
 
@@ -54,7 +54,7 @@ Run `plorp start` again - should see error: "❌ Daily note already exists"
 ### Step 2.1: Create a Standalone Note
 
 ```bash
-plorp note "Research Python Testing Frameworks"
+brainplorp note "Research Python Testing Frameworks"
 ```
 
 **Expected Output:**
@@ -76,7 +76,7 @@ task next
 
 Pick one UUID, then:
 ```bash
-plorp note "Sprint Planning Notes" --task <UUID> --type meeting
+brainplorp note "Sprint Planning Notes" --task <UUID> --type meeting
 ```
 
 **Expected Output:**
@@ -96,7 +96,7 @@ plorp note "Sprint Planning Notes" --task <UUID> --type meeting
 Create a note in Obsidian manually (or use existing note), then:
 
 ```bash
-plorp link <TASK_UUID> /path/to/vault/notes/existing-note.md
+brainplorp link <TASK_UUID> /path/to/vault/notes/existing-note.md
 ```
 
 **Expected Output:**
@@ -114,15 +114,15 @@ plorp link <TASK_UUID> /path/to/vault/notes/existing-note.md
 **Error Cases to Try:**
 ```bash
 # Non-existent task
-plorp link fake-uuid-999 /path/to/note.md
+brainplorp link fake-uuid-999 /path/to/note.md
 # Expected: ❌ Error: Task not found
 
 # Non-existent note
-plorp link <VALID_UUID> /path/to/nonexistent.md
+brainplorp link <VALID_UUID> /path/to/nonexistent.md
 # Expected: ❌ Error: Note not found
 
 # Note outside vault
-plorp link <VALID_UUID> /tmp/outside.md
+brainplorp link <VALID_UUID> /tmp/outside.md
 # Expected: ❌ Error: Note must be inside vault
 ```
 
@@ -152,7 +152,7 @@ These will appear in tomorrow's daily note (they're new today).
 ### Step 4.1: Run Review
 
 ```bash
-plorp review
+brainplorp review
 ```
 
 **Expected Flow:**
@@ -216,7 +216,7 @@ Choice [1-4]:
 ### Step 4.2: Run Review Again (Append Test)
 
 ```bash
-plorp review
+brainplorp review
 ```
 
 **Expected:**
@@ -257,7 +257,7 @@ Create/edit `vault/inbox.md`:
 ### Step 5.2: Process Inbox
 
 ```bash
-plorp inbox process
+brainplorp inbox process
 ```
 
 **Expected Flow:**
@@ -375,7 +375,7 @@ Should save progress - processed items marked, unprocessed items remain.
 Wait until next day (or mock date in tests), then:
 
 ```bash
-plorp start
+brainplorp start
 ```
 
 **Expected:**

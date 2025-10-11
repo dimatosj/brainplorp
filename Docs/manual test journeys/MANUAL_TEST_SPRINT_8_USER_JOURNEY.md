@@ -16,8 +16,8 @@
 ### 1. Verify Environment
 
 ```bash
-# Check plorp is installed
-plorp --version
+# Check brainplorp is installed
+brainplorp --version
 
 # Check TaskWarrior is working
 task diagnostics | grep "Version"
@@ -26,11 +26,11 @@ task diagnostics | grep "Version"
 ls -la /Users/jsd/vault/projects/
 
 # Check current focus state
-plorp focus get
+brainplorp focus get
 ```
 
 **Expected:**
-- plorp version shown
+- brainplorp version shown
 - TaskWarrior 3.x detected
 - `/Users/jsd/vault/projects/` directory exists (may have existing projects)
 - Default focus is "home"
@@ -44,7 +44,7 @@ plorp focus get
 ### Step 1: Create a Personal Project
 
 ```bash
-plorp project create \
+brainplorp project create \
   --name "kitchen-remodel" \
   --domain "home" \
   --workstream "house" \
@@ -91,20 +91,20 @@ Kitchen renovation project
 
 ```bash
 # Create first task
-plorp project add-task \
+brainplorp project add-task \
   home.house.kitchen-remodel \
   "Get contractor quotes" \
   --due "friday" \
   --priority "H"
 
 # Create second task
-plorp project add-task \
+brainplorp project add-task \
   home.house.kitchen-remodel \
   "Choose countertop material" \
   --priority "M"
 
 # Create third task
-plorp project add-task \
+brainplorp project add-task \
   home.house.kitchen-remodel \
   "Order appliances" \
   --due "2025-10-20"
@@ -145,10 +145,10 @@ cat /Users/jsd/vault/projects/home.house.kitchen-remodel.md
 
 ```bash
 # CLI: List all tasks in project
-plorp project tasks home.house.kitchen-remodel
+brainplorp project tasks home.house.kitchen-remodel
 
 # CLI: Get project info (includes task count)
-plorp project info home.house.kitchen-remodel
+brainplorp project info home.house.kitchen-remodel
 ```
 
 **Expected:**
@@ -164,8 +164,8 @@ plorp project info home.house.kitchen-remodel
 ### Step 7: Set Work Focus
 
 ```bash
-plorp focus set work
-plorp focus get
+brainplorp focus set work
+brainplorp focus get
 ```
 
 **Expected:**
@@ -178,27 +178,27 @@ Current focus: work
 
 ```bash
 # Marketing workstream
-plorp project create \
+brainplorp project create \
   --name "website-redesign" \
   --domain "work" \
   --workstream "marketing" \
   --description "Redesign company website"
 
-plorp project create \
+brainplorp project create \
   --name "blog-launch" \
   --domain "work" \
   --workstream "marketing" \
   --state "planning"
 
 # Engineering workstream
-plorp project create \
+brainplorp project create \
   --name "api-v2" \
   --domain "work" \
   --workstream "engineering" \
   --description "Build API v2"
 
 # Direct domain project (no workstream)
-plorp project create \
+brainplorp project create \
   --name "quarterly-review" \
   --domain "work" \
   --description "Q4 performance review"
@@ -216,16 +216,16 @@ plorp project create \
 
 ```bash
 # List all work projects
-plorp project list --domain work
+brainplorp project list --domain work
 
 # List only marketing projects
-plorp project list --domain work --workstream marketing
+brainplorp project list --domain work --workstream marketing
 
 # List all active projects
-plorp project list --state active
+brainplorp project list --state active
 
 # List all projects (no filter)
-plorp project list
+brainplorp project list
 ```
 
 **Expected:**
@@ -238,18 +238,18 @@ plorp project list
 
 ```bash
 # Start the blog launch project
-plorp project update-state work.marketing.blog-launch active
+brainplorp project update-state work.marketing.blog-launch active
 
 # Complete the quarterly review
-plorp project update-state work.quarterly-review completed
+brainplorp project update-state work.quarterly-review completed
 
 # Block the API project
-plorp project update-state work.engineering.api-v2 blocked
+brainplorp project update-state work.engineering.api-v2 blocked
 ```
 
 **Expected:**
 - Each command shows: `✓ Updated project state`
-- Verify with `plorp project info <full-path>` for each
+- Verify with `brainplorp project info <full-path>` for each
 
 ---
 
@@ -261,13 +261,13 @@ plorp project update-state work.engineering.api-v2 blocked
 
 ```bash
 # Add tasks to marketing projects
-plorp project add-task work.marketing.website-redesign "Design homepage mockup" --priority H
-plorp project add-task work.marketing.website-redesign "Write copy" --priority M
-plorp project add-task work.marketing.blog-launch "Research blog platform" --due tomorrow
+brainplorp project add-task work.marketing.website-redesign "Design homepage mockup" --priority H
+brainplorp project add-task work.marketing.website-redesign "Write copy" --priority M
+brainplorp project add-task work.marketing.blog-launch "Research blog platform" --due tomorrow
 
 # Add tasks to engineering project
-plorp project add-task work.engineering.api-v2 "Design API schema" --priority H
-plorp project add-task work.engineering.api-v2 "Setup database" --due friday
+brainplorp project add-task work.engineering.api-v2 "Design API schema" --priority H
+brainplorp project add-task work.engineering.api-v2 "Setup database" --due friday
 ```
 
 **Expected:**
@@ -278,10 +278,10 @@ plorp project add-task work.engineering.api-v2 "Setup database" --due friday
 
 ```bash
 # List all tasks in work domain
-plorp tasks list --domain work
+brainplorp tasks list --domain work
 
 # List all tasks in home domain
-plorp tasks list --domain home
+brainplorp tasks list --domain home
 ```
 
 **Expected:**
@@ -292,10 +292,10 @@ plorp tasks list --domain home
 
 ```bash
 # List all marketing tasks
-plorp tasks list --domain work --workstream marketing
+brainplorp tasks list --domain work --workstream marketing
 
 # List all engineering tasks
-plorp tasks list --domain work --workstream engineering
+brainplorp tasks list --domain work --workstream engineering
 ```
 
 **Expected:**
@@ -309,7 +309,7 @@ plorp tasks list --domain work --workstream engineering
 task add "Random work task" project:work.nonexistent.project
 
 # Query orphaned tasks
-plorp tasks list --orphaned
+brainplorp tasks list --orphaned
 ```
 
 **Expected:**
@@ -339,7 +339,7 @@ print('Set MCP focus to personal')
 "
 
 # Verify CLI and MCP focuses are independent
-plorp focus get
+brainplorp focus get
 python3 -c "
 from plorp.core.projects import get_focused_domain_mcp
 print(f'MCP Focus: {get_focused_domain_mcp()}')
@@ -396,7 +396,7 @@ for p in result['projects']:
 ### Step 18: Invalid Domain
 
 ```bash
-plorp project create \
+brainplorp project create \
   --name "test" \
   --domain "invalid-domain" \
   2>&1 | grep -i error
@@ -411,7 +411,7 @@ Error: Invalid domain: invalid-domain. Must be one of ['work', 'home', 'personal
 
 ```bash
 # Try to create project that already exists
-plorp project create \
+brainplorp project create \
   --name "kitchen-remodel" \
   --domain "home" \
   --workstream "house" \
@@ -426,7 +426,7 @@ Error: Project already exists: home.house.kitchen-remodel
 ### Step 20: Invalid State Transition
 
 ```bash
-plorp project update-state work.marketing.website-redesign invalid-state 2>&1 | grep -i error
+brainplorp project update-state work.marketing.website-redesign invalid-state 2>&1 | grep -i error
 ```
 
 **Expected:**
@@ -437,7 +437,7 @@ Error: Invalid state: invalid-state. Must be one of [active, planning, completed
 ### Step 21: Task in Nonexistent Project
 
 ```bash
-plorp project add-task nonexistent.project.path "Test task" 2>&1 | grep -i error
+brainplorp project add-task nonexistent.project.path "Test task" 2>&1 | grep -i error
 ```
 
 **Expected:**
@@ -491,10 +491,10 @@ Error: Project not found: nonexistent.project.path
 
 ```bash
 # Delete completed project
-plorp project delete work.quarterly-review
+brainplorp project delete work.quarterly-review
 
 # Verify it's gone
-plorp project list --domain work | grep quarterly
+brainplorp project list --domain work | grep quarterly
 ls /Users/jsd/vault/projects/ | grep quarterly
 ```
 
@@ -515,9 +515,9 @@ echo "Total tasks with projects:"
 task project.any: export | python3 -c "import sys, json; print(len(json.load(sys.stdin)))"
 
 # Show summary by domain
-plorp project list --domain work | head -5
-plorp project list --domain home | head -5
-plorp project list --domain personal | head -5
+brainplorp project list --domain work | head -5
+brainplorp project list --domain home | head -5
+brainplorp project list --domain personal | head -5
 ```
 
 **Expected Summary:**
@@ -535,7 +535,7 @@ After completing all journeys, verify:
 - [ ] Project notes created in `vault/projects/` with correct frontmatter
 - [ ] Tasks created in TaskWarrior with correct `project:` field
 - [ ] Bidirectional linking works (tasks have annotations, projects have UUIDs)
-- [ ] CLI commands work (`plorp project`, `plorp focus`)
+- [ ] CLI commands work (`brainplorp project`, `brainplorp focus`)
 - [ ] MCP integration works (Python imports and function calls)
 - [ ] Focus mechanism persists across sessions
 - [ ] CLI and MCP focus are independent
@@ -549,8 +549,8 @@ After completing all journeys, verify:
 ## Known Limitations (Expected Behavior)
 
 1. **Orphaned UUIDs:** If you delete a task in TaskWarrior, the UUID remains in project frontmatter
-   - **Expected:** Warning shown in `plorp project tasks` output
-   - **Future:** Sprint 9 will add `plorp project sync` command
+   - **Expected:** Warning shown in `brainplorp project tasks` output
+   - **Future:** Sprint 9 will add `brainplorp project sync` command
 
 2. **Workstream validation:** Any workstream name is accepted
    - **Expected:** No warnings for unusual workstreams

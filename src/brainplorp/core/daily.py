@@ -9,9 +9,9 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import List
 
-from plorp.core.types import DailyStartResult, TaskInfo, TaskSummary
-from plorp.core.exceptions import VaultNotFoundError, DailyNoteExistsError
-from plorp.integrations.taskwarrior import get_tasks
+from brainplorp.core.types import DailyStartResult, TaskInfo, TaskSummary
+from brainplorp.core.exceptions import VaultNotFoundError, DailyNoteExistsError
+from brainplorp.integrations.taskwarrior import get_tasks
 
 
 def start_day(target_date: date, vault_path: Path) -> DailyStartResult:

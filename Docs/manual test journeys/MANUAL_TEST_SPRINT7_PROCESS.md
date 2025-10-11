@@ -1,9 +1,9 @@
-# plorp v1.3.0 - Manual Test Journey for /process Workflow (Sprint 7)
+# brainplorp v1.3.0 - Manual Test Journey for /process Workflow (Sprint 7)
 
 **Purpose:** Walk through the complete `/process` workflow to verify informal task conversion to TaskWarrior tasks.
 
 **Prerequisites:**
-- plorp v1.3.0 installed (`uv pip install -e .` from project root)
+- brainplorp v1.3.0 installed (`uv pip install -e .` from project root)
 - TaskWarrior 3.x installed and configured
 - Obsidian vault configured in `~/.config/plorp/config.yaml`
 - Daily note exists with informal tasks
@@ -62,11 +62,11 @@ vim ~/vault/daily/$(date +%Y-%m-%d).md
 
 ## Journey Part 1: Step 1 - Proposal Generation
 
-### Action 1.1: Run plorp process (First Time)
+### Action 1.1: Run brainplorp process (First Time)
 
 **Command:**
 ```bash
-plorp process
+brainplorp process
 ```
 
 **Expected Output:**
@@ -83,7 +83,7 @@ Next steps:
   1. Open your daily note
   2. Review each proposal in ## TBD Processing
   3. Mark [Y] to approve or [N] to reject
-  4. Run 'plorp process' again to create tasks
+  4. Run 'brainplorp process' again to create tasks
 ```
 
 **What Happened:**
@@ -182,11 +182,11 @@ vim ~/vault/daily/$(date +%Y-%m-%d).md
 
 ## Journey Part 3: Step 2 - Task Creation
 
-### Action 3.1: Run plorp process (Second Time)
+### Action 3.1: Run brainplorp process (Second Time)
 
 **Command:**
 ```bash
-plorp process
+brainplorp process
 ```
 
 **Expected Output:**
@@ -290,7 +290,7 @@ echo "## Notes
 
 **Run Step 1:**
 ```bash
-plorp process --date 2025-10-08
+brainplorp process --date 2025-10-08
 ```
 
 **Expected:**
@@ -331,7 +331,7 @@ sed -i '' 's/- \[ \] \*\*\[Y\/N\]\*\*/- [Y] **[Y\/N]**/' ~/vault/daily/2025-10-0
 
 **Run Step 2:**
 ```bash
-plorp process --date 2025-10-08
+brainplorp process --date 2025-10-08
 ```
 
 **Expected:**
@@ -386,13 +386,13 @@ echo "## Notes
 **Run full workflow:**
 ```bash
 # Step 1
-plorp process --date 2025-10-09
+brainplorp process --date 2025-10-09
 
 # Edit to approve: [Y]
 sed -i '' 's/- \[ \] \*\*\[Y\/N\]\*\*/- [Y] **[Y\/N]**/' ~/vault/daily/2025-10-09.md
 
 # Step 2
-plorp process --date 2025-10-09
+brainplorp process --date 2025-10-09
 ```
 
 **Verify task in TaskWarrior:**

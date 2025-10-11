@@ -12,7 +12,7 @@
 
 ## Executive Summary
 
-Sprint 9.3 implements a "quick add" feature for macOS desktop capture to plorp inbox. Users can instantly add items to their inbox from anywhere on their Mac using a keyboard shortcut, without switching to Obsidian or terminal.
+Sprint 9.3 implements a "quick add" feature for macOS desktop capture to brainplorp inbox. Users can instantly add items to their inbox from anywhere on their Mac using a keyboard shortcut, without switching to Obsidian or terminal.
 
 **Philosophy: Pure Capture**
 - Quick-add is for CAPTURE ONLY - no metadata, no decisions
@@ -31,7 +31,7 @@ User anywhere on Mac → Press ⌘⌥I → Type "Buy milk" → Enter
 ```
 
 **What's New:**
-- `plorp inbox add <text>` - CLI command to append to inbox
+- `brainplorp inbox add <text>` - CLI command to append to inbox
 - Optional `--urgent` flag for visual priority (🔴)
 - Raycast script command (keyboard shortcut enabled)
 - Documentation for alternative frontends (Shortcuts, Alfred, Automator)
@@ -47,10 +47,10 @@ Enter → Added to inbox instantly
 
 *CLI (Alternative):*
 ```bash
-$ plorp inbox add "Review PR #42"
+$ brainplorp inbox add "Review PR #42"
 ✓ Added to inbox: vault/inbox/2025-10.md
 
-$ plorp inbox add "Call client ASAP" --urgent
+$ brainplorp inbox add "Call client ASAP" --urgent
 ✓ Added to inbox: vault/inbox/2025-10.md
 ```
 
@@ -71,7 +71,7 @@ $ plorp inbox add "Call client ASAP" --urgent
 2. Thought occurs: "Need to review Sarah's PR before EOD"
 3. User must:
    - Switch to terminal (⌘Tab)
-   - Type `plorp inbox add "Review Sarah's PR"`
+   - Type `brainplorp inbox add "Review Sarah's PR"`
    - Switch back to VSCode (⌘Tab)
    - **OR:** Open Obsidian → navigate to inbox file → type → save → switch back
 4. Total time: 30-60 seconds
@@ -90,7 +90,7 @@ $ plorp inbox add "Call client ASAP" --urgent
 - ✅ **Fast:** <5 seconds from thought to captured
 - ✅ **Accessible:** Available from any application
 - ✅ **Low friction:** No navigation, no file opening, no decisions
-- ❌ **plorp current state:** Requires terminal or Obsidian switch
+- ❌ **brainplorp current state:** Requires terminal or Obsidian switch
 
 ### Comparison to Competitors
 
@@ -99,8 +99,8 @@ $ plorp inbox add "Call client ASAP" --urgent
 | **Things 3** | 2-3 seconds | ✅ ⌘⌥N | ✅ System-wide |
 | **OmniFocus** | 2-3 seconds | ✅ ⌘⌥Space | ✅ System-wide |
 | **Todoist** | 3-5 seconds | ✅ ⌘⌥T | ✅ System-wide |
-| **plorp (current)** | 30-60 seconds | ❌ No shortcut | ❌ Terminal/Obsidian only |
-| **plorp (Sprint 9.3)** | 2-3 seconds | ✅ ⌘⌥I (Raycast) | ✅ System-wide |
+| **brainplorp (current)** | 30-60 seconds | ❌ No shortcut | ❌ Terminal/Obsidian only |
+| **brainplorp (Sprint 9.3)** | 2-3 seconds | ✅ ⌘⌥I (Raycast) | ✅ System-wide |
 
 ---
 
@@ -111,7 +111,7 @@ $ plorp inbox add "Call client ASAP" --urgent
 **Approach: Core CLI + Multiple Frontend Options**
 
 **Why this wins:**
-- ✅ Core logic in plorp (testable, maintainable)
+- ✅ Core logic in brainplorp (testable, maintainable)
 - ✅ Users choose their preferred capture method
 - ✅ No forced third-party dependencies
 - ✅ Each frontend is thin wrapper calling CLI
@@ -235,15 +235,15 @@ def inbox_add(ctx, text, urgent):
     Examples:
 
         # Simple add
-        plorp inbox add "Buy milk"
+        brainplorp inbox add "Buy milk"
 
         # Multi-word items (no quotes needed)
-        plorp inbox add Review PR #42 before EOD
+        brainplorp inbox add Review PR #42 before EOD
 
         # Mark as urgent
-        plorp inbox add "Call client ASAP" --urgent
+        brainplorp inbox add "Call client ASAP" --urgent
 
-    All project assignment, tagging, and due dates happen during 'plorp inbox process'.
+    All project assignment, tagging, and due dates happen during 'brainplorp inbox process'.
     """
     from plorp.core.inbox import quick_add_to_inbox
 
@@ -297,7 +297,7 @@ def inbox_add(ctx, text, urgent):
 # @raycast.argument1 { "type": "text", "placeholder": "Item to add" }
 
 # Documentation:
-# @raycast.description Quickly add an item to your plorp inbox
+# @raycast.description Quickly add an item to your brainplorp inbox
 # @raycast.author plorp
 # @raycast.authorURL https://github.com/yourusername/plorp
 
@@ -329,7 +329,7 @@ fi
    # Create Raycast scripts directory
    mkdir -p ~/Documents/Raycast/Scripts
 
-   # Copy plorp quick-add script
+   # Copy brainplorp quick-add script
    cp raycast/quick-add-inbox.sh ~/Documents/Raycast/Scripts/
    chmod +x ~/Documents/Raycast/Scripts/quick-add-inbox.sh
    ```
@@ -341,7 +341,7 @@ fi
    - Assign keyboard shortcut: ⌘⌥I
 
 4. **Edit script for your setup:**
-   - Update `PLORP_PATH` to your plorp installation
+   - Update `PLORP_PATH` to your brainplorp installation
    - Customize icon emoji if desired
 
 **Usage:**
@@ -366,7 +366,7 @@ Document setup instructions for:
 ```
 Create Shortcut:
 1. "Ask for input" → "What to add to inbox?"
-2. "Run Shell Script" → plorp inbox add "{{input}}"
+2. "Run Shell Script" → brainplorp inbox add "{{input}}"
 3. Assign keyboard shortcut in System Settings
 
 Pros: Native, no third-party apps
@@ -378,7 +378,7 @@ Cons: Basic UI, slower than Raycast
 Create Workflow:
 1. Hotkey Trigger: ⌘⌥I
 2. Keyword Input: "inbox {query}"
-3. Run Script: plorp inbox add "{query}"
+3. Run Script: brainplorp inbox add "{query}"
 4. Post Notification: "Added to inbox"
 
 Pros: Beautiful UI, very fast
@@ -391,7 +391,7 @@ Create Service:
 1. New Quick Action (Service)
 2. AppleScript:
    set userInput to text returned of (display dialog "Quick add to inbox:" default answer "")
-   do shell script "/usr/local/bin/plorp inbox add " & quoted form of userInput
+   do shell script "/usr/local/bin/brainplorp inbox add " & quoted form of userInput
 3. Assign keyboard shortcut in System Settings
 
 Pros: Native, all macOS versions
@@ -488,13 +488,13 @@ Raycast (⌘⌥I anywhere):
 - Speed: <3 seconds per capture
 
 CLI (Terminal):
-- plorp inbox add "Buy milk"
-- plorp inbox add "Call client" --urgent
-- plorp inbox add Multi word items work without quotes
+- brainplorp inbox add "Buy milk"
+- brainplorp inbox add "Call client" --urgent
+- brainplorp inbox add Multi word items work without quotes
 
 **Philosophy:**
 Quick-add is pure capture only. All processing (projects, tags, due dates)
-happens during 'plorp inbox process' workflow.
+happens during 'brainplorp inbox process' workflow.
 
 **Alternative Frontends:**
 See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
@@ -510,7 +510,7 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 
 ### Functional Requirements
 
-- [ ] `plorp inbox add <text>` command works
+- [ ] `brainplorp inbox add <text>` command works
 - [ ] Appends to current month's inbox file
 - [ ] Creates inbox file if missing
 - [ ] Handles existing inbox file (appends to Unprocessed)
@@ -524,7 +524,7 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 - [ ] Raycast script command created
 - [ ] Script has correct metadata (title, icon, description)
 - [ ] Script accepts text argument
-- [ ] Script calls plorp CLI correctly
+- [ ] Script calls brainplorp CLI correctly
 - [ ] Script shows success/error notification
 - [ ] Installation instructions documented
 - [ ] Keyboard shortcut configuration documented
@@ -560,7 +560,7 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 
 ### Story 1: Quick Thought Capture
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** to instantly add thoughts to my inbox from anywhere
 **So that** I can capture ideas without breaking flow state
 
@@ -573,12 +573,12 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 
 ### Story 2: Urgent Item Flagging
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** to mark inbox items as urgent during capture
 **So that** I can visually distinguish critical items
 
 **Acceptance Criteria:**
-- Run `plorp inbox add "Fix bug" --urgent`
+- Run `brainplorp inbox add "Fix bug" --urgent`
 - Item appears with 🔴 indicator
 - Visual distinction in inbox file
 - All other metadata assigned during `/process`
@@ -597,7 +597,7 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 5. Manual testing
 
 **Deliverables:**
-- `plorp inbox add` works end-to-end
+- `brainplorp inbox add` works end-to-end
 - --urgent flag functional
 
 ### Phase 2: Raycast Script Command (30 minutes)
@@ -707,9 +707,9 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 ## Manual Testing Checklist
 
 ### CLI Testing
-- [ ] Test `plorp inbox add "Simple item"`
-- [ ] Test `plorp inbox add Multi word item without quotes`
-- [ ] Test `plorp inbox add "Urgent item" --urgent`
+- [ ] Test `brainplorp inbox add "Simple item"`
+- [ ] Test `brainplorp inbox add Multi word item without quotes`
+- [ ] Test `brainplorp inbox add "Urgent item" --urgent`
 - [ ] Test with existing inbox file
 - [ ] Test with missing inbox file (auto-create)
 - [ ] Test error handling (invalid vault path)
@@ -786,7 +786,7 @@ See `Docs/QUICK_ADD_FRONTENDS.md` for Shortcuts, Alfred, Automator setup.
 **Sprint 9.3: APPROVED - Ready for Implementation**
 
 **Scope Summary:**
-- Core: CLI command `plorp inbox add` with optional --urgent flag
+- Core: CLI command `brainplorp inbox add` with optional --urgent flag
 - Primary Frontend: Raycast script command (free tier)
 - Alternative Frontends: Documented for Shortcuts, Alfred, Automator
 - Philosophy: Pure capture - all metadata during `/process`

@@ -1,13 +1,13 @@
-# plorp
+# brainplorp
 
 **Workflow automation for TaskWarrior + Obsidian, with Claude Desktop integration**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-270%20passing-brightgreen.svg)]()
 
-## What is plorp?
+## What is brainplorp?
 
-plorp bridges TaskWarrior (task management) and Obsidian (note-taking) through an intelligent workflow system. It provides both a traditional CLI and MCP (Model Context Protocol) integration for Claude Desktop.
+brainplorp bridges TaskWarrior (task management) and Obsidian (note-taking) through an intelligent workflow system. It provides both a traditional CLI and MCP (Model Context Protocol) integration for Claude Desktop.
 
 ### Core Workflows
 
@@ -16,14 +16,14 @@ plorp bridges TaskWarrior (task management) and Obsidian (note-taking) through a
 3. **Inbox workflow** - Email → Markdown → TaskWarrior/Obsidian
 4. **Notes workflow** - Create and link notes to tasks
 
-### Two Ways to Use plorp
+### Two Ways to Use brainplorp
 
 **Traditional CLI**:
 ```bash
-plorp start        # Generate daily note
-plorp review       # Review incomplete tasks
-plorp inbox process # Process inbox items
-plorp note "Title" # Create a note
+brainplorp start        # Generate daily note
+brainplorp review       # Review incomplete tasks
+brainplorp inbox process # Process inbox items
+brainplorp note "Title" # Create a note
 ```
 
 **Claude Desktop Integration** (v1.1):
@@ -47,23 +47,23 @@ Claude: [Generates your daily note with intelligent summaries]
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/plorp.git
+git clone https://github.com/dimatosj/plorp.git
 cd plorp
 
 # Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install plorp
+# Install brainplorp
 pip install -e ".[dev]"
 
 # Verify installation
-plorp --version
+brainplorp --version
 ```
 
 ### Configuration
 
-Create `~/.config/plorp/config.yaml`:
+Create `~/.config/brainplorp/config.yaml`:
 
 ```yaml
 vault_path: /path/to/your/obsidian/vault
@@ -76,7 +76,7 @@ default_editor: vim
 
 ```bash
 # Generate your first daily note
-plorp start
+brainplorp start
 
 # Output:
 # ✅ Created daily note: /vault/daily/2025-10-06.md
@@ -122,22 +122,22 @@ plorp start
 
 ```bash
 # Morning routine
-plorp start
-open "$(plorp start --date 2025-10-06 | grep 'Created' | awk '{print $NF}')"
+brainplorp start
+open "$(brainplorp start --date 2025-10-06 | grep 'Created' | awk '{print $NF}')"
 
 # Evening review
-plorp review
+brainplorp review
 # Interactive prompts for each uncompleted task
 
 # Process inbox
-plorp inbox process
+brainplorp inbox process
 # Convert emails to tasks or notes
 
 # Create note linked to task
-plorp note "Sprint Planning" --task abc-123 --type meeting
+brainplorp note "Sprint Planning" --task abc-123 --type meeting
 
 # Link existing note to task
-plorp link def-456 notes/architecture-decisions.md
+brainplorp link def-456 notes/architecture-decisions.md
 ```
 
 ### Claude Desktop Examples
@@ -160,7 +160,7 @@ Claude: [Creates project note and linked tasks automatically]
 
 ## Architecture
 
-plorp v1.1 uses a layered architecture:
+brainplorp v1.1 uses a layered architecture:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -192,7 +192,7 @@ See [ARCHITECTURE.md](Docs/ARCHITECTURE.md) for detailed design documentation.
 pytest tests/ -v
 
 # With coverage
-pytest tests/ --cov=src/plorp --cov-report=html
+pytest tests/ --cov=src/brainplorp --cov-report=html
 
 # Specific test file
 pytest tests/test_core/test_daily.py -v
@@ -273,7 +273,7 @@ plorp/
 
 ## Contributing
 
-plorp is currently in active development. Contributions welcome!
+brainplorp is currently in active development. Contributions welcome!
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -287,7 +287,7 @@ plorp is currently in active development. Contributions welcome!
 
 ## Philosophy
 
-plorp follows these design principles:
+brainplorp follows these design principles:
 
 - **Simplicity First**: No custom codes, no complex abstractions
 - **Markdown-Centric**: All data in plain markdown files
@@ -299,7 +299,7 @@ plorp follows these design principles:
 
 ## Support
 
-- **Issues**: https://github.com/yourusername/plorp/issues
+- **Issues**: https://github.com/dimatosj/plorp/issues
 - **Documentation**: See `Docs/` directory
 - **Questions**: Open a GitHub Discussion
 
@@ -316,4 +316,4 @@ plorp follows these design principles:
 
 ---
 
-**plorp v1.1** - Built with ❤️ for productive workflows
+**brainplorp v1.1** - Built with ❤️ for productive workflows

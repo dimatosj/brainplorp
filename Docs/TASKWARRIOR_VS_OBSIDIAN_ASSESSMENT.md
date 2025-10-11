@@ -1,7 +1,7 @@
 # TaskWarrior vs Obsidian Bases: Strategic Assessment
 
 **Date:** 2025-10-08
-**Context:** Evaluating whether plorp should continue using TaskWarrior as task backend, or pivot to Obsidian Bases/plugins for task management
+**Context:** Evaluating whether brainplorp should continue using TaskWarrior as task backend, or pivot to Obsidian Bases/plugins for task management
 **Decision Impact:** Affects Sprint 9+ architecture and plorp's core value proposition
 
 ---
@@ -32,7 +32,7 @@ After comprehensive analysis of TaskWarrior vs Obsidian Bases capabilities, the 
 
 TaskWarrior provides sophisticated task management features (urgency calculation, dependency tracking, recurring tasks) that would be difficult and time-consuming to replicate in Obsidian Bases. Obsidian Bases excels at note-level organization and visualization, but cannot natively track inline tasks (checkboxes). The two systems are complementary, not competing.
 
-**Sprint 9's note management layer makes the TaskWarrior bridge MORE valuable**, not less - by enabling plorp to read project notes, meeting notes, and context around tasks, while TaskWarrior handles the computational heavy lifting.
+**Sprint 9's note management layer makes the TaskWarrior bridge MORE valuable**, not less - by enabling brainplorp to read project notes, meeting notes, and context around tasks, while TaskWarrior handles the computational heavy lifting.
 
 ---
 
@@ -193,7 +193,7 @@ The Tasks plugin is a separate ecosystem:
 
 ---
 
-## What plorp Brings to the Table
+## What brainplorp Brings to the Table
 
 ### Current Architecture (TaskWarrior + Obsidian)
 
@@ -210,7 +210,7 @@ The Tasks plugin is a separate ecosystem:
 - Project notes (documentation)
 - Meeting notes (context)
 
-**plorp bridges:**
+**brainplorp bridges:**
 - Syncs tasks → daily notes (with UUIDs)
 - Creates tasks from informal checkboxes
 - Links notes ↔ tasks bidirectionally
@@ -301,14 +301,14 @@ $ task project:work due:week
 
 ### Scenario 3: "I need context on this task - what notes are related?"
 
-**Current plorp (TaskWarrior + Obsidian):**
+**Current brainplorp (TaskWarrior + Obsidian):**
 ```
 Task: "Review API design"
 Annotations: "Note: vault/projects/api-rewrite.md"
-           → plorp reads note, shows full context
+           → brainplorp reads note, shows full context
 ```
 
-**Future plorp with Sprint 9 (enhanced):**
+**Future brainplorp with Sprint 9 (enhanced):**
 ```
 Task: "Review API design"
 Project: work.engineering.api-rewrite
@@ -329,7 +329,7 @@ Project: work.engineering.api-rewrite
 ## Meeting Notes
 - [ ] Follow up with Sarah on budget approval
 ```
-→ `plorp process` converts to TaskWarrior task with UUID
+→ `brainplorp process` converts to TaskWarrior task with UUID
 
 **With Obsidian Tasks plugin only:**
 ```markdown
@@ -339,7 +339,7 @@ Project: work.engineering.api-rewrite
 → Task exists in Obsidian, queryable via Tasks plugin
 → **No urgency calculation, no TaskWarrior backend**
 
-**Verdict:** Current plorp approach provides more power (urgency, filtering) at cost of complexity.
+**Verdict:** Current brainplorp approach provides more power (urgency, filtering) at cost of complexity.
 
 ---
 
@@ -416,7 +416,7 @@ Project: work.engineering.api-rewrite
 
 ## Decision Matrix
 
-### Should plorp pivot to all-Obsidian?
+### Should brainplorp pivot to all-Obsidian?
 
 | Factor | Weight | TaskWarrior Score | All-Obsidian Score |
 |--------|--------|-------------------|-------------------|
@@ -448,11 +448,11 @@ Project: work.engineering.api-rewrite
 - ✅ "Read all SEO notes" → create tasks from insights
 
 **Value Proposition:**
-> "plorp gives you TaskWarrior's computational power + Obsidian's contextual richness, accessible via Claude."
+> "brainplorp gives you TaskWarrior's computational power + Obsidian's contextual richness, accessible via Claude."
 
 **Architecture:**
 ```
-User ↔ Claude Desktop ↔ plorp MCP
+User ↔ Claude Desktop ↔ brainplorp MCP
                           ↓
             ┌─────────────┴─────────────┐
             ↓                           ↓
@@ -510,7 +510,7 @@ Sprint 9's note management capabilities make this bridge **more powerful**, not 
 
 **Proceed with Sprint 9 as planned:** General note management via MCP.
 
-This enhances plorp's value proposition without requiring a risky architectural pivot. TaskWarrior remains the task computation engine, Obsidian provides context, and plorp bridges them intelligently.
+This enhances plorp's value proposition without requiring a risky architectural pivot. TaskWarrior remains the task computation engine, Obsidian provides context, and brainplorp bridges them intelligently.
 
 **Defer all-Obsidian consideration to Sprint 11+** when:
 - Obsidian Bases has matured further (out of beta)

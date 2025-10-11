@@ -24,7 +24,7 @@
 
 ### Goal
 
-Implement the `plorp review` command that provides an interactive end-of-day workflow for processing uncompleted tasks from the daily note. This is the second core workflow and closes the daily task management loop.
+Implement the `brainplorp review` command that provides an interactive end-of-day workflow for processing uncompleted tasks from the daily note. This is the second core workflow and closes the daily task management loop.
 
 ### What You're Building
 
@@ -51,7 +51,7 @@ The review workflow system with:
 You are implementing Sprint 3 for plorp, a workflow automation tool for TaskWarrior and Obsidian.
 
 PROJECT CONTEXT:
-- plorp is a Python CLI tool that bridges TaskWarrior and Obsidian
+- brainplorp is a Python CLI tool that bridges TaskWarrior and Obsidian
 - This is Sprint 3: You're building the review workflow for end-of-day task processing
 - Sprint 0 is complete: Project structure and test infrastructure ready
 - Sprint 1 is complete: TaskWarrior integration available
@@ -675,7 +675,7 @@ def review(config: Dict[str, Any]) -> None:
 
     if not daily_path.exists():
         print(f"❌ No daily note found for {format_date_long(today)}")
-        print(f"💡 Run: plorp start")
+        print(f"💡 Run: brainplorp start")
         return
 
     # Parse uncompleted tasks
@@ -866,7 +866,7 @@ Made good progress today.
 
 ## Review Section
 
-<!-- Auto-populated by `plorp review` -->
+<!-- Auto-populated by `brainplorp review` -->
 """
     note_path.write_text(content)
 
@@ -978,7 +978,7 @@ def test_review_no_daily_note(tmp_path, capsys, monkeypatch):
 
     captured = capsys.readouterr()
     assert '❌ No daily note found' in captured.out
-    assert 'plorp start' in captured.out
+    assert 'brainplorp start' in captured.out
 
 
 def test_review_all_tasks_complete(tmp_path, capsys, monkeypatch):
@@ -1158,7 +1158,7 @@ pytest tests/test_parsers/ tests/test_utils/test_prompts.py tests/test_workflows
     --cov-report=term-missing
 
 # Test interactively (manual test)
-plorp review
+brainplorp review
 ```
 
 ---
@@ -1196,10 +1196,10 @@ pytest tests/test_parsers/ tests/test_utils/test_prompts.py tests/test_workflows
 
 ```bash
 # 4. Generate daily note first
-plorp start
+brainplorp start
 
 # 5. Run review (interactive)
-plorp review
+brainplorp review
 # → Shows uncompleted tasks
 # → Prompts for actions
 # → Updates TaskWarrior
@@ -1213,14 +1213,14 @@ cat ~/vault/daily/$(date +%Y-%m-%d).md
 
 # 7. Test with no uncompleted tasks
 # Check all tasks in daily note first, then:
-plorp review
+brainplorp review
 # → Shows "All tasks completed!"
 
 # 8. Test with no daily note
 rm ~/vault/daily/$(date +%Y-%m-%d).md
-plorp review
+brainplorp review
 # → Shows error message
-# → Suggests running "plorp start"
+# → Suggests running "brainplorp start"
 ```
 
 ### Code Quality Check
@@ -1342,7 +1342,7 @@ print('✓ All imports successful')
 # Result: ✓ All imports successful
 
 # Check coverage
-pytest tests/ --cov=src/plorp --cov-report=term
+pytest tests/ --cov=src/brainplorp --cov-report=term
 # Result: 91% overall coverage
 
 # Format check
@@ -1502,7 +1502,7 @@ Status: PENDING
 
 **Q4: Multiple reviews per day**
 ```
-Q: If user runs `plorp review` multiple times in a day:
+Q: If user runs `brainplorp review` multiple times in a day:
    - Current spec: Replaces entire "## Review Section" with new content
    - Question: Should we instead:
      a) Append to existing review section with timestamp
@@ -1668,7 +1668,7 @@ Status: RESOLVED
 
 **Q4: Multiple reviews per day**
 ```
-Q: What happens if user runs plorp review multiple times?
+Q: What happens if user runs brainplorp review multiple times?
 A: Append with timestamps (Journey A).
 
    Implementation:

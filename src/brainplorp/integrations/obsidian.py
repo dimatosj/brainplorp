@@ -39,7 +39,7 @@ def create_note(
         >>> note = create_note(vault, "Project Ideas", note_type="project")
         >>> print(f"Created: {note}")
     """
-    from plorp.utils.files import write_file, ensure_directory
+    from brainplorp.utils.files import write_file, ensure_directory
 
     # Determine subdirectory based on note type
     if note_type == "meeting":

@@ -1,6 +1,6 @@
 # Example Workflows
 
-This document provides practical examples of using plorp v1.1 with both the CLI and MCP (Claude Desktop) interfaces.
+This document provides practical examples of using brainplorp v1.1 with both the CLI and MCP (Claude Desktop) interfaces.
 
 ## Daily Workflows
 
@@ -10,7 +10,7 @@ This document provides practical examples of using plorp v1.1 with both the CLI 
 
 ```bash
 # Generate today's daily note
-plorp start
+brainplorp start
 
 # Output:
 # ✅ Created daily note: /vault/daily/2025-10-06.md
@@ -55,7 +55,7 @@ Would you like me to:
 
 ```bash
 # Review uncompleted tasks
-plorp review
+brainplorp review
 
 # Interactive prompts:
 # Task: Fix authentication bug
@@ -182,7 +182,7 @@ echo "- [ ] $SUBJECT" >> "$INBOX_FILE"
 #### Step 2: Process Inbox via CLI
 
 ```bash
-plorp inbox process
+brainplorp inbox process
 
 # Output:
 # Found 5 inbox item(s)
@@ -263,7 +263,7 @@ The note is ready for you to add ideas!
 
 ```bash
 # Create note linked to existing task
-plorp note "Q4 Planning Meeting" --task abc-123 --type meeting
+brainplorp note "Q4 Planning Meeting" --task abc-123 --type meeting
 
 # Output:
 # ✅ Created note: /vault/meetings/q4-planning-meeting.md
@@ -530,7 +530,7 @@ task add "Implement OAuth flow" project:customer-portal due:friday priority:H +b
 # Task UUID: xyz-789
 
 # Create linked note via plorp
-plorp note "OAuth Implementation Notes" --task xyz-789 --type project
+brainplorp note "OAuth Implementation Notes" --task xyz-789 --type project
 
 # Now:
 # - Task in TaskWarrior has annotation: "Note: vault/projects/oauth-implementation-notes.md"
@@ -595,7 +595,7 @@ Would you like me to create a meeting note for the design review discussion?
 
 ```bash
 # Generate daily note
-plorp start
+brainplorp start
 
 # Focus on high-priority items
 task status:pending priority:H export | jq -r '.[] | "→ \(.description)"'
@@ -612,7 +612,7 @@ Process inbox items weekly during review:
 crontab -e
 
 # Add:
-0 16 * * 5 cd ~/Documents/plorp && plorp inbox process
+0 16 * * 5 cd ~/Documents/brainplorp && brainplorp inbox process
 ```
 
 ### 3. Project Templates
@@ -624,7 +624,7 @@ Create a script to initialize new projects:
 # new-project.sh
 
 PROJECT_NAME="$1"
-plorp note "$PROJECT_NAME" --type project
+brainplorp note "$PROJECT_NAME" --type project
 
 echo "Created project note for $PROJECT_NAME"
 echo "Next: Create initial tasks with tags +${PROJECT_NAME,,}"
@@ -639,8 +639,8 @@ When creating tasks, always link to notes:
 task add "Fix authentication bug"
 
 # Do:
-plorp note "Auth Bug Investigation" --type general
-plorp link <task-uuid> notes/auth-bug-investigation.md
+brainplorp note "Auth Bug Investigation" --type general
+brainplorp link <task-uuid> notes/auth-bug-investigation.md
 ```
 
 Now you have a place to capture:
@@ -651,7 +651,7 @@ Now you have a place to capture:
 
 ## Conclusion
 
-plorp v1.1 works seamlessly with both CLI and Claude Desktop. Choose the interface that fits your workflow:
+brainplorp v1.1 works seamlessly with both CLI and Claude Desktop. Choose the interface that fits your workflow:
 
 - **CLI**: Quick commands, scripting, automation
 - **Claude Desktop**: Natural language, guided workflows, intelligent suggestions

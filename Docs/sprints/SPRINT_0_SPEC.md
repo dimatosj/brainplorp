@@ -50,7 +50,7 @@ A working Python package with:
 You are implementing Sprint 0 for plorp, a workflow automation tool for TaskWarrior and Obsidian.
 
 PROJECT CONTEXT:
-- plorp is a Python CLI tool that bridges TaskWarrior (task management) and Obsidian (note-taking)
+- brainplorp is a Python CLI tool that bridges TaskWarrior (task management) and Obsidian (note-taking)
 - This is Sprint 0: You're creating the project foundation
 - No business logic yet - just structure and test infrastructure
 
@@ -149,7 +149,7 @@ build-backend = "setuptools.build_meta"
 name = "plorp"
 version = "1.0.0"
 description = "Workflow automation for TaskWarrior + Obsidian"
-authors = [{name = "plorp contributors"}]
+authors = [{name = "brainplorp contributors"}]
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
@@ -159,7 +159,7 @@ dependencies = [
 ]
 
 [project.scripts]
-plorp = "plorp.cli:cli"
+brainplorp = "plorp.cli:cli"
 
 [project.optional-dependencies]
 dev = [
@@ -191,10 +191,10 @@ disallow_untyped_defs = false  # Relaxed for initial development
 #### `src/plorp/__init__.py`
 
 ```python
-# ABOUTME: Package initialization for plorp - defines version and package metadata
+# ABOUTME: Package initialization for brainplorp - defines version and package metadata
 # ABOUTME: This module is imported when you "import plorp" and provides __version__
 """
-plorp - Workflow automation for TaskWarrior + Obsidian
+brainplorp - Workflow automation for TaskWarrior + Obsidian
 """
 
 __version__ = "1.0.0"
@@ -203,13 +203,13 @@ __version__ = "1.0.0"
 #### `src/plorp/cli.py`
 
 ```python
-# ABOUTME: Main CLI entry point using Click framework - defines all plorp commands
-# ABOUTME: Handles command routing, help text, and version display for the plorp tool
+# ABOUTME: Main CLI entry point using Click framework - defines all brainplorp commands
+# ABOUTME: Handles command routing, help text, and version display for the brainplorp tool
 """
 Main CLI entry point for plorp.
 """
 import click
-from plorp import __version__
+from brainplorp import __version__
 
 
 @click.group()
@@ -217,9 +217,9 @@ from plorp import __version__
 @click.pass_context
 def cli(ctx):
     """
-    plorp - Workflow automation for TaskWarrior + Obsidian
+    brainplorp - Workflow automation for TaskWarrior + Obsidian
 
-    plorp helps you manage daily workflows by bridging TaskWarrior
+    brainplorp helps you manage daily workflows by bridging TaskWarrior
     (task management) and Obsidian (note-taking).
 
     Key commands:
@@ -255,7 +255,7 @@ if __name__ == "__main__":
 #### `src/plorp/__main__.py`
 
 ```python
-# ABOUTME: Entry point module for running plorp via "python -m plorp" command
+# ABOUTME: Entry point module for running brainplorp via "python -m plorp" command
 # ABOUTME: Simply imports and invokes the CLI - enables module execution
 """
 Entry point for python -m plorp
@@ -409,7 +409,7 @@ plorp_version: 1.0
 
 ## Review Section
 
-<!-- Auto-populated by `plorp review` -->
+<!-- Auto-populated by `brainplorp review` -->
 ```
 
 #### `tests/fixtures/sample_inbox.md`
@@ -438,7 +438,7 @@ plorp_version: 1.0
 Basic smoke tests to verify project structure.
 """
 import plorp
-from plorp import __version__
+from brainplorp import __version__
 
 
 def test_version():
@@ -549,7 +549,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest tests/ -v --cov=src/plorp --cov-report=xml --cov-report=term
+        pytest tests/ -v --cov=src/brainplorp --cov-report=xml --cov-report=term
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
@@ -628,11 +628,11 @@ Workflow automation layer for TaskWarrior + Obsidian.
 
 🚧 **Under Development** - Sprint 0 Complete
 
-plorp is currently in active development. The project structure and test infrastructure are in place.
+brainplorp is currently in active development. The project structure and test infrastructure are in place.
 
 ## What is plorp?
 
-plorp bridges TaskWarrior (task management) and Obsidian (note-taking) through three core workflows:
+brainplorp bridges TaskWarrior (task management) and Obsidian (note-taking) through three core workflows:
 
 1. **Daily workflow** - Generate daily notes with tasks from TaskWarrior
 2. **Review workflow** - End-of-day processing of incomplete tasks
@@ -663,7 +663,7 @@ source venv/bin/activate
 # On Windows:
 # venv\Scripts\activate
 
-# Install plorp in development mode
+# Install brainplorp in development mode
 pip install -e .
 
 # Install development dependencies
@@ -674,12 +674,12 @@ pip install -e ".[dev]"
 
 ```bash
 # Show help
-plorp --help
+brainplorp --help
 
 # Commands (coming in future sprints)
-plorp start    # Generate daily note
-plorp review   # Review incomplete tasks
-plorp inbox    # Process inbox
+brainplorp start    # Generate daily note
+brainplorp review   # Review incomplete tasks
+brainplorp inbox    # Process inbox
 ```
 
 ## Development
@@ -689,7 +689,7 @@ plorp inbox    # Process inbox
 pytest tests/ -v
 
 # Run tests with coverage
-pytest tests/ --cov=src/plorp --cov-report=html
+pytest tests/ --cov=src/brainplorp --cov-report=html
 
 # Format code
 black src/ tests/
@@ -746,7 +746,7 @@ See `Docs/plorp_ARCHITECTURE.md` for detailed architecture documentation.
 pytest tests/ -v
 
 # Coverage report must generate
-pytest tests/ --cov=src/plorp --cov-report=html
+pytest tests/ --cov=src/brainplorp --cov-report=html
 
 # Black formatting must pass
 black --check src/ tests/
@@ -792,15 +792,15 @@ pip install -e .
 ### CLI Check
 
 ```bash
-plorp --help
+brainplorp --help
 # → Shows help text
 # → Lists commands: start, review, inbox
 # → Shows version 1.0.0
 
-plorp --version
+brainplorp --version
 # → Shows: plorp, version 1.0.0
 
-plorp start
+brainplorp start
 # → Shows: "not yet implemented (coming in Sprint 2)"
 # → Exit code 0
 ```
@@ -812,7 +812,7 @@ pytest tests/ -v
 # → All tests pass
 # → No failures or errors
 
-pytest tests/ --cov=src/plorp --cov-report=term
+pytest tests/ --cov=src/brainplorp --cov-report=term
 # → Coverage >80%
 # → Report generated
 ```
@@ -896,17 +896,17 @@ source venv/bin/activate
 pip install -e .
 
 # 4. CLI works
-plorp --help
-plorp --version
-plorp start
-plorp review
-plorp inbox
+brainplorp --help
+brainplorp --version
+brainplorp start
+brainplorp review
+brainplorp inbox
 
 # 5. Tests pass
 pytest tests/ -v
 
 # 6. Coverage adequate
-pytest tests/ --cov=src/plorp --cov-report=term
+pytest tests/ --cov=src/brainplorp --cov-report=term
 
 # 7. Formatting correct
 black --check src/ tests/

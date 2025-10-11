@@ -1,14 +1,14 @@
 # MCP Setup Guide
 
-This guide explains how to configure Claude Desktop to use the plorp MCP server.
+This guide explains how to configure Claude Desktop to use the brainplorp MCP server.
 
 ## Overview
 
-plorp v1.1 provides an MCP (Model Context Protocol) server that exposes 16 tools to Claude Desktop. These tools allow you to interact with your TaskWarrior tasks and Obsidian notes through natural language.
+brainplorp v1.1 provides an MCP (Model Context Protocol) server that exposes 16 tools to Claude Desktop. These tools allow you to interact with your TaskWarrior tasks and Obsidian notes through natural language.
 
 ## Prerequisites
 
-- plorp v1.1 installed (`pip install -e .`)
+- brainplorp v1.1 installed (`pip install -e .`)
 - Claude Desktop application
 - TaskWarrior 3.4.1+
 - Obsidian vault configured in `~/.config/plorp/config.yaml`
@@ -20,7 +20,7 @@ plorp v1.1 provides an MCP (Model Context Protocol) server that exposes 16 tools
 Run the `init-claude` command to install slash commands:
 
 ```bash
-plorp init-claude
+brainplorp init-claude
 ```
 
 This copies the slash command files to `~/.claude/commands/`:
@@ -40,7 +40,7 @@ Edit your Claude Desktop configuration file:
 
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Add the plorp MCP server configuration:
+Add the brainplorp MCP server configuration:
 
 ```json
 {
@@ -59,7 +59,7 @@ Add the plorp MCP server configuration:
 
 ### 3. Configure plorp
 
-Ensure your plorp configuration exists at `~/.config/plorp/config.yaml`:
+Ensure your brainplorp configuration exists at `~/.config/plorp/config.yaml`:
 
 ```yaml
 vault_path: /path/to/your/obsidian/vault
@@ -84,7 +84,7 @@ You should see Claude call the `plorp_start_day` tool and generate your daily no
 
 ## Available Tools
 
-The plorp MCP server provides these tools:
+The brainplorp MCP server provides these tools:
 
 ### Daily Workflow
 - `plorp_start_day` - Generate daily note with tasks from TaskWarrior
@@ -114,7 +114,7 @@ The plorp MCP server provides these tools:
 
 ## Slash Commands
 
-After running `plorp init-claude`, you can use these commands in Claude Desktop:
+After running `brainplorp init-claude`, you can use these commands in Claude Desktop:
 
 - `/start` - "Start my day" - Generates daily note with tasks
 - `/review` - "Review my day" - Interactive end-of-day review
@@ -143,7 +143,7 @@ tail -f ~/.config/plorp/mcp.log
 
 ### Permission Errors
 
-Ensure the plorp configuration directory is readable:
+Ensure the brainplorp configuration directory is readable:
 ```bash
 ls -la ~/.config/plorp/
 chmod 755 ~/.config/plorp

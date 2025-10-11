@@ -60,7 +60,7 @@ Location: /Users/jsd/Documents/plorp/CLAUDE.md
 **Warning:** May be outdated on sprint status. Trust PM_HANDOFF.md over this file.
 
 **What to look for:**
-- Project overview (what plorp does)
+- Project overview (what brainplorp does)
 - **State Synchronization (Critical Pattern)** section
 - TaskWarrior integration approach
 - Technology stack
@@ -121,7 +121,7 @@ Ready to [assist with sprint planning/review implementation/etc].
 
 **Core Principle:** State changes in EITHER system must propagate to the other. This is BIDIRECTIONAL.
 
-plorp is a **bridge** between TaskWarrior and Obsidian. When state changes in one system, it MUST sync to the other. This is not optional - it's a fundamental architectural requirement.
+brainplorp is a **bridge** between TaskWarrior and Obsidian. When state changes in one system, it MUST sync to the other. This is not optional - it's a fundamental architectural requirement.
 
 **The Two Directions:**
 
@@ -377,7 +377,7 @@ ls /Users/jsd/Documents/plorp/Docs/sprints/SPRINT_*.md
 
 ## Project Context (Quick Reference)
 
-**What plorp is:**
+**What brainplorp is:**
 - Workflow automation layer between TaskWarrior (tasks) and Obsidian (notes)
 - Daily notes with tasks, inbox processing, review workflow, natural language task parsing
 

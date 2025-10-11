@@ -1,4 +1,4 @@
-Use plorp MCP tools to help me review my day interactively.
+Use brainplorp MCP tools to help me review my day interactively.
 
 Steps:
 1. Call `plorp_get_review_tasks` to see what tasks remain uncompleted from today

@@ -4,7 +4,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from plorp.workflows.inbox import (
+from brainplorp.workflows.inbox import (
     process,
     get_current_inbox_path,
     process_item_as_task,
@@ -56,9 +56,9 @@ def test_get_current_inbox_path(tmp_path, monkeypatch):
     assert inbox_path == vault / "inbox" / "2025-10.md"
 
 
-@patch("plorp.workflows.inbox.create_task")
-@patch("plorp.workflows.inbox.prompt")
-@patch("plorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.create_task")
+@patch("brainplorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.confirm")
 def test_process_item_as_task_success(mock_confirm, mock_prompt, mock_create_task, tmp_path):
     """Test processing inbox item as task successfully."""
     mock_prompt.side_effect = [
@@ -86,9 +86,9 @@ def test_process_item_as_task_success(mock_confirm, mock_prompt, mock_create_tas
     assert call_kwargs["tags"] == ["shopping"]
 
 
-@patch("plorp.workflows.inbox.create_task")
-@patch("plorp.workflows.inbox.prompt")
-@patch("plorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.create_task")
+@patch("brainplorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.confirm")
 def test_process_item_as_task_cancelled(mock_confirm, mock_prompt, mock_create_task):
     """Test cancelling task creation."""
     mock_prompt.side_effect = ["Task", "", "", "", ""]
@@ -101,9 +101,9 @@ def test_process_item_as_task_cancelled(mock_confirm, mock_prompt, mock_create_t
     mock_create_task.assert_not_called()
 
 
-@patch("plorp.workflows.inbox.create_task")
-@patch("plorp.workflows.inbox.prompt")
-@patch("plorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.create_task")
+@patch("brainplorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.confirm")
 def test_process_item_as_task_retry_success(mock_confirm, mock_prompt, mock_create_task):
     """Test retry after initial failure."""
     mock_prompt.side_effect = ["Task", "", "", "", ""]
@@ -118,9 +118,9 @@ def test_process_item_as_task_retry_success(mock_confirm, mock_prompt, mock_crea
     assert mock_create_task.call_count == 2
 
 
-@patch("plorp.workflows.inbox.create_task")
-@patch("plorp.workflows.inbox.prompt")
-@patch("plorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.create_task")
+@patch("brainplorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.confirm")
 def test_process_item_as_task_mark_failed(mock_confirm, mock_prompt, mock_create_task):
     """Test marking as processed after failure."""
     mock_prompt.side_effect = ["Task", "", "", "", ""]
@@ -134,9 +134,9 @@ def test_process_item_as_task_mark_failed(mock_confirm, mock_prompt, mock_create
     assert should_mark is True
 
 
-@patch("plorp.workflows.inbox.create_note")
-@patch("plorp.workflows.inbox.prompt")
-@patch("plorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.create_note")
+@patch("brainplorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.confirm")
 @patch("builtins.input")
 def test_process_item_as_note(mock_input, mock_confirm, mock_prompt, mock_create_note, tmp_path):
     """Test processing inbox item as note."""
@@ -158,9 +158,9 @@ def test_process_item_as_note(mock_input, mock_confirm, mock_prompt, mock_create
     mock_create_note.assert_called_once()
 
 
-@patch("plorp.workflows.inbox.prompt_choice")
-@patch("plorp.workflows.inbox.process_item_as_task")
-@patch("plorp.workflows.inbox.mark_item_processed")
+@patch("brainplorp.workflows.inbox.prompt_choice")
+@patch("brainplorp.workflows.inbox.process_item_as_task")
+@patch("brainplorp.workflows.inbox.mark_item_processed")
 def test_process_create_task(mock_mark, mock_task, mock_choice, inbox_file, capsys):
     """Test full inbox processing creating task."""
     vault, inbox = inbox_file
@@ -182,9 +182,9 @@ def test_process_create_task(mock_mark, mock_task, mock_choice, inbox_file, caps
     assert "✅ Task created" in captured.out
 
 
-@patch("plorp.workflows.inbox.prompt_choice")
-@patch("plorp.workflows.inbox.confirm")
-@patch("plorp.workflows.inbox.mark_item_processed")
+@patch("brainplorp.workflows.inbox.prompt_choice")
+@patch("brainplorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.mark_item_processed")
 def test_process_discard_item(mock_mark, mock_confirm, mock_choice, inbox_file, capsys):
     """Test discarding inbox item."""
     vault, inbox = inbox_file
@@ -221,7 +221,7 @@ def test_process_empty_inbox(tmp_path, capsys):
 
     config = {"vault_path": str(vault)}
 
-    with patch("plorp.workflows.inbox.get_current_inbox_path", return_value=inbox):
+    with patch("brainplorp.workflows.inbox.get_current_inbox_path", return_value=inbox):
         process(config)
 
     captured = capsys.readouterr()
@@ -247,7 +247,7 @@ def test_process_creates_inbox_file(tmp_path, capsys, monkeypatch):
     }[fmt]
     monkeypatch.setattr("plorp.workflows.inbox.datetime", mock_dt)
 
-    with patch("plorp.workflows.inbox.get_current_inbox_path", return_value=inbox):
+    with patch("brainplorp.workflows.inbox.get_current_inbox_path", return_value=inbox):
         process(config)
 
     # Verify inbox file created
@@ -261,7 +261,7 @@ def test_process_creates_inbox_file(tmp_path, capsys, monkeypatch):
     assert "Inbox is empty" in captured.out
 
 
-@patch("plorp.workflows.inbox.prompt_choice")
+@patch("brainplorp.workflows.inbox.prompt_choice")
 def test_process_skip_item(mock_choice, inbox_file, capsys):
     """Test skipping an inbox item."""
     vault, inbox = inbox_file
@@ -278,9 +278,9 @@ def test_process_skip_item(mock_choice, inbox_file, capsys):
     assert "✅ Processed 0 items" in captured.out
 
 
-@patch("plorp.workflows.inbox.prompt_choice")
-@patch("plorp.workflows.inbox.process_item_as_task")
-@patch("plorp.workflows.inbox.mark_item_processed")
+@patch("brainplorp.workflows.inbox.prompt_choice")
+@patch("brainplorp.workflows.inbox.process_item_as_task")
+@patch("brainplorp.workflows.inbox.mark_item_processed")
 def test_process_mark_failed_task(mock_mark, mock_task, mock_choice, inbox_file, capsys):
     """Test marking item as processed when task creation fails."""
     vault, inbox = inbox_file
@@ -300,7 +300,7 @@ def test_process_mark_failed_task(mock_mark, mock_task, mock_choice, inbox_file,
     assert "Failed to create task" in mock_mark.call_args[0][2]
 
 
-@patch("plorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.prompt")
 def test_process_item_as_task_no_description(mock_prompt):
     """Test task creation with empty description."""
     mock_prompt.return_value = ""
@@ -311,9 +311,9 @@ def test_process_item_as_task_no_description(mock_prompt):
     assert should_mark is False
 
 
-@patch("plorp.workflows.inbox.create_note")
-@patch("plorp.workflows.inbox.prompt")
-@patch("plorp.workflows.inbox.confirm")
+@patch("brainplorp.workflows.inbox.create_note")
+@patch("brainplorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.confirm")
 @patch("builtins.input")
 def test_process_item_as_note_cancelled(
     mock_input, mock_confirm, mock_prompt, mock_create_note, tmp_path
@@ -334,7 +334,7 @@ def test_process_item_as_note_cancelled(
     mock_create_note.assert_not_called()
 
 
-@patch("plorp.workflows.inbox.prompt")
+@patch("brainplorp.workflows.inbox.prompt")
 def test_process_item_as_note_no_title(mock_prompt):
     """Test note creation with empty title."""
     mock_prompt.return_value = ""

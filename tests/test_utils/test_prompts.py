@@ -2,7 +2,7 @@
 # ABOUTME: Uses monkeypatch to mock input() and test various user responses
 """Tests for interactive prompts."""
 import pytest
-from plorp.utils.prompts import prompt, prompt_choice, confirm
+from brainplorp.utils.prompts import prompt, prompt_choice, confirm
 
 
 def test_prompt_basic(monkeypatch):

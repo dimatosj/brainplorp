@@ -1,4 +1,4 @@
-# plorp Architecture
+# brainplorp Architecture
 
 **Date:** October 6, 2025
 **Purpose:** Technical implementation details for plorp
@@ -129,7 +129,7 @@ from plorp.config import load_config
 @click.group()
 @click.pass_context
 def cli(ctx):
-    """plorp - Workflow automation for TaskWarrior + Obsidian"""
+    """brainplorp - Workflow automation for TaskWarrior + Obsidian"""
     ctx.obj = load_config()
 
 @cli.command()
@@ -297,7 +297,7 @@ def review(config):
 
     if not daily_path.exists():
         print(f"❌ No daily note for {today}")
-        print(f"Run: plorp start")
+        print(f"Run: brainplorp start")
         return
 
     # Parse uncompleted tasks
@@ -603,7 +603,7 @@ def extract_task_uuids_from_note(note_path: Path) -> List[str]:
 
 ### 5. `config.py` - Configuration Management
 
-**Purpose:** Load and manage plorp configuration
+**Purpose:** Load and manage brainplorp configuration
 
 ```python
 """
@@ -665,7 +665,7 @@ def save_config(config: dict):
 ### Daily Start Flow
 
 ```
-User: plorp start
+User: brainplorp start
     ↓
 cli.py:start() → daily.py:start()
     ↓
@@ -692,7 +692,7 @@ Print summary to user
 ### Review Flow
 
 ```
-User: plorp review
+User: brainplorp review
     ↓
 cli.py:review() → daily.py:review()
     ↓
@@ -726,7 +726,7 @@ Show summary
 ### Inbox Processing Flow
 
 ```
-User: plorp inbox process
+User: brainplorp inbox process
     ↓
 cli.py:inbox() → inbox.py:process()
     ↓
@@ -895,7 +895,7 @@ def link_note_to_task(note_path, task_uuid):
 ### Config File Format
 
 ```yaml
-# plorp Configuration
+# brainplorp Configuration
 
 # Obsidian vault path
 vault_path: ~/vault

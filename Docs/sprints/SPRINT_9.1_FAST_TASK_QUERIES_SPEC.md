@@ -24,7 +24,7 @@ Total: 5-8 seconds 😫
 
 **Solution:**
 ```bash
-$ plorp tasks --urgent --project work
+$ brainplorp tasks --urgent --project work
 ┌─────────────────────────────────────────────────┐
 │ Urgent Work Tasks (3)                           │
 ├─────────────────────────────────────────────────┤
@@ -37,19 +37,19 @@ Total: <100ms ✅
 ```
 
 **What's New:**
-- `plorp tasks` - List pending tasks with rich filtering
-- `plorp focus` - Get/set focused project (already exists from Sprint 8)
+- `brainplorp tasks` - List pending tasks with rich filtering
+- `brainplorp focus` - Get/set focused project (already exists from Sprint 8)
 - Slash commands: `/tasks`, `/urgent`, `/work-tasks`, `/today`, `/overdue`
 - Optional MCP tools for programmatic access (deferred to future sprint if needed)
 
 **User Experience:**
 ```bash
 # Terminal workflows (instant)
-plorp tasks                    # All pending tasks
-plorp tasks --urgent           # Urgent only
-plorp tasks --project work     # Work project tasks
-plorp tasks --due today        # Due today
-plorp tasks --overdue          # Overdue tasks
+brainplorp tasks                    # All pending tasks
+brainplorp tasks --urgent           # Urgent only
+brainplorp tasks --project work     # Work project tasks
+brainplorp tasks --due today        # Due today
+brainplorp tasks --overdue          # Overdue tasks
 
 # Claude Desktop workflows (fast)
 /tasks                         # Show all pending tasks
@@ -112,7 +112,7 @@ The current flow violates this - we're forcing users through an agent for simple
 **Primary use case:** Terminal workflows, scripts, power users
 
 ```bash
-plorp tasks [OPTIONS]
+brainplorp tasks [OPTIONS]
 
 Options:
   --urgent              Show only urgent (priority:H) tasks
@@ -125,14 +125,14 @@ Options:
 
 **Examples:**
 ```bash
-plorp tasks                          # All pending tasks
-plorp tasks --urgent                 # Urgent only
-plorp tasks --project work           # Work project
-plorp tasks --project work.api       # Specific subproject
-plorp tasks --due today              # Due today
-plorp tasks --overdue                # Overdue
-plorp tasks --urgent --project work  # Combine filters
-plorp tasks --format json            # JSON output for scripting
+brainplorp tasks                          # All pending tasks
+brainplorp tasks --urgent                 # Urgent only
+brainplorp tasks --project work           # Work project
+brainplorp tasks --project work.api       # Specific subproject
+brainplorp tasks --due today              # Due today
+brainplorp tasks --overdue                # Overdue
+brainplorp tasks --urgent --project work  # Combine filters
+brainplorp tasks --format json            # JSON output for scripting
 ```
 
 **Display Format (Rich Table):**
@@ -158,35 +158,35 @@ Create `.claude/commands/`:
 
 **`/tasks`** - Show all pending tasks
 ```markdown
-Run the command: `plorp tasks`
+Run the command: `brainplorp tasks`
 
 Display the output in a formatted code block.
 ```
 
 **`/urgent`** - Show urgent tasks
 ```markdown
-Run the command: `plorp tasks --urgent`
+Run the command: `brainplorp tasks --urgent`
 
 Display the output showing urgent tasks only.
 ```
 
 **`/today`** - Tasks due today
 ```markdown
-Run the command: `plorp tasks --due today`
+Run the command: `brainplorp tasks --due today`
 
 Display tasks due today.
 ```
 
 **`/overdue`** - Overdue tasks
 ```markdown
-Run the command: `plorp tasks --overdue`
+Run the command: `brainplorp tasks --overdue`
 
 Display overdue tasks that need attention.
 ```
 
 **`/work-tasks`** - Work project tasks
 ```markdown
-Run the command: `plorp tasks --project work`
+Run the command: `brainplorp tasks --project work`
 
 Display all tasks in the work project.
 ```
@@ -222,12 +222,12 @@ def tasks(urgent, important, project, due, limit, format):
     List pending tasks with optional filters.
 
     Examples:
-      plorp tasks                          # All pending tasks
-      plorp tasks --urgent                 # Urgent only
-      plorp tasks --project work           # Work project
-      plorp tasks --due today              # Due today
-      plorp tasks --overdue                # Overdue
-      plorp tasks --urgent --project work  # Combine filters
+      brainplorp tasks                          # All pending tasks
+      brainplorp tasks --urgent                 # Urgent only
+      brainplorp tasks --project work           # Work project
+      brainplorp tasks --due today              # Due today
+      brainplorp tasks --overdue                # Overdue
+      brainplorp tasks --urgent --project work  # Combine filters
     """
     try:
         config = load_config()
@@ -352,35 +352,35 @@ def format_date(date_str: str, format: str = 'short') -> str:
 
 **File:** `.claude/commands/tasks.md`
 ```markdown
-Run the command: `plorp tasks`
+Run the command: `brainplorp tasks`
 
 Display the output showing all pending tasks.
 ```
 
 **File:** `.claude/commands/urgent.md`
 ```markdown
-Run the command: `plorp tasks --urgent`
+Run the command: `brainplorp tasks --urgent`
 
 Display urgent tasks only.
 ```
 
 **File:** `.claude/commands/today.md`
 ```markdown
-Run the command: `plorp tasks --due today`
+Run the command: `brainplorp tasks --due today`
 
 Display tasks due today.
 ```
 
 **File:** `.claude/commands/overdue.md`
 ```markdown
-Run the command: `plorp tasks --overdue`
+Run the command: `brainplorp tasks --overdue`
 
 Display overdue tasks that need attention.
 ```
 
 **File:** `.claude/commands/work-tasks.md`
 ```markdown
-Run the command: `plorp tasks --project work`
+Run the command: `brainplorp tasks --project work`
 
 Display all tasks in the work project.
 ```
@@ -391,7 +391,7 @@ Display all tasks in the work project.
 
 ```python
 """
-Tests for the plorp tasks command.
+Tests for the brainplorp tasks command.
 """
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock
@@ -615,7 +615,7 @@ def test_format_date_empty():
 
 ### Functional Requirements
 
-- [ ] `plorp tasks` command exists and shows all pending tasks
+- [ ] `brainplorp tasks` command exists and shows all pending tasks
 - [ ] `--urgent` flag filters to priority:H tasks
 - [ ] `--important` flag filters to priority:M tasks
 - [ ] `--project` option filters by project
@@ -645,7 +645,7 @@ def test_format_date_empty():
 
 ### Documentation Requirements
 
-- [ ] CLI help text is clear (`plorp tasks --help`)
+- [ ] CLI help text is clear (`brainplorp tasks --help`)
 - [ ] Slash command files created with descriptions
 - [ ] Update `CLAUDE.md` with performance guidance
 - [ ] Update `MCP_ARCHITECTURE_GUIDE.md` with this example
@@ -663,7 +663,7 @@ def test_format_date_empty():
 
 **Sprint 8 (Project Management):**
 - Project filtering logic
-- `plorp focus` command (already exists)
+- `brainplorp focus` command (already exists)
 
 **Sprint 9 (General Note Management):**
 - Rich table formatting patterns
@@ -685,7 +685,7 @@ def test_format_date_empty():
 ```
 User Input → CLI Parser → Filter Builder → TaskWarrior Query → Format Output
      ↓           ↓              ↓                ↓                    ↓
-  "plorp      Parse          Build          subprocess         Rich Table
+  "brainplorp      Parse          Build          subprocess         Rich Table
    tasks      options        TW             task export        or JSON
    --urgent"  into dict      filter         (instant)          (pretty)
 ```
@@ -740,7 +740,7 @@ All filters are combined with AND logic.
 6. Manual testing
 
 **Deliverables:**
-- Working `plorp tasks` command
+- Working `brainplorp tasks` command
 - All filter options functional
 - All output formats working
 
@@ -789,23 +789,23 @@ All filters are combined with AND logic.
 
 ### Story 1: Quick Task Check
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** to check my task list instantly
 **So that** I can quickly see what needs attention without waiting
 
 **Acceptance Criteria:**
-- Run `plorp tasks` and see results in <100ms
+- Run `brainplorp tasks` and see results in <100ms
 - See all pending tasks in a readable format
 - See priority, project, and due date at a glance
 
 ### Story 2: Focus on Urgent Work
 
-**As a** plorp user
+**As a** brainplorp user
 **I want** to see only urgent work tasks
 **So that** I can focus on what's critical
 
 **Acceptance Criteria:**
-- Run `plorp tasks --urgent --project work`
+- Run `brainplorp tasks --urgent --project work`
 - See only priority:H tasks in work project
 - Results appear instantly (<100ms)
 
@@ -828,7 +828,7 @@ All filters are combined with AND logic.
 **So that** I can pipe to other tools and scripts
 
 **Acceptance Criteria:**
-- Run `plorp tasks --format json` and get valid JSON
+- Run `brainplorp tasks --format json` and get valid JSON
 - Can pipe to `jq` for complex queries
 - Can use in shell scripts for automation
 
@@ -838,9 +838,9 @@ All filters are combined with AND logic.
 
 | Operation | Target | Measured |
 |-----------|--------|----------|
-| `plorp tasks` (10 tasks) | <100ms | TBD |
-| `plorp tasks` (100 tasks) | <200ms | TBD |
-| `plorp tasks` (500 tasks) | <500ms | TBD |
+| `brainplorp tasks` (10 tasks) | <100ms | TBD |
+| `brainplorp tasks` (100 tasks) | <200ms | TBD |
+| `brainplorp tasks` (500 tasks) | <500ms | TBD |
 | Slash command `/tasks` | 1-2s | TBD |
 | Natural language "show tasks" | 5-8s | Known |
 
@@ -872,19 +872,19 @@ All filters are combined with AND logic.
    - Still slower than CLI, but faster than multi-tool orchestration
 
 2. **Saved Filters** - User-defined task views
-   - `plorp tasks --view my-urgent-work`
+   - `brainplorp tasks --view my-urgent-work`
    - Stored in config: `~/.config/plorp/views.yaml`
 
 3. **Interactive Mode** - TUI for task exploration
-   - `plorp tasks --interactive`
+   - `brainplorp tasks --interactive`
    - Arrow keys to navigate, enter to view details
 
 4. **Task Counts** - Quick summary without full list
-   - `plorp tasks --count`
+   - `brainplorp tasks --count`
    - Output: `Pending: 42 | Urgent: 5 | Due today: 3`
 
 5. **Custom Columns** - User-defined table columns
-   - `plorp tasks --columns priority,description,tags,due`
+   - `brainplorp tasks --columns priority,description,tags,due`
 
 ---
 
@@ -932,7 +932,7 @@ Users get:
 
 **A:** This is a **perfect example** of the three-tier approach in action:
 
-**Tier 1 (CLI):** Instant, deterministic, no AI needed → `plorp tasks --urgent`
+**Tier 1 (CLI):** Instant, deterministic, no AI needed → `brainplorp tasks --urgent`
 **Tier 2 (Slash):** Reliable, tested workflows → `/urgent`
 **Tier 3 (Natural):** Flexible, intelligent → "analyze my task distribution"
 
@@ -946,14 +946,14 @@ Each tier has its use case. This sprint adds Tier 1 and Tier 2 for task queries.
 
 ---
 
-### Q6: What about focus workflow? Doesn't `plorp focus` already exist?
+### Q6: What about focus workflow? Doesn't `brainplorp focus` already exist?
 
-**A:** Yes! `plorp focus` was added in Sprint 8 for CLI and MCP. This sprint adds `plorp tasks` as the complement - `focus` sets context, `tasks` queries based on context.
+**A:** Yes! `brainplorp focus` was added in Sprint 8 for CLI and MCP. This sprint adds `brainplorp tasks` as the complement - `focus` sets context, `tasks` queries based on context.
 
 Example workflow:
 ```bash
-plorp focus work.api-rewrite    # Set context
-plorp tasks --urgent            # See urgent tasks in focused project
+brainplorp focus work.api-rewrite    # Set context
+brainplorp tasks --urgent            # See urgent tasks in focused project
 ```
 
 ---
@@ -962,8 +962,8 @@ plorp tasks --urgent            # See urgent tasks in focused project
 
 **A:** Not in Sprint 9.1 (keep scope small), but easy to add later:
 ```bash
-plorp tasks --tag bug
-plorp tasks --tag +urgent -bug
+brainplorp tasks --tag bug
+brainplorp tasks --tag +urgent -bug
 ```
 
 Add in Sprint 9.2 if users request it.
@@ -990,8 +990,8 @@ Performance target: <500ms for 500+ tasks. If slower, we can add pagination in f
 
 **A:** Not in 9.1 (keep scope small). TaskWarrior already returns tasks in a reasonable order (urgent first, then by due date). If users request custom sorting, add in 9.2:
 ```bash
-plorp tasks --sort due
-plorp tasks --sort priority
+brainplorp tasks --sort due
+brainplorp tasks --sort priority
 ```
 
 ---
@@ -1017,7 +1017,7 @@ plorp tasks --sort priority
 ### Before Starting
 - [ ] Read Sprint 9.1 spec
 - [ ] Confirm Sprint 9 is complete and signed off
-- [ ] Review existing `plorp focus` implementation (Sprint 8)
+- [ ] Review existing `brainplorp focus` implementation (Sprint 8)
 
 ### Phase 1: CLI Command
 - [ ] Add `tasks()` command to `src/plorp/cli.py`
@@ -1102,7 +1102,7 @@ from datetime import datetime, date as dt_date, timedelta
 ---
 
 ### Q2: TaskWarrior Not Installed Error Handling
-**Question:** What should `plorp tasks` output if TaskWarrior is not installed or returns an error? Should we:
+**Question:** What should `brainplorp tasks` output if TaskWarrior is not installed or returns an error? Should we:
 - (A) Show friendly error message and exit with code 1
 - (B) Show empty table with warning
 - (C) Show error and suggest installation instructions
@@ -1231,26 +1231,26 @@ def get_tasks(filters: List[str]) -> List[Dict[str, Any]]:
 - How do we report results?
 
 **Impact:** Success criteria verification
-**Severity:** Low (can manually test with `time plorp tasks`)
+**Severity:** Low (can manually test with `time brainplorp tasks`)
 **Suggested Answer:** Use `time` command for manual verification, no embedded timing
 
 **PM Answer:** ✅ **Use `time` command** - No embedded profiling code in 9.1. Too much complexity for 3-hour sprint. Verify performance targets manually:
 ```bash
-time plorp tasks
-time plorp tasks --urgent --project work
+time brainplorp tasks
+time brainplorp tasks --urgent --project work
 ```
 Document results in handoff notes. If we want embedded profiling later, add in Sprint 9.2 or beyond.
 
 ---
 
-### Q10: `plorp focus` Integration Details
+### Q10: `brainplorp focus` Integration Details
 **Question:** Line 956 shows:
 ```bash
-plorp focus work.api-rewrite    # Set context
-plorp tasks --urgent            # See urgent tasks in focused project
+brainplorp focus work.api-rewrite    # Set context
+brainplorp tasks --urgent            # See urgent tasks in focused project
 ```
 
-Should `plorp tasks` automatically respect focused project, or is this showing a future feature? If automatic:
+Should `brainplorp tasks` automatically respect focused project, or is this showing a future feature? If automatic:
 - Where is focus stored?
 - How do we read it?
 - Does it override `--project` flag?
@@ -1260,10 +1260,10 @@ Should `plorp tasks` automatically respect focused project, or is this showing a
 **Suggested Answer:** Clarify - I believe this is showing manual workflow, not automatic filtering
 
 **PM Answer:** ✅ **Manual workflow, NOT automatic** - Example shows TWO separate commands:
-1. `plorp focus work.api-rewrite` - Sets context (from Sprint 8, already exists)
-2. `plorp tasks --urgent` - Shows all urgent tasks (NOT filtered by focus)
+1. `brainplorp focus work.api-rewrite` - Sets context (from Sprint 8, already exists)
+2. `brainplorp tasks --urgent` - Shows all urgent tasks (NOT filtered by focus)
 
-User would manually type: `plorp tasks --urgent --project work` to get the effect shown.
+User would manually type: `brainplorp tasks --urgent --project work` to get the effect shown.
 
 **Future feature (Sprint 9.2+):** Auto-respect focus when no `--project` specified. For 9.1, keep it simple - focus and tasks are independent. Update spec example to be clearer or remove it to avoid confusion.
 
@@ -1363,7 +1363,7 @@ TaskWarrior handles this correctly. No special logic needed.
 
 **PM Answer:** ✅ **Option A** - Full objects. Users who want JSON are doing automation/scripting. They need all fields (tags, annotations, entry date, modified date, etc.). They can filter with `jq` if needed:
 ```bash
-plorp tasks --format json | jq '.[] | {description, priority, due}'
+brainplorp tasks --format json | jq '.[] | {description, priority, due}'
 ```
 Don't cripple the JSON output.
 
@@ -1379,7 +1379,7 @@ Don't cripple the JSON output.
 **Severity:** Very Low
 **Suggested Answer:** (A) - Import at top of file for consistency
 
-**PM Answer:** ✅ **Option A** - Import at top of file. Existing plorp codebase uses top-level imports throughout. Lazy imports are premature optimization for a 3-hour sprint. Match existing style:
+**PM Answer:** ✅ **Option A** - Import at top of file. Existing brainplorp codebase uses top-level imports throughout. Lazy imports are premature optimization for a 3-hour sprint. Match existing style:
 ```python
 from plorp.integrations.taskwarrior import get_tasks
 from plorp.config import load_config
@@ -1429,7 +1429,7 @@ from plorp.config import load_config
 **PM Answer:** ✅ **Specific sections to update:**
 
 **CLAUDE.md:**
-- Update "Development Commands" section (add `plorp tasks` examples)
+- Update "Development Commands" section (add `brainplorp tasks` examples)
 - Add new subsection under "Core Workflows": "### Quick Task Queries"
   ```markdown
   ## Quick Task Queries
@@ -1437,10 +1437,10 @@ from plorp.config import load_config
   For instant task lists without waiting for agent reasoning:
 
   ```bash
-  plorp tasks                    # All pending
-  plorp tasks --urgent           # Urgent only
-  plorp tasks --project work     # Work project
-  plorp tasks --due today        # Due today
+  brainplorp tasks                    # All pending
+  brainplorp tasks --urgent           # Urgent only
+  brainplorp tasks --project work     # Work project
+  brainplorp tasks --due today        # Due today
   ```
 
   In Claude Desktop, use slash commands:
@@ -1471,7 +1471,7 @@ from plorp.config import load_config
 
 **Changes to Original Spec:**
 1. Fix `format_date()` import - add `timedelta`
-2. Clarify `plorp focus` example is manual workflow (not automatic)
+2. Clarify `brainplorp focus` example is manual workflow (not automatic)
 3. Version bump in Phase 4 AFTER tests pass
 4. Specific documentation section locations provided
 
@@ -1497,7 +1497,7 @@ from plorp.config import load_config
 - `src/plorp/utils/dates.py` - Added `format_date()` function with timedelta import
 
 **Features Implemented:**
-- ✅ `plorp tasks` base command
+- ✅ `brainplorp tasks` base command
 - ✅ Filter options: `--urgent`, `--important`, `--project`, `--due`, `--limit`
 - ✅ Output formats: `table` (rich), `simple`, `json`
 - ✅ Rich table with emoji indicators (🔴=H, 🟡=M)
@@ -1542,7 +1542,7 @@ from plorp.config import load_config
 ### Success Criteria Met
 
 #### Functional Requirements ✅
-- ✅ `plorp tasks` command exists and shows all pending tasks
+- ✅ `brainplorp tasks` command exists and shows all pending tasks
 - ✅ `--urgent` flag filters to priority:H tasks
 - ✅ `--important` flag filters to priority:M tasks
 - ✅ `--project` option filters by project
@@ -1587,7 +1587,7 @@ Agent reasoning + tool orchestration: 5-8 seconds
 User: /urgent
 Slash command execution: 1-2 seconds (3-4x faster)
 
-Terminal: plorp tasks --urgent
+Terminal: brainplorp tasks --urgent
 CLI execution: <100ms (50-80x faster)
 ```
 
@@ -1672,13 +1672,13 @@ __version__ = "1.5.1"
 
 #### 3. CLI Implementation ✅
 ```bash
-$ .venv/bin/plorp tasks --help
-Usage: plorp tasks [OPTIONS]
+$ .venv/bin/brainplorp tasks --help
+Usage: brainplorp tasks [OPTIONS]
   List pending tasks with optional filters.
   ...
 ```
 **Tested manually:**
-- ✅ `plorp tasks --limit 5` - Works perfectly, shows rich table with emojis
+- ✅ `brainplorp tasks --limit 5` - Works perfectly, shows rich table with emojis
 - ✅ Rich table formatting with emoji indicators (🔴=H, 🟡=M)
 - ✅ Human-readable dates ("2d ago", "tomorrow", "1d ago")
 - ✅ All filter options present (--urgent, --important, --project, --due, --limit, --format)
@@ -1707,7 +1707,7 @@ tasks.md  urgent.md  today.md  overdue.md  work-tasks.md
 ### Code Quality Assessment
 
 **Strengths:**
-1. **Clean Implementation:** CLI command follows existing plorp patterns (click options, rich output, error handling)
+1. **Clean Implementation:** CLI command follows existing brainplorp patterns (click options, rich output, error handling)
 2. **Comprehensive Testing:** 13 tests cover all filter combinations, output formats, and edge cases
 3. **Good UX:** Emoji indicators, human-readable dates, sensible defaults (limit 50, table format)
 4. **Performance:** Direct TaskWarrior queries, no unnecessary abstraction layers
@@ -1740,7 +1740,7 @@ tasks.md  urgent.md  today.md  overdue.md  work-tasks.md
 
 **User Impact:**
 - Before: "show me urgent tasks" = 5-8 seconds (agent reasoning)
-- After CLI: `plorp tasks --urgent` = <100ms (50-80x faster)
+- After CLI: `brainplorp tasks --urgent` = <100ms (50-80x faster)
 - After Slash: `/urgent` = 1-2 seconds (3-4x faster)
 
 ### Final Verdict

@@ -1,4 +1,4 @@
-Use plorp MCP tools to help me process my inbox.
+Use brainplorp MCP tools to help me process my inbox.
 
 Steps:
 1. Call `plorp_get_inbox_items` to see unprocessed inbox items

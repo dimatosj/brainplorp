@@ -101,7 +101,7 @@ Replace `X` with your sprint number (check PM_HANDOFF.md for which sprint you're
 
 **State changes in EITHER system must propagate to the other. This is BIDIRECTIONAL.**
 
-plorp is a **bridge** between TaskWarrior and Obsidian. Both systems are EQUAL - neither is "source of truth." When state changes in one, it MUST sync to the other.
+brainplorp is a **bridge** between TaskWarrior and Obsidian. Both systems are EQUAL - neither is "source of truth." When state changes in one, it MUST sync to the other.
 
 **The Two Directions:**
 
@@ -370,7 +370,7 @@ def test_mark_done():
 
 ## Project Context (Quick Reference)
 
-**What plorp is:**
+**What brainplorp is:**
 - Workflow automation layer between TaskWarrior (tasks) and Obsidian (notes)
 - Bridge system - state changes must sync both ways
 

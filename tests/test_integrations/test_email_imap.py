@@ -7,7 +7,7 @@ Real Gmail integration testing must be manual.
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from plorp.integrations.email_imap import (
+from brainplorp.integrations.email_imap import (
     connect_gmail,
     fetch_unread_emails,
     mark_emails_as_seen,
@@ -16,7 +16,7 @@ from plorp.integrations.email_imap import (
 )
 
 
-@patch("plorp.integrations.email_imap.imaplib.IMAP4_SSL")
+@patch("brainplorp.integrations.email_imap.imaplib.IMAP4_SSL")
 def test_connect_gmail_success(mock_imap):
     """Test successful Gmail connection."""
     mock_client = Mock()
@@ -30,7 +30,7 @@ def test_connect_gmail_success(mock_imap):
     mock_client.login.assert_called_once_with("user@gmail.com", "password")
 
 
-@patch("plorp.integrations.email_imap.imaplib.IMAP4_SSL")
+@patch("brainplorp.integrations.email_imap.imaplib.IMAP4_SSL")
 def test_connect_gmail_auth_failure(mock_imap):
     """Test Gmail connection with bad credentials."""
     mock_client = Mock()
@@ -138,7 +138,7 @@ def test_convert_email_body_html_fallback():
 
     # We can't easily mock the ImportError for html2text in this test,
     # but we can test that the fallback function works
-    from plorp.integrations.email_imap import _strip_html_tags
+    from brainplorp.integrations.email_imap import _strip_html_tags
 
     stripped = _strip_html_tags(body_html)
     assert "Paragraph 1" in stripped
@@ -148,7 +148,7 @@ def test_convert_email_body_html_fallback():
 
 def test_has_markdown_bullets():
     """Test detection of markdown bullets."""
-    from plorp.integrations.email_imap import _has_markdown_bullets
+    from brainplorp.integrations.email_imap import _has_markdown_bullets
 
     assert _has_markdown_bullets("- Task 1\n- Task 2")
     assert _has_markdown_bullets("* Task 1\n* Task 2")
@@ -159,7 +159,7 @@ def test_has_markdown_bullets():
 
 def test_paragraphs_to_bullets():
     """Test paragraph to bullet conversion."""
-    from plorp.integrations.email_imap import _paragraphs_to_bullets
+    from brainplorp.integrations.email_imap import _paragraphs_to_bullets
 
     text = "Paragraph 1\n\nParagraph 2\n\nParagraph 3"
     result = _paragraphs_to_bullets(text)
@@ -170,7 +170,7 @@ def test_paragraphs_to_bullets():
 
 def test_remove_signature():
     """Test signature removal patterns."""
-    from plorp.integrations.email_imap import _remove_signature
+    from brainplorp.integrations.email_imap import _remove_signature
 
     text = "Important content\n\n-- \nSignature here"
     result = _remove_signature(text)
@@ -185,7 +185,7 @@ def test_remove_signature():
 
 def test_strip_html_tags():
     """Test HTML tag stripping fallback."""
-    from plorp.integrations.email_imap import _strip_html_tags
+    from brainplorp.integrations.email_imap import _strip_html_tags
 
     html = "<html><body><p>Test content</p></body></html>"
     result = _strip_html_tags(html)

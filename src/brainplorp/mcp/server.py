@@ -17,8 +17,8 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-from plorp.config import load_config
-from plorp.core import (
+from brainplorp.config import load_config
+from brainplorp.core import (
     # Workflows
     start_day,
     get_review_tasks,
@@ -38,8 +38,8 @@ from plorp.core import (
     # Exceptions
     PlorpError,
 )
-from plorp.core.process import process_daily_note_step1, process_daily_note_step2
-from plorp.core.projects import (
+from brainplorp.core.process import process_daily_note_step1, process_daily_note_step2
+from brainplorp.core.projects import (
     # Project management (Sprint 8)
     create_project,
     list_projects,
@@ -53,7 +53,7 @@ from plorp.core.projects import (
     # Sprint 8.6
     sync_all_projects,
 )
-from plorp.core.note_operations import (
+from brainplorp.core.note_operations import (
     # Note management (Sprint 9)
     read_note,
     read_folder,
@@ -63,14 +63,14 @@ from plorp.core.note_operations import (
     create_note_in_folder,
     list_vault_folders,
 )
-from plorp.parsers.note_structure import (
+from brainplorp.parsers.note_structure import (
     # Pattern matching (Sprint 9 Phase 2)
     extract_headers,
     find_header_content,
     detect_project_headers,
     extract_bullet_points,
 )
-from plorp.integrations.taskwarrior import get_task_info as tw_get_task_info
+from brainplorp.integrations.taskwarrior import get_task_info as tw_get_task_info
 
 
 logger = logging.getLogger("plorp.mcp")

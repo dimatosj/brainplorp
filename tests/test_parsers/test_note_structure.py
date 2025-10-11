@@ -6,7 +6,7 @@ Tests markdown structure parsing functions.
 
 import pytest
 
-from plorp.parsers.note_structure import (
+from brainplorp.parsers.note_structure import (
     extract_headers,
     find_header_content,
     detect_project_headers,

@@ -3,7 +3,7 @@
 
 import pytest
 from unittest.mock import patch, MagicMock
-from plorp.core.projects import (
+from brainplorp.core.projects import (
     create_project,
     list_projects,
     get_project_info,
@@ -14,7 +14,7 @@ from plorp.core.projects import (
     list_tasks_by_domain,
     list_orphaned_tasks,
 )
-from plorp.core.types import ProjectInfo, TaskInfo
+from brainplorp.core.types import ProjectInfo, TaskInfo
 
 
 def test_create_project_valid(tmp_path, monkeypatch):
@@ -62,8 +62,8 @@ def test_create_task_in_project_success(tmp_path, monkeypatch):
     )
 
     # Mock TaskWarrior integration
-    with patch("plorp.core.projects.create_task") as mock_create:
-        with patch("plorp.core.projects.add_annotation") as mock_annotate:
+    with patch("brainplorp.core.projects.create_task") as mock_create:
+        with patch("brainplorp.core.projects.add_annotation") as mock_annotate:
             mock_create.return_value = "abc-123"  # Mock UUID
 
             # Test: Create task in project
@@ -117,7 +117,7 @@ def test_create_task_in_project_taskwarrior_fails(tmp_path, monkeypatch):
     create_project(name="website", domain="work", workstream="marketing")
 
     # Mock TaskWarrior to return None (failure)
-    with patch("plorp.core.projects.create_task", return_value=None):
+    with patch("brainplorp.core.projects.create_task", return_value=None):
         # Should raise RuntimeError
         with pytest.raises(RuntimeError, match="Failed to create task"):
             create_task_in_project(
@@ -153,7 +153,7 @@ def test_list_project_tasks(tmp_path, monkeypatch):
         }
     ]
 
-    with patch("plorp.core.projects.get_tasks", return_value=mock_tasks):
+    with patch("brainplorp.core.projects.get_tasks", return_value=mock_tasks):
         # Test: List tasks
         tasks = list_project_tasks("work.marketing.website")
 
@@ -189,7 +189,7 @@ def test_list_tasks_by_domain(tmp_path, monkeypatch):
         }
     ]
 
-    with patch("plorp.core.projects.get_tasks", return_value=mock_tasks) as mock_get:
+    with patch("brainplorp.core.projects.get_tasks", return_value=mock_tasks) as mock_get:
         # Test: List tasks in domain
         tasks = list_tasks_by_domain("work")
 
@@ -214,7 +214,7 @@ def test_list_orphaned_tasks():
         }
     ]
 
-    with patch("plorp.core.projects.get_tasks", return_value=mock_tasks) as mock_get:
+    with patch("brainplorp.core.projects.get_tasks", return_value=mock_tasks) as mock_get:
         # Test: List orphaned tasks
         tasks = list_orphaned_tasks()
 
@@ -235,7 +235,7 @@ def test_list_project_tasks_with_orphan_warning(tmp_path, monkeypatch, capsys):
     project = create_project(name="website", domain="work", workstream="marketing")
 
     # Manually add task UUIDs to project (simulating tasks that were deleted)
-    from plorp.integrations.obsidian_bases import add_task_to_project as add_uuid
+    from brainplorp.integrations.obsidian_bases import add_task_to_project as add_uuid
     add_uuid("work.marketing.website", "abc-123")
     add_uuid("work.marketing.website", "def-456")
     add_uuid("work.marketing.website", "ghi-789")
@@ -252,7 +252,7 @@ def test_list_project_tasks_with_orphan_warning(tmp_path, monkeypatch, capsys):
         }
     ]
 
-    with patch("plorp.core.projects.get_tasks", return_value=mock_tasks):
+    with patch("brainplorp.core.projects.get_tasks", return_value=mock_tasks):
         # Test: List project tasks
         tasks = list_project_tasks("work.marketing.website")
 
@@ -282,8 +282,8 @@ def test_integration_create_project_and_tasks(tmp_path, monkeypatch):
     assert project["full_path"] == "work.engineering.api-rewrite"
 
     # Mock TaskWarrior for task creation
-    with patch("plorp.core.projects.create_task") as mock_create:
-        with patch("plorp.core.projects.add_annotation"):
+    with patch("brainplorp.core.projects.create_task") as mock_create:
+        with patch("brainplorp.core.projects.add_annotation"):
             mock_create.side_effect = ["task-1", "task-2", "task-3"]
 
             # Add multiple tasks
@@ -330,7 +330,7 @@ def test_list_projects_wrapper(tmp_path, monkeypatch):
 
 def test_cli_focus_default(tmp_path, monkeypatch):
     """Test CLI focus defaults to 'home'."""
-    from plorp.core.projects import get_focused_domain_cli
+    from brainplorp.core.projects import get_focused_domain_cli
 
     # Mock config dir to use tmp_path
     monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
@@ -344,7 +344,7 @@ def test_cli_focus_default(tmp_path, monkeypatch):
 
 def test_cli_focus_set_and_get(tmp_path, monkeypatch):
     """Test setting and getting CLI focus."""
-    from plorp.core.projects import get_focused_domain_cli, set_focused_domain_cli
+    from brainplorp.core.projects import get_focused_domain_cli, set_focused_domain_cli
 
     monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
 
@@ -365,7 +365,7 @@ def test_cli_focus_set_and_get(tmp_path, monkeypatch):
 
 def test_cli_focus_persists_across_calls(tmp_path, monkeypatch):
     """Test CLI focus persists in file."""
-    from plorp.core.projects import set_focused_domain_cli, get_focused_domain_cli
+    from brainplorp.core.projects import set_focused_domain_cli, get_focused_domain_cli
 
     monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
 
@@ -384,7 +384,7 @@ def test_cli_focus_persists_across_calls(tmp_path, monkeypatch):
 
 def test_mcp_focus_default(tmp_path, monkeypatch):
     """Test MCP focus defaults to 'home'."""
-    from plorp.core.projects import get_focused_domain_mcp
+    from brainplorp.core.projects import get_focused_domain_mcp
 
     monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
 
@@ -396,7 +396,7 @@ def test_mcp_focus_default(tmp_path, monkeypatch):
 
 def test_mcp_focus_set_and_get(tmp_path, monkeypatch):
     """Test setting and getting MCP focus."""
-    from plorp.core.projects import get_focused_domain_mcp, set_focused_domain_mcp
+    from brainplorp.core.projects import get_focused_domain_mcp, set_focused_domain_mcp
 
     monkeypatch.setattr("plorp.core.projects.get_config_dir", lambda: tmp_path)
 
@@ -411,7 +411,7 @@ def test_mcp_focus_set_and_get(tmp_path, monkeypatch):
 
 def test_cli_and_mcp_focus_independent(tmp_path, monkeypatch):
     """Test CLI and MCP focus are stored separately."""
-    from plorp.core.projects import (
+    from brainplorp.core.projects import (
         set_focused_domain_cli,
         set_focused_domain_mcp,
         get_focused_domain_cli,
@@ -435,7 +435,7 @@ def test_cli_and_mcp_focus_independent(tmp_path, monkeypatch):
 
 def test_focus_respects_xdg_config_home(tmp_path, monkeypatch):
     """Test focus files respect XDG_CONFIG_HOME."""
-    from plorp.core.projects import set_focused_domain_cli, get_focused_domain_cli
+    from brainplorp.core.projects import set_focused_domain_cli, get_focused_domain_cli
     import os
 
     # Set XDG_CONFIG_HOME
@@ -444,7 +444,7 @@ def test_focus_respects_xdg_config_home(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_dir))
 
     # get_config_dir should now use XDG_CONFIG_HOME
-    from plorp.config import get_config_dir
+    from brainplorp.config import get_config_dir
     config_dir = get_config_dir()
     assert str(xdg_dir / "plorp") == str(config_dir)
 
@@ -467,17 +467,17 @@ def test_create_task_in_project_returns_uuid(tmp_path, monkeypatch):
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project
-    from plorp.core.projects import create_project
+    from brainplorp.core.projects import create_project
     create_project(name="test-project", domain="work", workstream="test")
 
     # Mock TaskWarrior to return UUID
-    with patch("plorp.core.projects.create_task") as mock_create:
-        with patch("plorp.core.projects.add_annotation"):
+    with patch("brainplorp.core.projects.create_task") as mock_create:
+        with patch("brainplorp.core.projects.add_annotation"):
             # Simulate successful task creation with valid UUID
             test_uuid = "a1b2c3d4-e5f6-7890-1234-567890abcdef"
             mock_create.return_value = test_uuid
 
-            from plorp.core.projects import create_task_in_project
+            from brainplorp.core.projects import create_task_in_project
 
             # Create task in project
             uuid = create_task_in_project(
@@ -504,7 +504,7 @@ def test_remove_task_from_all_projects_single_project(tmp_path, monkeypatch):
     create_project(name="website", domain="work", workstream="marketing")
 
     # Add task UUIDs to project
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
     add_task_to_project("work.marketing.website", "task-2")
     add_task_to_project("work.marketing.website", "task-3")
@@ -515,7 +515,7 @@ def test_remove_task_from_all_projects_single_project(tmp_path, monkeypatch):
     assert "task-2" in project["task_uuids"]
 
     # Test: Remove task-2 from all projects
-    from plorp.core.projects import remove_task_from_all_projects
+    from brainplorp.core.projects import remove_task_from_all_projects
     remove_task_from_all_projects(tmp_path, "task-2")
 
     # Assert: task-2 removed, others remain
@@ -536,7 +536,7 @@ def test_remove_task_from_all_projects_multiple_projects(tmp_path, monkeypatch):
     create_project(name="garden", domain="home", workstream="maintenance")
 
     # Add same UUID to multiple projects (shouldn't happen, but test data integrity fix per Q4)
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "orphaned-uuid")
     add_task_to_project("work.engineering.api", "orphaned-uuid")
     add_task_to_project("work.marketing.website", "task-1")
@@ -548,7 +548,7 @@ def test_remove_task_from_all_projects_multiple_projects(tmp_path, monkeypatch):
     assert "orphaned-uuid" in get_project_info("home.maintenance.garden")["task_uuids"]
 
     # Test: Remove orphaned UUID from ALL projects
-    from plorp.core.projects import remove_task_from_all_projects
+    from brainplorp.core.projects import remove_task_from_all_projects
     remove_task_from_all_projects(tmp_path, "orphaned-uuid")
 
     # Assert: UUID removed from ALL projects (per Q4 answer)
@@ -568,7 +568,7 @@ def test_remove_task_from_all_projects_no_projects(tmp_path, monkeypatch):
     (tmp_path / "projects").mkdir()
 
     # Test: Should not raise error
-    from plorp.core.projects import remove_task_from_all_projects
+    from brainplorp.core.projects import remove_task_from_all_projects
     remove_task_from_all_projects(tmp_path, "nonexistent-uuid")
 
     # Assert: No error raised (graceful handling)
@@ -580,12 +580,12 @@ def test_remove_task_from_all_projects_uuid_not_found(tmp_path, monkeypatch):
 
     # Create project with different UUIDs
     create_project(name="website", domain="work", workstream="marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
     add_task_to_project("work.marketing.website", "task-2")
 
     # Test: Remove UUID that doesn't exist
-    from plorp.core.projects import remove_task_from_all_projects
+    from brainplorp.core.projects import remove_task_from_all_projects
     remove_task_from_all_projects(tmp_path, "nonexistent-uuid")
 
     # Assert: Project unchanged
@@ -602,7 +602,7 @@ def test_remove_task_from_all_projects_uuid_not_found(tmp_path, monkeypatch):
 
 def test_validate_workstream_returns_warning_for_unknown():
     """Test that validation warns about non-standard workstreams (Sprint 8.5 Item 3)."""
-    from plorp.core.projects import validate_workstream
+    from brainplorp.core.projects import validate_workstream
 
     # Test: Unknown workstream for 'work' domain
     warning = validate_workstream("work", "foobar")
@@ -615,7 +615,7 @@ def test_validate_workstream_returns_warning_for_unknown():
 
 def test_validate_workstream_passes_for_known():
     """Test that validation passes for standard workstreams."""
-    from plorp.core.projects import validate_workstream
+    from brainplorp.core.projects import validate_workstream
 
     # Test: Known workstreams for each domain
     assert validate_workstream("work", "engineering") is None
@@ -626,7 +626,7 @@ def test_validate_workstream_passes_for_known():
 
 def test_validate_workstream_handles_unknown_domain():
     """Test that validation passes for unknown domains (no validation rules)."""
-    from plorp.core.projects import validate_workstream
+    from brainplorp.core.projects import validate_workstream
 
     # Test: Unknown domain with any workstream
     warning = validate_workstream("custom-domain", "any-workstream")
@@ -643,7 +643,7 @@ def test_validate_workstream_handles_unknown_domain():
 def test_find_orphaned_projects(tmp_path, monkeypatch):
     """Test finding projects with needs_review flag (Sprint 8.5 Item 4)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import find_orphaned_projects
+    from brainplorp.core.projects import find_orphaned_projects
 
     # Create projects - 2 with needs_review, 1 without
     create_project("api", "work")  # 2-segment, needs_review=true
@@ -664,7 +664,7 @@ def test_find_orphaned_projects(tmp_path, monkeypatch):
 def test_rename_project(tmp_path, monkeypatch):
     """Test renaming project file and updating frontmatter (Sprint 8.5 Item 4)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import rename_project
+    from brainplorp.core.projects import rename_project
 
     # Create 2-segment project
     create_project("api", "work", description="API rewrite project")
@@ -688,17 +688,17 @@ def test_rename_project(tmp_path, monkeypatch):
 def test_rename_project_preserves_task_uuids(tmp_path, monkeypatch):
     """Test that rename preserves task UUIDs and updates TaskWarrior (Sprint 8.5 Item 4)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import rename_project
+    from brainplorp.core.projects import rename_project
 
     # Create project with tasks
     create_project("api", "work")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.api", "task-1")
     add_task_to_project("work.api", "task-2")
 
     # Mock TaskWarrior modify and annotate
     from unittest.mock import patch
-    with patch("plorp.integrations.taskwarrior.modify_task") as mock_modify, \
+    with patch("brainplorp.integrations.taskwarrior.modify_task") as mock_modify, \
          patch("plorp.integrations.taskwarrior.add_annotation") as mock_annotate:
 
         # Test: Rename project
@@ -722,14 +722,14 @@ def test_rename_project_preserves_task_uuids(tmp_path, monkeypatch):
 def test_assign_orphaned_task_to_project(tmp_path, monkeypatch):
     """Test assigning orphaned task to project with State Sync (Sprint 8.5 Item 5)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import assign_task_to_project
+    from brainplorp.core.projects import assign_task_to_project
 
     # Create project
     create_project("website", "work", "marketing")
 
     # Mock TaskWarrior
     from unittest.mock import patch
-    with patch("plorp.integrations.taskwarrior.modify_task") as mock_modify, \
+    with patch("brainplorp.integrations.taskwarrior.modify_task") as mock_modify, \
          patch("plorp.integrations.taskwarrior.add_annotation") as mock_annotate:
 
         # Test: Assign orphaned task to project
@@ -747,7 +747,7 @@ def test_assign_orphaned_task_to_project(tmp_path, monkeypatch):
 def test_assign_orphaned_task_to_project_not_found(tmp_path, monkeypatch):
     """Test assigning task to non-existent project raises error."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import assign_task_to_project
+    from brainplorp.core.projects import assign_task_to_project
 
     # Test: Should raise ValueError
     with pytest.raises(ValueError, match="Project not found"):
@@ -762,17 +762,17 @@ def test_assign_orphaned_task_to_project_not_found(tmp_path, monkeypatch):
 def test_sync_project_task_section_creates_section(tmp_path, monkeypatch):
     """Test that sync creates Tasks section when none exists (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import _sync_project_task_section
+    from brainplorp.core.projects import _sync_project_task_section
 
     # Create project
     create_project("website", "work", "marketing", description="Test project")
 
     # Add task UUID to project frontmatter
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
     # Mock TaskWarrior to return task details
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get_task:
         mock_get_task.return_value = {
             "uuid": "task-1",
             "description": "Design homepage",
@@ -798,7 +798,7 @@ def test_sync_project_task_section_creates_section(tmp_path, monkeypatch):
 def test_sync_project_task_section_updates_existing(tmp_path, monkeypatch):
     """Test that sync replaces old Tasks section (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import _sync_project_task_section
+    from brainplorp.core.projects import _sync_project_task_section
 
     # Create project with existing Tasks section
     create_project("website", "work", "marketing")
@@ -810,11 +810,11 @@ def test_sync_project_task_section_updates_existing(tmp_path, monkeypatch):
     note_path.write_text(content)
 
     # Add task to frontmatter
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-new")
 
     # Mock TaskWarrior
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get_task:
         mock_get_task.return_value = {
             "uuid": "task-new",
             "description": "New task",
@@ -834,7 +834,7 @@ def test_sync_project_task_section_updates_existing(tmp_path, monkeypatch):
 def test_sync_project_task_section_preserves_content(tmp_path, monkeypatch):
     """Test that sync preserves other sections and content (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import _sync_project_task_section
+    from brainplorp.core.projects import _sync_project_task_section
 
     # Create project
     create_project("website", "work", "marketing", description="Test")
@@ -846,10 +846,10 @@ def test_sync_project_task_section_preserves_content(tmp_path, monkeypatch):
     note_path.write_text(content)
 
     # Add task
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get_task:
         mock_get_task.return_value = {
             "uuid": "task-1",
             "description": "Test task",
@@ -870,7 +870,7 @@ def test_sync_project_task_section_preserves_content(tmp_path, monkeypatch):
 def test_sync_project_task_section_handles_empty(tmp_path, monkeypatch):
     """Test sync with no tasks removes Tasks section (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import _sync_project_task_section
+    from brainplorp.core.projects import _sync_project_task_section
 
     # Create project with existing Tasks section but no task UUIDs
     create_project("website", "work", "marketing")
@@ -891,19 +891,19 @@ def test_sync_project_task_section_handles_empty(tmp_path, monkeypatch):
 def test_sync_project_task_section_skips_orphaned(tmp_path, monkeypatch):
     """Test sync gracefully skips orphaned UUIDs (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import _sync_project_task_section
+    from brainplorp.core.projects import _sync_project_task_section
 
     # Create project with orphaned UUID
     create_project("website", "work", "marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "orphaned-uuid")
     add_task_to_project("work.marketing.website", "valid-uuid")
 
     # Mock TaskWarrior - orphaned returns None, valid returns task
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get_task:
         def side_effect(uuid):
             if uuid == "orphaned-uuid":
-                from plorp.core.exceptions import TaskNotFoundError
+                from brainplorp.core.exceptions import TaskNotFoundError
                 raise TaskNotFoundError(uuid)
             return {
                 "uuid": "valid-uuid",
@@ -932,14 +932,14 @@ def test_sync_project_task_section_skips_orphaned(tmp_path, monkeypatch):
 def test_sync_project_task_section_formats_correctly(tmp_path, monkeypatch):
     """Test sync formats task lines correctly (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import _sync_project_task_section
+    from brainplorp.core.projects import _sync_project_task_section
 
     # Create project with task
     create_project("website", "work", "marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
-    with patch("plorp.integrations.taskwarrior.get_task_info") as mock_get_task:
+    with patch("brainplorp.integrations.taskwarrior.get_task_info") as mock_get_task:
         # Task with all metadata fields
         mock_get_task.return_value = {
             "uuid": "task-1",
@@ -960,8 +960,8 @@ def test_sync_project_task_section_formats_correctly(tmp_path, monkeypatch):
 
 def test_sync_project_task_section_project_not_found(tmp_path):
     """Test sync raises error for non-existent project (Sprint 8.6)."""
-    from plorp.core.projects import _sync_project_task_section
-    from plorp.core.exceptions import ProjectNotFoundError
+    from brainplorp.core.projects import _sync_project_task_section
+    from brainplorp.core.exceptions import ProjectNotFoundError
 
     # Test: Should raise ProjectNotFoundError
     with pytest.raises(ProjectNotFoundError, match="Project not found"):
@@ -976,11 +976,11 @@ def test_sync_project_task_section_project_not_found(tmp_path):
 def test_process_project_note_marks_tasks_done(tmp_path, monkeypatch):
     """Test processing project note marks checked tasks as done (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import process_project_note
+    from brainplorp.core.projects import process_project_note
 
     # Create project with task
     create_project("website", "work", "marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
     # Manually add checked task to Tasks section
@@ -990,7 +990,7 @@ def test_process_project_note_marks_tasks_done(tmp_path, monkeypatch):
     note_path.write_text(content)
 
     # Mock TaskWarrior
-    with patch("plorp.integrations.taskwarrior.mark_done") as mock_done:
+    with patch("brainplorp.integrations.taskwarrior.mark_done") as mock_done:
         # Test: Process project note
         process_project_note(tmp_path, "work.marketing.website")
 
@@ -1001,11 +1001,11 @@ def test_process_project_note_marks_tasks_done(tmp_path, monkeypatch):
 def test_process_project_note_syncs_after_marking_done(tmp_path, monkeypatch):
     """Test processing syncs note body after marking tasks done (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import process_project_note
+    from brainplorp.core.projects import process_project_note
 
     # Create project with task
     create_project("website", "work", "marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
     # Add checked task to Tasks section
@@ -1015,7 +1015,7 @@ def test_process_project_note_syncs_after_marking_done(tmp_path, monkeypatch):
     note_path.write_text(content)
 
     # Mock TaskWarrior
-    with patch("plorp.integrations.taskwarrior.mark_done") as mock_done, \
+    with patch("brainplorp.integrations.taskwarrior.mark_done") as mock_done, \
          patch("plorp.integrations.taskwarrior.get_task_info") as mock_get:
 
         # After marking done, task status changes to completed
@@ -1039,11 +1039,11 @@ def test_process_project_note_syncs_after_marking_done(tmp_path, monkeypatch):
 def test_process_project_note_removes_from_frontmatter(tmp_path, monkeypatch):
     """Test processing removes completed task UUIDs from frontmatter (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import process_project_note, get_project_info
+    from brainplorp.core.projects import process_project_note, get_project_info
 
     # Create project with task
     create_project("website", "work", "marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
     # Add checked task
@@ -1053,7 +1053,7 @@ def test_process_project_note_removes_from_frontmatter(tmp_path, monkeypatch):
     note_path.write_text(content)
 
     # Mock TaskWarrior
-    with patch("plorp.integrations.taskwarrior.mark_done"):
+    with patch("brainplorp.integrations.taskwarrior.mark_done"):
         # Test: Process
         process_project_note(tmp_path, "work.marketing.website")
 
@@ -1065,11 +1065,11 @@ def test_process_project_note_removes_from_frontmatter(tmp_path, monkeypatch):
 def test_process_project_note_handles_no_checkboxes(tmp_path, monkeypatch):
     """Test processing with no checked tasks does nothing (Sprint 8.6)."""
     monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
-    from plorp.core.projects import process_project_note
+    from brainplorp.core.projects import process_project_note
 
     # Create project with unchecked task
     create_project("website", "work", "marketing")
-    from plorp.integrations.obsidian_bases import add_task_to_project
+    from brainplorp.integrations.obsidian_bases import add_task_to_project
     add_task_to_project("work.marketing.website", "task-1")
 
     # Add UNchecked task
@@ -1079,7 +1079,7 @@ def test_process_project_note_handles_no_checkboxes(tmp_path, monkeypatch):
     note_path.write_text(content)
 
     # Mock TaskWarrior
-    with patch("plorp.integrations.taskwarrior.mark_done") as mock_done:
+    with patch("brainplorp.integrations.taskwarrior.mark_done") as mock_done:
         # Test: Process
         process_project_note(tmp_path, "work.marketing.website")
 

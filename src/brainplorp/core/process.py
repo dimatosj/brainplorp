@@ -12,7 +12,7 @@ from datetime import date
 from pathlib import Path
 from typing import List, Optional
 
-from plorp.core.types import (
+from brainplorp.core.types import (
     InformalTask,
     TaskProposal,
     ProcessStepOneResult,
@@ -20,7 +20,7 @@ from plorp.core.types import (
     ProcessError,
     TaskInfo,
 )
-from plorp.parsers.nlp import (
+from brainplorp.parsers.nlp import (
     parse_due_date,
     parse_priority_keywords,
     extract_clean_description,
@@ -407,7 +407,7 @@ def create_tasks_batch(proposals: List[TaskProposal], reference_date: date) -> t
         - Handle checked tasks: create + mark complete
         - Collect errors, continue batch processing
     """
-    from plorp.integrations.taskwarrior import create_task, mark_done, get_task_info
+    from brainplorp.integrations.taskwarrior import create_task, mark_done, get_task_info
 
     created_tasks = []
     errors = []
@@ -532,7 +532,7 @@ def reorganize_note(
             # Add metadata
             metadata_parts = []
             if task.get("due"):
-                from plorp.utils.dates import format_taskwarrior_date_short
+                from brainplorp.utils.dates import format_taskwarrior_date_short
                 metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
             if task.get("priority"):
                 metadata_parts.append(f"priority: {task['priority']}")
@@ -566,7 +566,7 @@ def reorganize_note(
                 # Add metadata
                 metadata_parts = []
                 if task.get("due"):
-                    from plorp.utils.dates import format_taskwarrior_date_short
+                    from brainplorp.utils.dates import format_taskwarrior_date_short
                     metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
                 if task.get("priority"):
                     metadata_parts.append(f"priority: {task['priority']}")
@@ -596,7 +596,7 @@ def reorganize_note(
 
                 metadata_parts = []
                 if task.get("due"):
-                    from plorp.utils.dates import format_taskwarrior_date_short
+                    from brainplorp.utils.dates import format_taskwarrior_date_short
                     metadata_parts.append(f"due: {format_taskwarrior_date_short(task['due'])}")
                 if task.get("priority"):
                     metadata_parts.append(f"priority: {task['priority']}")
@@ -621,7 +621,7 @@ def _is_today_or_urgent(task: TaskInfo, reference_date: date) -> bool:
 
     # TODAY: due date equals reference date
     if task.get("due"):
-        from plorp.utils.dates import parse_taskwarrior_date
+        from brainplorp.utils.dates import parse_taskwarrior_date
         task_due_date = parse_taskwarrior_date(task.get("due"))
         if task_due_date and task_due_date == reference_date:
             return True
@@ -655,9 +655,9 @@ def process_daily_note_step2(note_path: Path, reference_date: date, vault_path: 
 
     # Sprint 8.5: Sync formal task checkbox state (Obsidian → TaskWarrior)
     if vault_path:
-        from plorp.integrations.taskwarrior import mark_done, get_task_info
-        from plorp.core.projects import remove_task_from_all_projects
-        from plorp.core.exceptions import TaskNotFoundError
+        from brainplorp.integrations.taskwarrior import mark_done, get_task_info
+        from brainplorp.core.projects import remove_task_from_all_projects
+        from brainplorp.core.exceptions import TaskNotFoundError
 
         lines = content.split("\n")
         formal_tasks_synced = []

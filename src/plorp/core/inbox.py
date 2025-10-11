@@ -242,3 +242,90 @@ def discard_inbox_item(
         "task_uuid": None,
         "note_path": None,
     }
+
+
+def append_emails_to_inbox(emails: list, vault_path: Path) -> dict:
+    """
+    Append fetched emails to monthly inbox file as markdown bullets.
+
+    Args:
+        emails: List of email dicts from fetch_unread_emails()
+                Each email has: id, body_text, body_html
+        vault_path: Path to Obsidian vault
+
+    Returns:
+        Dict with:
+            - appended_count: Number of emails appended
+            - inbox_path: Path to inbox file
+            - total_unprocessed: Total unprocessed items in inbox
+
+    Example:
+        {
+            "appended_count": 3,
+            "inbox_path": "/vault/inbox/2025-10.md",
+            "total_unprocessed": 15
+        }
+    """
+    from plorp.integrations.email_imap import convert_email_body_to_bullets
+
+    # Get current month's inbox file
+    today = date.today()
+    inbox_dir = vault_path / "inbox"
+    inbox_file = inbox_dir / f"{today.year}-{today.month:02d}.md"
+
+    # Ensure inbox directory exists
+    inbox_dir.mkdir(parents=True, exist_ok=True)
+
+    # Read existing inbox (create if doesn't exist)
+    if inbox_file.exists():
+        content = inbox_file.read_text(encoding="utf-8")
+    else:
+        content = (
+            f"# Inbox {today.year}-{today.month:02d}\n\n## Unprocessed\n\n## Processed\n"
+        )
+
+    # Find "## Unprocessed" section
+    unprocessed_section_start = content.find("## Unprocessed")
+    processed_section_start = content.find("## Processed")
+
+    if unprocessed_section_start == -1:
+        # Create sections if missing
+        content += "\n## Unprocessed\n\n## Processed\n"
+        unprocessed_section_start = content.find("## Unprocessed")
+        processed_section_start = content.find("## Processed")
+
+    # Build email markdown bullets (no subject, no metadata)
+    email_lines = []
+    for email in emails:
+        # Convert email body to markdown bullets
+        bullets = convert_email_body_to_bullets(email["body_text"], email["body_html"])
+        if bullets:
+            email_lines.append(bullets)
+
+    # Insert emails at end of Unprocessed section (before ## Processed)
+    insertion_point = processed_section_start
+    new_content = (
+        content[:insertion_point].rstrip()
+        + "\n\n"  # Double newline for proper spacing
+        + "\n".join(email_lines)
+        + "\n\n"
+        + content[insertion_point:]
+    )
+
+    # Write back
+    inbox_file.write_text(new_content, encoding="utf-8")
+
+    # Count total unprocessed items (count all bullets in Unprocessed section)
+    # Need to recalculate section positions in new_content
+    new_unprocessed_start = new_content.find("## Unprocessed")
+    new_processed_start = new_content.find("## Processed")
+    unprocessed_section = new_content[new_unprocessed_start:new_processed_start]
+    unprocessed_count = len(
+        [line for line in unprocessed_section.split("\n") if line.strip().startswith("-")]
+    )
+
+    return {
+        "appended_count": len(emails),
+        "inbox_path": str(inbox_file),
+        "total_unprocessed": unprocessed_count,
+    }

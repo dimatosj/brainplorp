@@ -4,6 +4,7 @@ Main CLI entry point for plorp.
 Refactored for v1.1 to use core functions directly.
 """
 
+import json
 from datetime import date
 from pathlib import Path
 
@@ -38,6 +39,8 @@ from plorp.core import (
     InboxNotFoundError,
 )
 from plorp.core.process import process_daily_note_step1, process_daily_note_step2
+from plorp.integrations.taskwarrior import get_tasks
+from plorp.utils.dates import format_date
 from plorp.utils.prompts import confirm, prompt
 
 console = Console()
@@ -55,6 +58,7 @@ def cli(ctx):
 
     Key commands:
       start       - Generate daily note from TaskWarrior tasks
+      tasks       - List pending tasks with filters (fast queries)
       process     - Process informal tasks with NLP (Sprint 7)
       review      - Interactive end-of-day task review
       inbox       - Process inbox items into tasks/notes
@@ -215,14 +219,25 @@ def _add_review_reflection(target_date, vault_path):
 
 @cli.command()
 @click.argument("subcommand", default="process")
+@click.option("--limit", default=20, help="(fetch) Max emails to fetch")
+@click.option("--label", default=None, help="(fetch) Gmail label (default: INBOX)")
+@click.option("--dry-run", is_flag=True, help="(fetch) Show emails without appending")
+@click.option("--verbose", "-v", is_flag=True, help="(fetch) Show detailed progress")
 @click.pass_context
-def inbox(ctx, subcommand):
-    """Process inbox items."""
-    if subcommand != "process":
+def inbox(ctx, subcommand, limit, label, dry_run, verbose):
+    """Inbox management (process, fetch)."""
+    if subcommand == "fetch":
+        _inbox_fetch(ctx, limit, label, dry_run, verbose)
+    elif subcommand == "process":
+        _inbox_process(ctx)
+    else:
         console.print(f"[red]❌ Unknown inbox subcommand:[/red] {subcommand}")
-        console.print("[dim]💡 Available: plorp inbox process[/dim]")
+        console.print("[dim]💡 Available: plorp inbox process, plorp inbox fetch[/dim]")
         ctx.exit(1)
 
+
+def _inbox_process(ctx):
+    """Process inbox items interactively."""
     config = load_config()
     vault_path = Path(config["vault_path"]).expanduser().resolve()
 
@@ -250,6 +265,116 @@ def inbox(ctx, subcommand):
         ctx.exit(0)
     except Exception as e:
         console.print(f"[red]❌ Error processing inbox:[/red] {e}")
+        ctx.exit(1)
+
+
+def _inbox_fetch(ctx, limit, label, dry_run, verbose):
+    """
+    Fetch emails from Gmail and append to inbox.
+
+    Requires email configuration in ~/.config/plorp/config.yaml:
+
+      email:
+        enabled: true
+        username: your@gmail.com
+        password: "app_password"
+
+    Gmail App Password setup:
+      1. Enable 2FA on Gmail
+      2. Go to https://myaccount.google.com/apppasswords
+      3. Generate password for "plorp"
+      4. Copy 16-char password to config
+    """
+    from plorp.integrations.email_imap import (
+        connect_gmail,
+        fetch_unread_emails,
+        convert_email_body_to_bullets,
+        mark_emails_as_seen,
+        disconnect,
+    )
+    from plorp.core.inbox import append_emails_to_inbox
+
+    try:
+        config = load_config()
+
+        # Check email config
+        if "email" not in config or not config["email"].get("enabled"):
+            console.print("[red]❌ Email not configured[/red]")
+            console.print(
+                "[dim]Add email config to ~/.config/plorp/config.yaml[/dim]"
+            )
+            ctx.exit(1)
+
+        email_config = config["email"]
+        username = email_config.get("username")
+        password = email_config.get("password")
+        server = email_config.get("imap_server", "imap.gmail.com")
+        port = email_config.get("imap_port", 993)
+        folder = label or email_config.get("inbox_label", "INBOX")
+
+        if not username or not password:
+            console.print("[red]❌ Email username/password missing in config[/red]")
+            ctx.exit(1)
+
+        # Strip whitespace from password (PM Answer A10)
+        password = password.replace(" ", "").replace("\n", "")
+
+        if verbose:
+            console.print(f"[dim]Connecting to {server}:{port}...[/dim]")
+
+        # Connect to Gmail
+        client = connect_gmail(username, password, server, port)
+
+        if verbose:
+            console.print(f"[dim]Fetching emails from {folder}...[/dim]")
+
+        # Fetch emails
+        emails = fetch_unread_emails(client, folder, limit)
+
+        if not emails:
+            console.print("[green]✓ No new emails[/green]")
+            disconnect(client)
+            return
+
+        if verbose or dry_run:
+            console.print(f"[yellow]📧 Found {len(emails)} new email(s)[/yellow]")
+            for i, email in enumerate(emails, 1):
+                # Preview first line of body (not subject, per PM Answer A9)
+                body_preview = convert_email_body_to_bullets(
+                    email["body_text"], email["body_html"]
+                )
+                first_line = (
+                    body_preview.split("\n")[0][:60] if body_preview else "(empty)"
+                )
+                console.print(f"  {i}. {first_line}...")
+
+        if dry_run:
+            console.print("\n[dim]Dry run - not appending to inbox[/dim]")
+            disconnect(client)
+            return
+
+        # Append to inbox
+        vault_path = Path(config["vault_path"]).expanduser().resolve()
+        result = append_emails_to_inbox(emails, vault_path)
+
+        # Mark as seen
+        email_ids = [e["id"] for e in emails]
+        mark_emails_as_seen(client, email_ids)
+
+        # Disconnect
+        disconnect(client)
+
+        # Report success
+        console.print(f"[green]✓ Appended {result['appended_count']} email(s) to inbox[/green]")
+        console.print(f"[dim]  Inbox: {result['inbox_path']}[/dim]")
+        console.print(f"[dim]  Total unprocessed: {result['total_unprocessed']}[/dim]")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}", err=True)
+        if verbose:
+            import traceback
+
+            console.print(f"[dim]{traceback.format_exc()}[/dim]")
         ctx.exit(1)
 
 
@@ -514,6 +639,92 @@ def process(ctx, date_str):
         console.print(f"[dim]Debug info: {type(e).__name__}[/dim]")
         ctx.exit(1)
 
+
+@cli.command()
+@click.option('--urgent', is_flag=True, help='Show only urgent (priority:H) tasks')
+@click.option('--important', is_flag=True, help='Show important (priority:M) tasks')
+@click.option('--project', help='Filter by project')
+@click.option('--due', help='Filter by due date (today, tomorrow, overdue, week)')
+@click.option('--limit', default=50, help='Limit number of results')
+@click.option('--format', 'output_format', default='table', type=click.Choice(['table', 'simple', 'json']))
+@click.pass_context
+def tasks(ctx, urgent, important, project, due, limit, output_format):
+    """
+    List pending tasks with optional filters.
+
+    Examples:
+      plorp tasks                          # All pending tasks
+      plorp tasks --urgent                 # Urgent only
+      plorp tasks --project work           # Work project
+      plorp tasks --due today              # Due today
+      plorp tasks --overdue                # Overdue
+      plorp tasks --urgent --project work  # Combine filters
+    """
+    try:
+        config = load_config()
+
+        # Build TaskWarrior filter
+        filters = ['status:pending']
+
+        if urgent:
+            filters.append('priority:H')
+        elif important:
+            filters.append('priority:M')
+
+        if project:
+            filters.append(f'project:{project}')
+
+        if due == 'today':
+            filters.append('due:today')
+        elif due == 'tomorrow':
+            filters.append('due:tomorrow')
+        elif due == 'overdue':
+            filters.append('due.before:today')
+        elif due == 'week':
+            filters.append('due.before:eow')
+
+        # Get tasks from TaskWarrior
+        task_list = get_tasks(filters)
+
+        # Limit results
+        if len(task_list) > limit:
+            task_list = task_list[:limit]
+
+        # Format output
+        if output_format == 'json':
+            click.echo(json.dumps(task_list, indent=2))
+        elif output_format == 'simple':
+            for task in task_list:
+                pri = task.get('priority', ' ')
+                desc = task.get('description', '')
+                proj = task.get('project', '')
+                click.echo(f"[{pri}] {desc} ({proj})")
+        else:  # table
+            table = Table(title=f"Tasks ({len(task_list)})")
+
+            table.add_column("Pri", width=6)
+            table.add_column("Description", width=40)
+            table.add_column("Project", width=15)
+            table.add_column("Due", width=12)
+
+            for task in task_list:
+                pri = task.get('priority', '')
+                pri_icon = '🔴' if pri == 'H' else '🟡' if pri == 'M' else '  '
+                desc = task.get('description', '')
+                proj = task.get('project', '')
+                due_date = task.get('due', '')
+
+                # Format due date
+                if due_date:
+                    due_date = format_date(due_date, format='short')
+
+                table.add_row(f"{pri} [{pri_icon}]", desc, proj, due_date)
+
+            console.print(table)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}", err=True)
+        ctx.exit(1)
 
 
 # ============================================================================

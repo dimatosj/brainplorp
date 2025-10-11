@@ -4,4 +4,4 @@
 plorp - Workflow automation for TaskWarrior + Obsidian
 """
 
-__version__ = "1.5.0"
+__version__ = "1.5.2"

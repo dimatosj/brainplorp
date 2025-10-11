@@ -5,7 +5,7 @@ Date utilities.
 
 Helper functions for date formatting and conversion.
 """
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 
@@ -83,3 +83,41 @@ def format_taskwarrior_date_short(tw_date: str) -> str:
     if parsed:
         return format_date_iso(parsed)
     return tw_date
+
+
+def format_date(date_str: str, format: str = 'short') -> str:
+    """
+    Format TaskWarrior date for display.
+
+    Args:
+        date_str: TaskWarrior date (20251009T000000Z)
+        format: 'short', 'iso', or 'long'
+
+    Returns:
+        Formatted date string
+
+    Examples:
+        format_date('20251009T000000Z', 'short') -> 'today' or '2025-10-09'
+        format_date('20251009T000000Z', 'iso') -> '2025-10-09'
+        format_date('20251009T000000Z', 'long') -> 'Wednesday, October 9, 2025'
+    """
+    if not date_str:
+        return ''
+
+    # Parse TaskWarrior date
+    dt = datetime.strptime(date_str, '%Y%m%dT%H%M%SZ')
+    today = date.today()
+
+    if format == 'short':
+        if dt.date() == today:
+            return 'today'
+        elif dt.date() == today + timedelta(days=1):
+            return 'tomorrow'
+        elif dt.date() < today:
+            return f'{(today - dt.date()).days}d ago'
+        else:
+            return dt.strftime('%Y-%m-%d')
+    elif format == 'iso':
+        return dt.strftime('%Y-%m-%d')
+    else:  # long
+        return dt.strftime('%A, %B %d, %Y')

@@ -27,6 +27,16 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "max_folder_read": 50,
         "warn_large_file_words": 10000,
     },
+    # Sprint 9.2: Email inbox capture
+    "email": {
+        "enabled": False,
+        "imap_server": "imap.gmail.com",
+        "imap_port": 993,
+        "username": "",
+        "password": "",
+        "inbox_label": "INBOX",
+        "fetch_limit": 20,
+    },
 }
 
 

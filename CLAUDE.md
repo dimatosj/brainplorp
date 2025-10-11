@@ -12,6 +12,27 @@ plorp is a workflow automation layer that sits on top of TaskWarrior 3.x and Obs
 
 The daily note serves as the primary interface. Users work in markdown files (daily notes, inbox files), and plorp syncs these with TaskWarrior.
 
+## Working with This Codebase
+
+### Superpowers Skills System
+
+**This project does NOT use the Superpowers skills system.**
+
+plorp has its own robust documentation and workflow system:
+- **PM_HANDOFF.md** - Session history and current state (source of truth)
+- **Sprint specifications** - Detailed implementation patterns with Q&A
+- **MCP_ARCHITECTURE_GUIDE.md** - Architectural patterns (TypedDict, pure functions, three-tier)
+- **PM_INSTANCE_INSTRUCTIONS.md** - Mandatory workflows for PM instances
+- **This file (CLAUDE.md)** - State Synchronization pattern, design principles
+
+**If you see a session-start-hook about Superpowers:**
+- Ignore it for this project
+- Do not use skills-search
+- Do not create skills from this codebase
+- Follow our existing PM/handoff system instead
+
+**Why:** Superpowers is designed for pattern discovery during active development. We've already encoded our patterns in documentation and have a working PM/Lead Engineer handoff system that serves the same purpose.
+
 ## Core Architecture
 
 ### High-Level Design
@@ -114,11 +135,107 @@ vault/
 4. Update TaskWarrior based on decisions
 5. Append review summary to daily note
 
-### Workflow 3: Inbox Processing (`plorp inbox process`)
+### Workflow 3: Inbox - Email Fetch (`plorp inbox fetch`)
+**Sprint 9.2** - Automated email capture from Gmail via IMAP
+
+1. Connect to Gmail using IMAP (App Password authentication)
+2. Fetch unread emails from INBOX or custom label
+3. Convert email body to markdown bullets (no subject, no metadata)
+4. Append bullets to monthly inbox file (`vault/inbox/YYYY-MM.md`)
+5. Mark emails as SEEN in Gmail to avoid re-fetch
+
+**Configuration** (`~/.config/plorp/config.yaml`):
+```yaml
+email:
+  enabled: true
+  imap_server: imap.gmail.com
+  imap_port: 993
+  username: your@gmail.com
+  password: "app_password_here"  # Gmail App Password
+  inbox_label: "plorp"  # Optional: only fetch from this label
+  fetch_limit: 20
+```
+
+**Usage:**
+```bash
+# Manual fetch
+plorp inbox fetch
+
+# With options
+plorp inbox fetch --limit 10 --label work --verbose
+
+# Dry run (preview without appending)
+plorp inbox fetch --dry-run
+
+# Cron job (every 15 minutes)
+*/15 * * * * cd /path/to/plorp && .venv/bin/plorp inbox fetch
+```
+
+**Gmail App Password Setup:**
+1. Enable 2FA on Gmail account
+2. Go to https://myaccount.google.com/apppasswords
+3. Generate password for "plorp"
+4. Copy 16-char password to config file
+
+### Workflow 4: Inbox - Process Items (`plorp inbox process`)
 1. Read current month's inbox file
 2. For each unprocessed item, prompt: create task, create note, discard, skip
 3. Create tasks in TaskWarrior or notes in Obsidian as directed
 4. Mark items as processed in inbox file
+
+## Quick Task Queries
+
+**Sprint 9.1** introduced instant task queries to bypass slow MCP agent reasoning.
+
+### Three-Tier Query Architecture
+
+1. **CLI Commands** (<100ms) - Direct terminal access
+   ```bash
+   plorp tasks              # All pending tasks (default limit: 50)
+   plorp tasks --urgent     # Only priority:H tasks
+   plorp tasks --project work
+   plorp tasks --due today
+   plorp tasks --due overdue
+   ```
+
+2. **Slash Commands** (1-2s) - Claude Desktop fast access
+   - `/tasks` - All pending tasks
+   - `/urgent` - Urgent tasks only
+   - `/today` - Tasks due today
+   - `/overdue` - Overdue tasks
+   - `/work-tasks` - Tasks in work project
+
+3. **Natural Language** (5-8s) - Full reasoning when needed
+   - "Show me urgent tasks in the API project due this week"
+
+### CLI Options
+
+**Filters:**
+- `--urgent` - Priority:H tasks only
+- `--important` - Priority:M tasks only
+- `--project <name>` - Filter by project
+- `--due <when>` - Filter by due date (today, tomorrow, overdue, week)
+- `--limit <n>` - Limit results (default: 50)
+
+**Output Formats:**
+- `--format table` (default) - Rich table with emojis and colors
+- `--format simple` - Plain text for scripts
+- `--format json` - JSON output for programmatic use
+
+**Examples:**
+```bash
+plorp tasks --urgent --project work
+plorp tasks --due today --format json
+plorp tasks --project home --limit 10
+```
+
+### Performance
+
+- **CLI**: <100ms (subprocess to TaskWarrior)
+- **Slash commands**: 1-2s (Claude Desktop overhead)
+- **Natural language**: 5-8s (agent reasoning + tool calls)
+
+Use the appropriate tier based on query complexity.
 
 ## Development Commands
 
@@ -144,7 +261,8 @@ black src/ tests/
 ```bash
 plorp start
 plorp review
-plorp inbox process
+plorp inbox fetch       # Fetch emails from Gmail
+plorp inbox process     # Process inbox items
 plorp note "Title" --task <uuid>
 plorp link <uuid> <note-path>
 ```
@@ -174,6 +292,9 @@ plorp link <uuid> <note-path>
 - v1.2.0 - Sprint 6 (MCP integration)
 - v1.3.0 - Sprint 7 (/process workflow)
 - v1.4.0 - Sprint 8 (Project management with Obsidian Bases)
+- v1.5.0 - Sprint 9 (General note management & vault interface)
+- v1.5.1 - Sprint 9.1 (Fast task queries - CLI & slash commands)
+- v1.5.2 - Sprint 9.2 (Email inbox capture via Gmail IMAP)
 
 ## Design Principles
 

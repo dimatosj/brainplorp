@@ -313,3 +313,144 @@ def test_get_inbox_items_defaults_to_today(tmp_path):
 
     assert result["inbox_path"].endswith(f"{current_month}.md")
     assert result["item_count"] == 1
+
+
+# Email Appending Tests (Sprint 9.2)
+
+
+def test_append_emails_to_inbox_new_file(tmp_path):
+    """Test appending emails when inbox file doesn't exist."""
+    from plorp.core.inbox import append_emails_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    emails = [
+        {"id": "1", "body_text": "- Task 1\n- Task 2", "body_html": ""}
+    ]
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = append_emails_to_inbox(emails, vault)
+
+        assert result["appended_count"] == 1
+        assert "2025-10" in result["inbox_path"]
+        assert result["total_unprocessed"] == 2  # Two bullets
+
+        # Verify file content
+        inbox_file = Path(result["inbox_path"])
+        assert inbox_file.exists()
+        content = inbox_file.read_text()
+        assert "- Task 1" in content
+        assert "- Task 2" in content
+        assert "## Unprocessed" in content
+        assert "## Processed" in content
+
+
+def test_append_emails_to_inbox_existing_file(tmp_path):
+    """Test appending emails to existing inbox file."""
+    from plorp.core.inbox import append_emails_to_inbox
+
+    vault = tmp_path / "vault"
+    inbox_dir = vault / "inbox"
+    inbox_dir.mkdir(parents=True)
+
+    # Create existing inbox with one item
+    inbox_file = inbox_dir / "2025-10.md"
+    inbox_file.write_text(
+        "# Inbox 2025-10\n\n"
+        "## Unprocessed\n\n"
+        "- Existing item\n\n"
+        "## Processed\n"
+    )
+
+    emails = [
+        {"id": "2", "body_text": "New task from email", "body_html": ""}
+    ]
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = append_emails_to_inbox(emails, vault)
+
+        assert result["appended_count"] == 1
+        assert result["total_unprocessed"] == 2  # 1 existing + 1 new
+
+        content = inbox_file.read_text()
+        assert "- Existing item" in content
+        assert "- New task from email" in content
+
+
+def test_append_emails_with_html_body(tmp_path):
+    """Test appending emails with HTML body."""
+    from plorp.core.inbox import append_emails_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    emails = [
+        {
+            "id": "3",
+            "body_text": "",
+            "body_html": "<ul><li>Item 1</li><li>Item 2</li></ul>",
+        }
+    ]
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = append_emails_to_inbox(emails, vault)
+
+        inbox_file = Path(result["inbox_path"])
+        content = inbox_file.read_text()
+
+        # html2text should convert HTML list to markdown bullets
+        assert "Item 1" in content
+        assert "Item 2" in content
+
+
+def test_append_emails_with_multiple_emails(tmp_path):
+    """Test appending multiple emails at once."""
+    from plorp.core.inbox import append_emails_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    emails = [
+        {"id": "1", "body_text": "First email task", "body_html": ""},
+        {"id": "2", "body_text": "Second email task", "body_html": ""},
+        {"id": "3", "body_text": "Third email task", "body_html": ""},
+    ]
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = append_emails_to_inbox(emails, vault)
+
+        assert result["appended_count"] == 3
+        assert result["total_unprocessed"] == 3
+
+        inbox_file = Path(result["inbox_path"])
+        content = inbox_file.read_text()
+        assert "- First email task" in content
+        assert "- Second email task" in content
+        assert "- Third email task" in content
+
+
+def test_append_emails_empty_list(tmp_path):
+    """Test appending empty email list."""
+    from plorp.core.inbox import append_emails_to_inbox
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    emails = []
+
+    with patch("plorp.core.inbox.date") as mock_date:
+        mock_date.today.return_value = date(2025, 10, 6)
+
+        result = append_emails_to_inbox(emails, vault)
+
+        assert result["appended_count"] == 0
+        assert result["total_unprocessed"] == 0

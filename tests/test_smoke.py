@@ -9,7 +9,7 @@ from brainplorp import __version__
 
 def test_version():
     """Test that version is defined."""
-    assert __version__ == "1.5.3"
+    assert __version__ == "1.6.0"
 
 
 def test_package_imports():

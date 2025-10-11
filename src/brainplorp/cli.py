@@ -945,10 +945,13 @@ def config_validate(ctx):
     warnings = []
 
     # Check vault path
-    if not cfg.vault_path.exists():
-        errors.append(f"Vault path does not exist: {cfg.vault_path}")
-    elif not (cfg.vault_path / '.obsidian').exists():
-        warnings.append(f"Not an Obsidian vault (missing .obsidian): {cfg.vault_path}")
+    vault_path = Path(cfg['vault_path']) if 'vault_path' in cfg else None
+    if not vault_path:
+        errors.append("Vault path not configured")
+    elif not vault_path.exists():
+        errors.append(f"Vault path does not exist: {vault_path}")
+    elif not (vault_path / '.obsidian').exists():
+        warnings.append(f"Not an Obsidian vault (missing .obsidian): {vault_path}")
 
     # Check TaskWarrior
     if not shutil.which('task'):

@@ -3,8 +3,8 @@
 """
 Basic smoke tests to verify project structure.
 """
-import plorp
-from plorp import __version__
+import brainplorp
+from brainplorp import __version__
 
 
 def test_version():
@@ -14,10 +14,10 @@ def test_version():
 
 def test_package_imports():
     """Test that main package can be imported."""
-    import plorp.cli
-    import plorp.workflows
-    import plorp.integrations
-    import plorp.parsers
-    import plorp.utils
+    import brainplorp.cli
+    import brainplorp.workflows
+    import brainplorp.integrations
+    import brainplorp.parsers
+    import brainplorp.utils
 
-    assert plorp.cli is not None
+    assert brainplorp.cli is not None

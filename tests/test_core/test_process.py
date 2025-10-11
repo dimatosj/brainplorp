@@ -353,12 +353,12 @@ def test_process_step2_creates_tasks_from_approvals(tmp_path):
     # Mock TaskWarrior integration
     from unittest.mock import patch, MagicMock
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create_task:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create_task:
         # Mock successful task creation
         mock_create_task.return_value = "abc-123-uuid"
 
         # Mock get_task_info to return task details
-        with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get_task_info:
+        with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get_task_info:
             mock_get_task_info.return_value = {
                 "uuid": "abc-123-uuid",
                 "description": "call mom",
@@ -400,9 +400,9 @@ def test_process_step2_preserves_rejected_tasks(tmp_path):
 
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create:
         mock_create.return_value = "uuid-1"
-        with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+        with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
             mock_get.return_value = {
                 "uuid": "uuid-1",
                 "description": "task 1",
@@ -448,9 +448,9 @@ def test_process_step2_removes_tbd_section_on_success(tmp_path):
 
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create:
         mock_create.return_value = "uuid-1"
-        with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+        with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
             mock_get.return_value = {
                 "uuid": "uuid-1",
                 "description": "task 1",
@@ -523,11 +523,11 @@ def test_full_workflow_success(tmp_path):
     # Step 2: Create tasks from approvals
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create:
         # Return different UUIDs for each task
         mock_create.side_effect = ["uuid-1", "uuid-2"]
 
-        with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+        with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
             def get_task_side_effect(uuid):
                 if uuid == "uuid-1":
                     return {
@@ -595,9 +595,9 @@ def test_full_workflow_with_rejections(tmp_path):
     # Step 2
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create:
         mock_create.return_value = "uuid-1"
-        with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+        with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
             mock_get.return_value = {
                 "uuid": "uuid-1",
                 "description": "task 1",
@@ -645,9 +645,9 @@ def test_full_workflow_with_errors(tmp_path):
     # Step 2: Create tasks from approvals
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create:
         mock_create.return_value = "uuid-1"
-        with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+        with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
             mock_get.return_value = {
                 "uuid": "uuid-1",
                 "description": "buy groceries",
@@ -705,8 +705,8 @@ def test_process_step2_task_without_due_date(tmp_path):
     # Mock TaskWarrior integration
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create, \
-         patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create, \
+         patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
 
         mock_create.return_value = "uuid-123"
 
@@ -757,8 +757,8 @@ def test_process_step2_task_without_priority(tmp_path):
 
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create, \
-         patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create, \
+         patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
 
         mock_create.return_value = "uuid-456"
 
@@ -807,8 +807,8 @@ def test_process_step2_task_minimal_fields(tmp_path):
 
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.create_task') as mock_create, \
-         patch('plorp.integrations.taskwarrior.get_task_info') as mock_get:
+    with patch('brainplorp.integrations.taskwarrior.create_task') as mock_create, \
+         patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get:
 
         mock_create.return_value = "uuid-789"
 
@@ -861,8 +861,8 @@ Some notes here
     # Mock TaskWarrior integration
     from unittest.mock import patch, MagicMock
 
-    with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get_info, \
-         patch('plorp.integrations.taskwarrior.mark_done') as mock_mark_done:
+    with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get_info, \
+         patch('brainplorp.integrations.taskwarrior.mark_done') as mock_mark_done:
 
         # Mock task exists
         mock_get_info.return_value = {
@@ -885,7 +885,7 @@ def test_process_step2_removes_from_projects_when_done(tmp_path, monkeypatch):
     it must be removed from all project frontmatter.
     """
     # Setup: Create vault structure with project
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project with task
     from brainplorp.core.projects import create_project
@@ -908,8 +908,8 @@ Some notes
     # Mock TaskWarrior integration
     from unittest.mock import patch
 
-    with patch('plorp.integrations.taskwarrior.get_task_info') as mock_get_info, \
-         patch('plorp.integrations.taskwarrior.mark_done') as mock_mark_done:
+    with patch('brainplorp.integrations.taskwarrior.get_task_info') as mock_get_info, \
+         patch('brainplorp.integrations.taskwarrior.mark_done') as mock_mark_done:
 
         mock_get_info.return_value = {
             "uuid": "task-xyz-789",

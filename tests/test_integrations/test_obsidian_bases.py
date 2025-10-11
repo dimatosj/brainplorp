@@ -106,7 +106,7 @@ full_path: test
 def test_create_project_note_3_segment(tmp_path, monkeypatch):
     """Test creating a 3-segment project note (domain.workstream.project)."""
     # Monkeypatch get_vault_path to use tmp_path
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Test: Create project
     project = create_project_note(
@@ -141,7 +141,7 @@ def test_create_project_note_3_segment(tmp_path, monkeypatch):
 
 def test_create_project_note_2_segment(tmp_path, monkeypatch):
     """Test creating a 2-segment project (needs review)."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Test: Create project without workstream
     project = create_project_note(
@@ -163,7 +163,7 @@ def test_create_project_note_2_segment(tmp_path, monkeypatch):
 
 def test_create_project_note_invalid_domain(tmp_path, monkeypatch):
     """Test validation rejects invalid domain."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Should raise ValueError
     with pytest.raises(ValueError, match="Invalid domain"):
@@ -176,7 +176,7 @@ def test_create_project_note_invalid_domain(tmp_path, monkeypatch):
 
 def test_create_project_note_already_exists(tmp_path, monkeypatch):
     """Test creating duplicate project fails."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create first project
     create_project_note(
@@ -196,7 +196,7 @@ def test_create_project_note_already_exists(tmp_path, monkeypatch):
 
 def test_list_projects_empty(tmp_path, monkeypatch):
     """Test listing projects when directory is empty."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create empty projects directory
     (tmp_path / "projects").mkdir()
@@ -211,7 +211,7 @@ def test_list_projects_empty(tmp_path, monkeypatch):
 
 def test_list_projects_with_filters(tmp_path, monkeypatch):
     """Test filtering projects by domain and state."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create multiple projects
     create_project_note("work", "marketing", "website", "active")
@@ -236,7 +236,7 @@ def test_list_projects_with_filters(tmp_path, monkeypatch):
 
 def test_list_projects_grouped_by_domain(tmp_path, monkeypatch):
     """Test projects are grouped by domain."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create projects in different domains
     create_project_note("work", "marketing", "website")
@@ -255,7 +255,7 @@ def test_list_projects_grouped_by_domain(tmp_path, monkeypatch):
 
 def test_get_project_info_exists(tmp_path, monkeypatch):
     """Test getting single project that exists."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project
     create_project_note("work", "marketing", "website")
@@ -271,7 +271,7 @@ def test_get_project_info_exists(tmp_path, monkeypatch):
 
 def test_get_project_info_not_found(tmp_path, monkeypatch):
     """Test getting project that doesn't exist returns None."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
     (tmp_path / "projects").mkdir()
 
     # Test: Get non-existent project
@@ -283,7 +283,7 @@ def test_get_project_info_not_found(tmp_path, monkeypatch):
 
 def test_update_project_state(tmp_path, monkeypatch):
     """Test updating project state."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project
     create_project_note("work", "marketing", "website", state="planning")
@@ -301,7 +301,7 @@ def test_update_project_state(tmp_path, monkeypatch):
 
 def test_update_project_state_invalid_state(tmp_path, monkeypatch):
     """Test validation rejects invalid state."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     create_project_note("work", "marketing", "website")
 
@@ -312,7 +312,7 @@ def test_update_project_state_invalid_state(tmp_path, monkeypatch):
 
 def test_update_project_state_not_found(tmp_path, monkeypatch):
     """Test updating non-existent project fails."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
     (tmp_path / "projects").mkdir()
 
     # Should raise ValueError
@@ -322,7 +322,7 @@ def test_update_project_state_not_found(tmp_path, monkeypatch):
 
 def test_add_task_to_project(tmp_path, monkeypatch):
     """Test adding task UUID to project."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project
     create_project_note("work", "marketing", "website")
@@ -343,7 +343,7 @@ def test_add_task_to_project(tmp_path, monkeypatch):
 
 def test_add_task_to_project_duplicate(tmp_path, monkeypatch):
     """Test adding same UUID twice doesn't duplicate."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     create_project_note("work", "marketing", "website")
 
@@ -357,7 +357,7 @@ def test_add_task_to_project_duplicate(tmp_path, monkeypatch):
 
 def test_delete_project(tmp_path, monkeypatch):
     """Test deleting project."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     # Create project
     create_project_note("work", "marketing", "website")
@@ -374,7 +374,7 @@ def test_delete_project(tmp_path, monkeypatch):
 
 def test_delete_project_not_found(tmp_path, monkeypatch):
     """Test deleting non-existent project returns False."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
     (tmp_path / "projects").mkdir()
 
     # Test: Delete non-existent project
@@ -386,7 +386,7 @@ def test_delete_project_not_found(tmp_path, monkeypatch):
 
 def test_list_projects_skips_invalid_notes(tmp_path, monkeypatch, capsys):
     """Test that invalid notes are skipped with warning."""
-    monkeypatch.setattr("plorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
+    monkeypatch.setattr("brainplorp.integrations.obsidian_bases.get_vault_path", lambda: tmp_path)
 
     projects_dir = tmp_path / "projects"
     projects_dir.mkdir()

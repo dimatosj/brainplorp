@@ -41,9 +41,9 @@ def test_load_config_creates_default(tmp_path, monkeypatch, capsys):
     vault_dir = tmp_path / "test_vault"
 
     # Mock both get_config_path and DEFAULT_CONFIG
-    monkeypatch.setattr("plorp.config.get_config_path", lambda: config_file)
+    monkeypatch.setattr("brainplorp.config.get_config_path", lambda: config_file)
     monkeypatch.setattr(
-        "plorp.config.DEFAULT_CONFIG",
+        "brainplorp.config.DEFAULT_CONFIG",
         {
             "vault_path": str(vault_dir),
             "taskwarrior_data": "~/.task",
@@ -84,7 +84,7 @@ def test_load_config_existing(tmp_path, monkeypatch):
     with open(config_file, "w") as f:
         yaml.dump(custom_config, f)
 
-    monkeypatch.setattr("plorp.config.get_config_path", lambda: config_file)
+    monkeypatch.setattr("brainplorp.config.get_config_path", lambda: config_file)
 
     config = load_config()
 
@@ -110,7 +110,7 @@ def test_load_config_creates_vault_if_not_exists(tmp_path, monkeypatch, capsys):
     with open(config_file, "w") as f:
         yaml.dump(custom_config, f)
 
-    monkeypatch.setattr("plorp.config.get_config_path", lambda: config_file)
+    monkeypatch.setattr("brainplorp.config.get_config_path", lambda: config_file)
 
     config = load_config()
 
@@ -139,7 +139,7 @@ def test_load_config_warns_if_vault_is_file(tmp_path, monkeypatch, capsys):
     with open(config_file, "w") as f:
         yaml.dump(custom_config, f)
 
-    monkeypatch.setattr("plorp.config.get_config_path", lambda: config_file)
+    monkeypatch.setattr("brainplorp.config.get_config_path", lambda: config_file)
 
     config = load_config()
 
@@ -157,7 +157,7 @@ def test_save_config(tmp_path, monkeypatch):
     config_dir = tmp_path / "plorp"
     config_file = config_dir / "config.yaml"
 
-    monkeypatch.setattr("plorp.config.get_config_path", lambda: config_file)
+    monkeypatch.setattr("brainplorp.config.get_config_path", lambda: config_file)
 
     test_config = {"vault_path": "/test/vault"}
     save_config(test_config)
@@ -183,7 +183,7 @@ def test_load_config_handles_invalid_yaml(tmp_path, monkeypatch):
     with open(config_file, "w") as f:
         f.write("- item1\n- item2\n")
 
-    monkeypatch.setattr("plorp.config.get_config_path", lambda: config_file)
+    monkeypatch.setattr("brainplorp.config.get_config_path", lambda: config_file)
 
     config = load_config()
 

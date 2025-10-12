@@ -2295,3 +2295,502 @@ Formula/
 4. Phase 4: Documentation (1.5 hours)
 
 **Total:** 9 hours → v1.6.2 release
+
+---
+
+## Implementation Guidance for Lead Engineer
+
+**Date:** 2025-10-12
+**Status:** Additional Q&A from Implementation Start
+
+### Implementer Questions & Answers
+
+**IQ1: Where is the homebrew-brainplorp repo?**
+
+**Answer:** Clone from GitHub:
+
+```bash
+cd /private/tmp  # Or your preferred workspace
+git clone https://github.com/dimatosj/homebrew-brainplorp.git
+cd homebrew-brainplorp
+```
+
+The repo already exists with the current `brainplorp.rb` formula.
+
+---
+
+**IQ2: Phase 1 Approach - Should I test versions systematically or use a known working version?**
+
+**Answer: Systematic testing (Option B)** ✅
+
+**Context from Implementer:**
+> "I'm not looking to solve this problem once, I'm trying to make a robust installer."
+
+**This is the correct mindset.** ✅
+
+### Why Systematic Testing is Required:
+
+**1. Production Confidence**
+- Can't ship "we hope 3.3.0 works"
+- Need data: "3.4.0 tested on 3 Macs, works consistently"
+- Document failure modes for troubleshooting
+
+**2. Future-Proofing**
+- TaskWarrior will release 3.5.0, 3.6.0, etc.
+- Test script enables quick validation of new versions
+- Process: "run script on new version → decide to upgrade or stay pinned"
+
+**3. Maintainability**
+- Reusable process for future updates
+- Other developers can validate TaskWarrior versions
+- Institutional knowledge (not tribal knowledge)
+
+**4. User Support**
+- When users report issues: "run this test script"
+- Helps identify TaskWarrior vs brainplorp issues
+- Clear documentation for troubleshooting
+
+### Implementation Approach (Option B):
+
+**Phase 1.1: Create Test Infrastructure (1 hour)**
+
+Create `scripts/test_taskwarrior_version.sh`:
+```bash
+#!/bin/bash
+# ⚠️  WARNING: This script deletes ~/.task and ~/.taskrc
+# ⚠️  Only run on a test Mac with no important tasks!
+
+set -e
+
+echo "=========================================="
+echo "TaskWarrior Version Testing Script"
+echo "=========================================="
+echo ""
+echo "⚠️  This script will DELETE ~/.task and ~/.taskrc"
+echo "⚠️  All TaskWarrior data will be lost!"
+echo ""
+read -p "Continue? (type 'yes' to confirm): " confirm
+
+if [ "$confirm" != "yes" ]; then
+    echo "Aborted."
+    exit 1
+fi
+
+VERSION=$1
+
+if [ -z "$VERSION" ]; then
+    echo "Usage: $0 <version>"
+    echo "Example: $0 v3.4.0"
+    exit 1
+fi
+
+echo ""
+echo "Testing TaskWarrior ${VERSION}..."
+echo "=========================================="
+echo ""
+
+# Clean previous TaskWarrior install
+echo "1. Cleaning previous TaskWarrior..."
+brew uninstall --ignore-dependencies task 2>/dev/null || true
+
+# Clone TaskWarrior and checkout version
+echo "2. Cloning TaskWarrior..."
+cd /tmp
+rm -rf taskwarrior-test
+git clone https://github.com/GothenburgBitFactory/taskwarrior.git taskwarrior-test
+cd taskwarrior-test
+
+echo "3. Checking out ${VERSION}..."
+if ! git checkout $VERSION; then
+    echo "❌ Version ${VERSION} not found in TaskWarrior repo"
+    exit 1
+fi
+
+# Build TaskWarrior
+echo "4. Building TaskWarrior..."
+mkdir -p build
+cd build
+if ! cmake ..; then
+    echo "❌ CMake configuration failed"
+    exit 1
+fi
+
+if ! make -j4; then
+    echo "❌ Build failed"
+    exit 1
+fi
+
+echo "✅ Build succeeded"
+echo ""
+
+# Clean TaskWarrior data
+echo "5. Cleaning TaskWarrior data..."
+rm -rf ~/.task ~/.taskrc
+
+# Test 1: Version check (with timeout)
+echo "6. Running tests..."
+echo "   Test 1: task --version (5s timeout)"
+if timeout 5s ./src/task --version > /tmp/tw_version.txt 2>&1; then
+    VERSION_OUTPUT=$(cat /tmp/tw_version.txt)
+    echo "   ✅ PASS - Version: $VERSION_OUTPUT"
+else
+    echo "   ❌ FAIL - Command hung or errored"
+    cat /tmp/tw_version.txt
+    exit 1
+fi
+
+# Test 2: Basic task creation (with timeout)
+echo "   Test 2: task add (5s timeout)"
+if timeout 5s ./src/task add "test task" > /tmp/tw_add.txt 2>&1; then
+    echo "   ✅ PASS - Task created"
+else
+    echo "   ❌ FAIL - Command hung or errored"
+    cat /tmp/tw_add.txt
+    exit 1
+fi
+
+# Test 3: Task count (with timeout)
+echo "   Test 3: task count (5s timeout)"
+if timeout 5s ./src/task count > /tmp/tw_count.txt 2>&1; then
+    COUNT=$(cat /tmp/tw_count.txt)
+    echo "   ✅ PASS - Count: $COUNT"
+else
+    echo "   ❌ FAIL - Command hung or errored"
+    cat /tmp/tw_count.txt
+    exit 1
+fi
+
+# Test 4: Task list (with timeout)
+echo "   Test 4: task list (5s timeout)"
+if timeout 5s ./src/task list > /tmp/tw_list.txt 2>&1; then
+    echo "   ✅ PASS - List displayed"
+else
+    echo "   ❌ FAIL - Command hung or errored"
+    cat /tmp/tw_list.txt
+    exit 1
+fi
+
+# Test 5: Mark done (with timeout)
+echo "   Test 5: task 1 done (5s timeout)"
+if timeout 5s ./src/task 1 done > /tmp/tw_done.txt 2>&1; then
+    echo "   ✅ PASS - Task marked done"
+else
+    echo "   ❌ FAIL - Command hung or errored"
+    cat /tmp/tw_done.txt
+    exit 1
+fi
+
+# Test 6: Final count (should be 0)
+echo "   Test 6: task count (verify 0) (5s timeout)"
+if timeout 5s ./src/task count > /tmp/tw_final.txt 2>&1; then
+    FINAL_COUNT=$(cat /tmp/tw_final.txt)
+    if [ "$FINAL_COUNT" = "0" ]; then
+        echo "   ✅ PASS - Count: 0 (task completed)"
+    else
+        echo "   ⚠️  WARN - Count: $FINAL_COUNT (expected 0)"
+    fi
+else
+    echo "   ❌ FAIL - Command hung or errored"
+    cat /tmp/tw_final.txt
+    exit 1
+fi
+
+echo ""
+echo "=========================================="
+echo "✅ TaskWarrior ${VERSION} - ALL TESTS PASSED"
+echo "=========================================="
+echo ""
+echo "Binary location: /tmp/taskwarrior-test/build/src/task"
+echo "Git commit: $(git rev-parse HEAD)"
+echo ""
+echo "Next steps:"
+echo "1. Document results in scripts/TASKWARRIOR_TESTING.md"
+echo "2. Test on additional Mac configurations"
+echo "3. Create pinned formula if this version works consistently"
+echo ""
+
+exit 0
+```
+
+Create `scripts/TASKWARRIOR_TESTING.md`:
+```markdown
+# TaskWarrior Version Testing
+
+## Current Status
+
+**Recommended Version:** TBD (testing in progress)
+**Last Updated:** 2025-10-12
+
+## Test Matrix
+
+Test each version with `./scripts/test_taskwarrior_version.sh <version>`
+
+| Version | Build | Test 1 (version) | Test 2 (add) | Test 3 (count) | Test 4 (list) | Test 5 (done) | Result | Notes |
+|---------|-------|------------------|--------------|----------------|---------------|---------------|--------|-------|
+| v3.4.1  | ?     | ?                | ?            | ?              | ?             | ?             | TBD    | Known issue: hangs on first run |
+| v3.4.0  | ?     | ?                | ?            | ?              | ?             | ?             | TBD    | Testing... |
+| v3.3.0  | ?     | ?                | ?            | ?              | ?             | ?             | TBD    | Testing... |
+| v3.2.0  | ?     | ?                | ?            | ?              | ?             | ?             | TBD    | Testing... |
+| v3.1.0  | ?     | ?                | ?            | ?              | ?             | ?             | TBD    | Testing... |
+| v3.0.0  | ?     | ?                | ?            | ?              | ?             | ?             | TBD    | Testing... |
+
+## Testing Procedure
+
+### Prerequisites
+- macOS with Homebrew
+- Xcode Command Line Tools installed
+- cmake installed: `brew install cmake`
+- Clean test environment (no important TaskWarrior data)
+
+### Run Tests
+
+```bash
+# Make script executable
+chmod +x scripts/test_taskwarrior_version.sh
+
+# Test each version (most recent first)
+./scripts/test_taskwarrior_version.sh v3.4.0
+./scripts/test_taskwarrior_version.sh v3.3.0
+./scripts/test_taskwarrior_version.sh v3.2.0
+./scripts/test_taskwarrior_version.sh v3.1.0
+./scripts/test_taskwarrior_version.sh v3.0.0
+
+# Document results in table above after each test
+```
+
+### Multi-Mac Testing
+
+After finding a working version, test on multiple Mac configurations:
+
+| Mac Type | Conda | macOS | Architecture | Version | Result | Notes |
+|----------|-------|-------|--------------|---------|--------|-------|
+| Mac 1    | Yes   | 15.4  | arm64        | v3.4.0  | TBD    | John's Mac |
+| Mac 2    | No    | 15.x  | arm64        | v3.4.0  | TBD    | Clean Mac |
+| Mac 3    | No    | 14.x  | arm64        | v3.4.0  | TBD    | Older macOS |
+
+## Recommended Version
+
+**To Be Determined**
+
+After testing, update this section with:
+- Recommended TaskWarrior version for brainplorp
+- Git commit SHA
+- Build instructions
+- Known limitations
+
+## Future Updates
+
+When TaskWarrior releases new versions (3.5.0, 3.6.0, etc.):
+
+1. Run test script: `./scripts/test_taskwarrior_version.sh vX.Y.Z`
+2. Update test matrix above
+3. If PASS and no regressions: Consider updating pinned formula
+4. If FAIL: Document failure mode for troubleshooting
+
+## Creating Pinned Formula
+
+Once a working version is identified:
+
+1. Note the git commit SHA from test output
+2. Create `Formula/taskwarrior-pinned.rb` in homebrew-brainplorp
+3. Pin to the specific commit
+4. Test installation: `brew install dimatosj/brainplorp/taskwarrior-pinned`
+5. Update brainplorp.rb to depend on pinned formula
+```
+
+**Phase 1.2: Systematic Testing (1.5 hours)**
+
+Run test matrix:
+```bash
+cd /Users/jsd/Documents/plorps/brainplorp
+
+# Make script executable
+chmod +x scripts/test_taskwarrior_version.sh
+
+# Test each version (start with most recent, work backward)
+./scripts/test_taskwarrior_version.sh v3.4.0
+# Document results in TASKWARRIOR_TESTING.md
+
+./scripts/test_taskwarrior_version.sh v3.3.0
+# Document results
+
+./scripts/test_taskwarrior_version.sh v3.2.0
+# Document results
+
+# Continue until you find a working version
+```
+
+**Expected outcome:**
+- One version passes all 6 tests
+- Document git commit SHA for that version
+- Use that version for pinned formula
+
+**Phase 1.3: Create Pinned Formula (0.5 hours)**
+
+After finding working version (example: v3.4.0):
+
+Create `Formula/taskwarrior-pinned.rb` in homebrew-brainplorp repo:
+```ruby
+class TaskwarriorPinned < Formula
+  desc "TaskWarrior (pinned version for brainplorp compatibility)"
+  homepage "https://taskwarrior.org"
+  url "https://github.com/GothenburgBitFactory/taskwarrior.git",
+      tag:      "v3.4.0",  # Use working version from tests
+      revision: "abc123def456..."  # Git commit SHA from test output
+  license "MIT"
+  head "https://github.com/GothenburgBitFactory/taskwarrior.git", branch: "3.0.0"
+
+  depends_on "cmake" => :build
+  depends_on "rust" => :build
+
+  def install
+    system "cmake", "-S", ".", "-B", "build", *std_cmake_args
+    system "cmake", "--build", "build"
+    system "cmake", "--install", "build"
+  end
+
+  def caveats
+    <<~EOS
+      This is a pinned version of TaskWarrior (3.4.0) for brainplorp compatibility.
+
+      Why pinned?
+      - TaskWarrior 3.4.1 has known issues (hangs on first run)
+      - Version 3.4.0 tested and verified working on multiple Macs
+      - See: https://github.com/dimatosj/brainplorp/blob/master/scripts/TASKWARRIOR_TESTING.md
+
+      To upgrade TaskWarrior in the future:
+      1. Test new version: /path/to/brainplorp/scripts/test_taskwarrior_version.sh vX.Y.Z
+      2. Update this formula if tests pass
+      3. Open PR in homebrew-brainplorp repo
+    EOS
+  end
+
+  test do
+    system "#{bin}/task", "--version"
+  end
+end
+```
+
+Update `Formula/brainplorp.rb`:
+```ruby
+# Change from:
+depends_on "task"  # Gets latest (broken 3.4.1)
+
+# To:
+depends_on "dimatosj/brainplorp/taskwarrior-pinned"  # Pinned working version
+```
+
+---
+
+### Why NOT Skip Testing (Option A)?
+
+❌ **Don't take shortcuts** - you said it yourself: "robust installer"
+
+**Skipping testing means:**
+- No data on what works (guessing)
+- Can't ship production installer without validation
+- Users will report issues you could have caught
+- No process for future TaskWarrior updates
+- Violates your robustness goal
+
+---
+
+### Why NOT Defer to Phase 2 First (Option C)?
+
+❌ **Dependencies matter**
+
+**Phase 2 (`brainplorp doctor`) needs working TaskWarrior:**
+- Doctor validates TaskWarrior functionality
+- Can't validate a broken system
+- Would have to retest everything after fixing TaskWarrior
+
+**Correct order:**
+1. Fix TaskWarrior (Phase 1)
+2. Build diagnostics on working system (Phase 2)
+3. Add validation to setup (Phase 3)
+4. Document (Phase 4)
+
+---
+
+### Current Knowledge
+
+**From SPRINT_10.1_BUGS.md:**
+- ✅ TaskWarrior 3.4.1 hangs (confirmed on John's Mac with conda)
+- ❓ Older 3.x versions: **Unknown - must test**
+
+**We have zero data on which versions work.** The systematic testing IS the work.
+
+---
+
+### Deliverables for Phase 1
+
+When Phase 1 is complete, you will have:
+
+**1. Test Script**
+- `scripts/test_taskwarrior_version.sh` (executable, with safety warnings)
+- Reusable for future TaskWarrior updates
+- 6 comprehensive tests per version
+
+**2. Test Results Documentation**
+- `scripts/TASKWARRIOR_TESTING.md`
+- Complete test matrix with results
+- Recommended version with justification
+- Multi-Mac validation results
+
+**3. Pinned Formula**
+- `Formula/taskwarrior-pinned.rb` (homebrew-brainplorp repo)
+- Pins to specific git commit of working version
+- Clear documentation of why pinned
+- Caveats explaining version choice
+
+**4. Updated brainplorp Formula**
+- `Formula/brainplorp.rb` depends on pinned version
+- Tested installation on 2+ Macs
+- Post-install message references testing docs
+
+---
+
+### Timeline
+
+**Phase 1 Total: 3 hours**
+- 1.1 Test infrastructure: 1 hour
+- 1.2 Systematic testing: 1.5 hours (5 versions × ~15-20 min each)
+- 1.3 Formula creation: 0.5 hours
+
+**Phases 2-4: 6 hours**
+- Phase 2: 2 hours
+- Phase 3: 2.5 hours
+- Phase 4: 1.5 hours
+
+**Sprint 10.1.1 Total: 9 hours**
+
+---
+
+### Success Criteria for Phase 1
+
+✅ **Test script exists and is reusable**
+✅ **5+ TaskWarrior versions tested with documented results**
+✅ **Working version identified with git commit SHA**
+✅ **Pinned formula created and tested on 2+ Macs**
+✅ **brainplorp.rb updated to use pinned formula**
+✅ **Documentation complete for future updates**
+
+---
+
+## Summary: Systematic Testing is the Robust Approach
+
+**Your instinct is correct:** "I'm not looking to solve this problem once, I'm trying to make a robust installer."
+
+**Systematic testing gives you:**
+1. ✅ Data-driven decisions (not guessing)
+2. ✅ Reusable process for future updates
+3. ✅ Documentation for troubleshooting
+4. ✅ Confidence for production release
+5. ✅ Institutional knowledge of TaskWarrior behavior
+6. ✅ Clear upgrade path when TaskWarrior improves
+
+**The test script is not just for this sprint** - it's infrastructure for maintaining brainplorp's TaskWarrior dependency long-term.
+
+**Proceed with Option B: Create test script, test systematically, document results, create pinned formula.**
+
+This is the professional, maintainable, robust approach. ✅

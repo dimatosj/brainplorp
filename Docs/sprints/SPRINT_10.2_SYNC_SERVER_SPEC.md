@@ -1,11 +1,11 @@
 # Sprint 10.2: Cloud Sync Server for Multi-User Testing
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Status:** ✅ Ready for Implementation
 **Sprint:** 10.2 (Minor sprint - Infrastructure for testing)
 **Estimated Effort:** 11 hours (2 + 4 + 2 + 3)
 **Dependencies:** Sprint 10.1 (v1.6.1 must ship first)
-**Architecture:** TaskChampion sync server (Fly.io) + Setup wizard enhancement
+**Architecture:** TaskChampion sync server (Fly.io) + Setup wizard with automatic first sync
 **Target Version:** brainplorp v1.7.0 (MINOR)
 **Date:** 2025-10-12
 
@@ -532,6 +532,81 @@ def configure_taskwarrior_sync(server_url: str, client_id: str, secret: str):
 
 ## Technical Notes (From Q&A)
 
+### TaskChampion Authentication Model
+
+**IMPORTANT: TaskChampion uses possession-based authentication, NOT username/password.**
+
+**No Traditional Login:**
+- ❌ No username/password
+- ❌ No account creation
+- ❌ No email verification
+- ✅ Credentials (client_id + secret) ARE the authentication
+
+**The Credentials:**
+
+1. **Client ID (UUID)** - 128-bit unique identifier
+   - Example: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
+   - Acts like a "username" but impossible to guess (1 in 2^128)
+   - Public: visible in server requests
+
+2. **Encryption Secret (64-char hex)** - 256-bit symmetric key
+   - Example: `abc123def456...` (32 bytes)
+   - Acts like a "password" AND encrypts all data
+   - Private: never sent to server, only used locally
+
+**How "Authentication" Works:**
+
+```
+Computer 1 (First Setup):
+├─ Generates: client_id=abc-123, secret=xyz-789
+├─ Creates task: "Buy milk"
+├─ Encrypts locally with secret=xyz-789
+├─ Uploads to server: POST /client/abc-123 (encrypted blob)
+└─ Server stores blob (can't read it, no secret)
+
+Computer 2 (Second Setup):
+├─ User enters: client_id=abc-123, secret=xyz-789 (SAME)
+├─ Requests from server: GET /client/abc-123
+├─ Server returns: encrypted blob (no credential check!)
+├─ Decrypts locally with secret=xyz-789
+└─ Success: "Buy milk" appears ✓
+
+Computer 3 (Wrong Secret):
+├─ User enters: client_id=abc-123, secret=WRONG (different)
+├─ Requests from server: GET /client/abc-123
+├─ Server returns: encrypted blob (doesn't verify secret)
+├─ Tries to decrypt with WRONG secret
+└─ Failure: garbage data, TaskWarrior errors ✗
+```
+
+**Key Insights:**
+
+1. **Server doesn't authenticate** - It gives encrypted blob to anyone who asks for client_id
+2. **Security = possession of secret** - Only correct secret can decrypt
+3. **Zero-knowledge server** - Server never knows your encryption secret
+4. **Computer 2 "authenticates" by decrypting** - If decrypt works, you're authorized
+
+**Why This Is Secure:**
+
+- Client ID impossible to guess (2^128 = 340 undecillion possibilities)
+- Even if attacker guesses client_id, data is encrypted
+- Need BOTH client_id AND secret to read data
+- For small testing group (5-20 users), collision probability ≈ 0%
+
+**Why No Username/Password:**
+
+- Simpler: no account system, password resets, email verification
+- More secure: end-to-end encryption (server can't be hacked for plaintext)
+- Privacy-first: server admin can't read your tasks
+- Stateless: server doesn't track "logged in" state
+
+**Implications for Computer 2 Setup:**
+
+1. User must manually enter EXACT client_id from Computer 1
+2. User must manually enter EXACT encryption_secret from Computer 1
+3. No "forgot password" recovery (if lost, must create new credentials)
+4. First sync automatically downloads tasks (no explicit "login" step)
+
 ### TaskChampion Multi-User Architecture
 
 **How it works:**
@@ -539,7 +614,7 @@ def configure_taskwarrior_sync(server_url: str, client_id: str, secret: str):
 - Each client has unique client ID + encryption secret
 - Data encrypted on client before upload (end-to-end)
 - Server never sees plaintext
-- No user accounts or authentication
+- No user accounts or traditional authentication
 
 **Same user, multiple computers:**
 ```
@@ -954,13 +1029,46 @@ User B: client_id=B, secret=Y  ← DIFFERENT
            'encryption_secret': encryption_secret
        }
 
-       # Test connection
+       # Test connection and perform first sync
+       click.echo()
        click.echo("  Testing connection...")
-       if test_sync_connection():
-           click.echo("  ✓ Sync successful!")
+
+       sync_result = subprocess.run(['task', 'sync'],
+                                     capture_output=True,
+                                     text=True,
+                                     timeout=30)
+
+       if sync_result.returncode == 0:
+           # Successful sync - check if we downloaded tasks
+           task_count_result = subprocess.run(['task', 'count'],
+                                              capture_output=True,
+                                              text=True)
+           task_count = int(task_count_result.stdout.strip()) if task_count_result.returncode == 0 else 0
+
+           if use_existing and task_count > 0:
+               # Computer 2+ downloading existing tasks
+               click.echo(f"  ✓ Sync successful! Downloaded {task_count} tasks from server.")
+               click.echo()
+               click.secho("  🎉 Your tasks are now available on this computer!",
+                          fg='green', bold=True)
+               click.echo(f"     Run 'task list' to see your {task_count} tasks.")
+           elif not use_existing and task_count > 0:
+               # Computer 1 uploading existing tasks
+               click.echo(f"  ✓ Sync successful! Uploaded {task_count} tasks to server.")
+               click.echo()
+               click.echo("  Your tasks are now synced to the cloud.")
+           else:
+               # Fresh start on both sides
+               click.echo("  ✓ Sync successful!")
        else:
+           # Sync failed
            click.echo("  ⚠ Couldn't reach server, but config saved.")
            click.echo("    Try 'task sync' later to verify.")
+           if use_existing:
+               click.echo()
+               click.secho("  💡 First sync will download your tasks from the server.",
+                          fg='cyan')
+               click.echo("     Your tasks from Computer 1 will appear after first successful sync.")
 
        # Display credentials (for Computer 2 setup)
        if not use_existing:
@@ -971,8 +1079,23 @@ User B: client_id=B, secret=Y  ← DIFFERENT
            click.echo(f"     Client ID: {client_id}")
            click.echo(f"     Secret: {encryption_secret}")
            click.echo()
-           click.echo("  On your other Mac, run 'brainplorp setup' and enter these values.")
-           click.echo("  (Also saved to: ~/.config/brainplorp/config.yaml)")
+           click.echo("  On your other Mac:")
+           click.echo("    1. Install brainplorp: brew install dimatosj/brainplorp/brainplorp")
+           click.echo("    2. Run: brainplorp setup")
+           click.echo("    3. Choose option 1 (Cloud Sync)")
+           click.echo("    4. Select 'Yes' when asked about existing credentials")
+           click.echo("    5. Enter the credentials above")
+           click.echo("    6. First sync will download all your tasks automatically")
+           click.echo()
+           click.echo("  (Credentials also saved to: ~/.config/brainplorp/config.yaml)")
+       else:
+           # Computer 2+ just finished first sync
+           if sync_result.returncode == 0 and task_count > 0:
+               click.echo()
+               click.echo("  Next steps:")
+               click.echo("    • Run 'brainplorp start' to generate today's daily note")
+               click.echo("    • Add/complete tasks on either computer")
+               click.echo("    • Run 'task sync' periodically to keep computers in sync")
 
    elif choice == 2:
        # Self-hosted (existing implementation)
@@ -1078,17 +1201,32 @@ The easiest way to sync brainplorp across multiple computers is to use the brain
 
 4. When asked "Do you have existing credentials?", choose YES
 
-5. Enter credentials from Computer 1
+5. Enter credentials from Computer 1:
+   - Server URL: `https://brainplorp-sync.fly.dev`
+   - Client ID: (paste from Computer 1)
+   - Encryption Secret: (paste from Computer 1)
 
-6. Test sync:
-   ```bash
-   task sync
+6. **First sync happens automatically** - Your tasks download from server!
+   ```
+   Testing connection...
+   ✓ Sync successful! Downloaded 50 tasks from server.
+
+   🎉 Your tasks are now available on this computer!
+       Run 'task list' to see your 50 tasks.
    ```
 
 7. Verify tasks appear:
    ```bash
    task list
+   # You should see all tasks from Computer 1!
    ```
+
+**How It Works:**
+- Computer 2 starts with empty TaskWarrior database
+- When you enter same credentials as Computer 1, first sync downloads all tasks
+- Server recognizes the client_id and sends encrypted task data
+- Computer 2 decrypts with encryption_secret locally
+- All tasks appear as if they've always been there!
 
 ### Retrieving Credentials
 
@@ -1102,19 +1240,60 @@ Look for the `taskwarrior_sync` section.
 
 ### Troubleshooting
 
-**"Connection refused" during sync:**
+**"Connection refused" during setup:**
 - Check internet connection
 - Verify server URL: `curl https://brainplorp-sync.fly.dev/`
-- If server down, wait and try again later
+- If server down, setup completes but warns you
+- Try `task sync` again when server is back up
 
 **"Sync failed" error:**
 - Check credentials match between computers
 - Re-run `brainplorp setup` and enter correct credentials
+- Verify client_id: `task config sync.server.client_id`
+- Verify server URL: `task config sync.server.url`
 
-**Tasks not appearing on Computer 2:**
-- Verify same client ID on both computers: `task config sync.server.client_id`
-- Run `task sync` on both computers
-- Check for sync errors: `task sync --verbose`
+**Tasks not appearing on Computer 2 after first sync:**
+1. Verify same client_id on both computers:
+   ```bash
+   # Computer 1
+   task config sync.server.client_id
+   # Output: abc-123-xyz
+
+   # Computer 2
+   task config sync.server.client_id
+   # Output: abc-123-xyz (should match!)
+   ```
+
+2. Run sync on both computers:
+   ```bash
+   # Computer 1
+   task sync
+
+   # Computer 2
+   task sync
+   task list  # Should now see tasks
+   ```
+
+3. Check for sync errors:
+   ```bash
+   task sync --verbose
+   ```
+
+**"Wrong encryption secret" symptoms:**
+- No explicit error (server doesn't validate)
+- TaskWarrior errors when trying to decrypt
+- Garbage data or "corrupted database" messages
+- **Solution:** Re-run `brainplorp setup`, enter CORRECT secret from Computer 1
+
+**"I lost my credentials":**
+- Check Computer 1: `cat ~/.config/brainplorp/config.yaml`
+- If all computers lost: no recovery, must create new client_id
+- Old tasks on server become inaccessible (no way to decrypt)
+
+**"Authentication failed" or "Unauthorized":**
+- TaskChampion doesn't use username/password authentication
+- No "login" step - credentials are used for encryption only
+- If you see auth errors, it's likely a different issue (firewall, wrong URL)
 
 ---
 
@@ -1209,30 +1388,63 @@ fly logs --app brainplorp-sync
 # Should see: sync request from client_id
 ```
 
-**Test 2: Two Computers (Same User)**
+**Test 2: Two Computers (Same User) - First Sync Download**
 ```bash
 # Computer 1 (already set up from Test 1)
 task add "Task from Computer 1" project:sync-test
+task add "Another task" project:sync-test
 task sync
+task count  # Should show: 2 (or more if Test 1 had tasks)
 
 # Computer 2 (different Mac or clean environment)
 brew install dimatosj/brainplorp/brainplorp
-brainplorp setup
-# Choose: option 1 (cloud sync), use existing credentials
-# Enter: client_id and secret from Computer 1
 
-task sync
+# IMPORTANT: Verify Computer 2 starts with EMPTY database
+task count  # Should show: 0 (fresh install, no tasks)
+
+brainplorp setup
+# Vault path: (enter path)
+# Choose: option 1 (cloud sync)
+# Do you have existing credentials? YES
+# Enter: client_id from Computer 1 (from config.yaml)
+# Enter: secret from Computer 1 (from config.yaml)
+
+# First sync should happen AUTOMATICALLY during setup
+# Expected output:
+#   Testing connection...
+#   ✓ Sync successful! Downloaded 2 tasks from server.
+#   🎉 Your tasks are now available on this computer!
+
+# Verify tasks downloaded
+task count  # Should show: 2 (same as Computer 1)
 task list project:sync-test
-# Should see: "Task from Computer 1"
+# Should see: "Task from Computer 1" and "Another task"
+
+# Verify task UUIDs match between computers
+task _get 1.uuid  # Copy this UUID
+# On Computer 1: task _get 1.uuid
+# Should match Computer 2's UUID (same task object!)
 
 # Add task on Computer 2
 task add "Task from Computer 2" project:sync-test
 task sync
+task count  # Should show: 3
 
 # Back to Computer 1
 task sync
+task count  # Should show: 3 (downloaded Computer 2's new task)
 task list project:sync-test
-# Should see: Both tasks
+# Should see: All 3 tasks
+
+# CRITICAL: Verify bidirectional sync
+# Computer 1: mark task done
+task 1 done
+task sync
+
+# Computer 2: verify completion synced
+task sync
+task 1 status
+# Should show: completed
 ```
 
 **Test 3: Multiple Testers (Data Isolation)**
@@ -1309,19 +1521,44 @@ task sync
 
 ## Success Criteria (Finalized)
 
+**Infrastructure:**
 - ✅ TaskChampion server deployed to Fly.io at `https://brainplorp-sync.fly.dev`
 - ✅ Server accessible and responds to sync requests
-- ✅ Setup wizard offers "brainplorp Cloud Sync" as option 1
+- ✅ 3GB persistent volume configured for task data
+
+**Setup Wizard:**
+- ✅ Wizard offers "brainplorp Cloud Sync" as option 1 (default)
 - ✅ Credentials auto-generated securely (UUID + 32-byte secret)
-- ✅ Credentials displayed to user and saved to config.yaml
-- ✅ Connection tested after wizard setup
-- ✅ Second computer can enter existing credentials
-- ✅ Tasks sync successfully between two computers
-- ✅ Multiple testers have isolated data (can't see each other's tasks)
-- ✅ MULTI_COMPUTER_SETUP.md updated with cloud sync instructions
+- ✅ Credentials displayed to user with step-by-step Computer 2 instructions
+- ✅ Credentials saved to config.yaml for retrieval
+- ✅ "Existing credentials" flow for Computer 2+ setup
+- ✅ First sync happens automatically during setup
+- ✅ Wizard shows task count after successful first sync
+
+**Sync Behavior:**
+- ✅ Computer 2 starts with empty TaskWarrior database
+- ✅ First sync downloads all tasks from server automatically
+- ✅ User sees: "Downloaded X tasks from server" message
+- ✅ Task UUIDs match between computers (same objects)
+- ✅ Bidirectional sync works (both directions)
+- ✅ Multiple testers have isolated data (different client_ids)
+
+**Documentation:**
+- ✅ MULTI_COMPUTER_SETUP.md explains cloud sync option
+- ✅ Documentation clarifies "no username/password" authentication model
+- ✅ Troubleshooting section covers first-sync issues
 - ✅ TESTING_GUIDE.md includes sync testing scenario
-- ✅ All 5 test scenarios pass
+
+**Testing:**
+- ✅ Test 1 passes (single computer setup)
+- ✅ Test 2 passes (two computers, first-sync download verified)
+- ✅ Test 3 passes (multiple testers, data isolated)
+- ✅ Test 4 passes (server unreachable gracefully handled)
+- ✅ Test 5 passes (invalid credentials detected)
+
+**Release:**
 - ✅ Version bumped to v1.7.0
+- ✅ Sprint 10.1 (v1.6.1) shipped successfully before starting 10.2
 
 ---
 
@@ -1357,3 +1594,21 @@ task sync
 - Added effort estimate (11 hours)
 - Added success criteria (finalized)
 - Status: Ready for implementation
+
+**v1.1.0 (2025-10-12):**
+- Added explicit first-sync behavior to wizard (Phase 2)
+- Wizard now performs `task sync` automatically during setup
+- Shows task count after sync: "Downloaded X tasks from server"
+- Different messages for Computer 1 (upload) vs Computer 2+ (download)
+- Step-by-step Computer 2 setup instructions displayed
+- Added comprehensive TaskChampion authentication model explanation
+- Clarified: no username/password, possession-based auth (client_id + secret)
+- Documented how "authentication" works via decryption success
+- Updated MULTI_COMPUTER_SETUP.md section with first-sync details
+- Enhanced troubleshooting: wrong secret symptoms, lost credentials
+- Test 2 now explicitly verifies first-sync download behavior
+- Verify Computer 2 starts with empty database (task count = 0)
+- Verify task UUIDs match between computers
+- Verify bidirectional sync (mark done on Computer 1, appears on Computer 2)
+- Expanded success criteria (28 checkboxes, organized by category)
+- Status: Ready for implementation (v1.1.0)

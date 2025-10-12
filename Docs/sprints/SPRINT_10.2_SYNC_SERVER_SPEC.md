@@ -1,19 +1,20 @@
 # Sprint 10.2: Cloud Sync Server for Multi-User Testing
 
-**Version:** 1.1.0
+**Version:** 2.0.0
 **Status:** ✅ Ready for Implementation
 **Sprint:** 10.2 (Minor sprint - Infrastructure for testing)
-**Estimated Effort:** 11 hours (2 + 4 + 2 + 3)
+**Estimated Effort:** 8 hours remaining (Phase 1 complete: 2 hrs, Remaining: 3 + 2 + 3)
 **Dependencies:** Sprint 10.1 (v1.6.1 must ship first)
-**Architecture:** TaskChampion sync server (Fly.io) + Setup wizard with automatic first sync
+**Architecture:** TaskChampion sync server (Fly.io) + Setup wizard with cloud-only sync
 **Target Version:** brainplorp v1.7.0 (MINOR)
 **Date:** 2025-10-12
+**Phase 1 Status:** ✅ COMPLETE - Server deployed at https://brainplorp-sync.fly.dev/
 
 ---
 
 ## Executive Summary
 
-Sprint 10.2 deploys a shared TaskChampion sync server in the cloud and enhances the setup wizard to offer it as the default option for testers. This enables multiple testers to easily test brainplorp's multi-computer sync without setting up their own servers.
+Sprint 10.2 deploys a shared TaskChampion sync server in the cloud and simplifies the setup wizard to use cloud sync exclusively. This enables multiple testers to easily test brainplorp's multi-computer sync without any configuration complexity.
 
 **Problem:**
 - Sprint 10 documented multi-computer sync, but requires users to set up their own TaskChampion server
@@ -21,31 +22,50 @@ Sprint 10.2 deploys a shared TaskChampion sync server in the cloud and enhances 
 - No easy way to onboard multiple testers with minimal setup
 
 **Solution:**
-- Deploy single public TaskChampion sync server (e.g., `https://sync.brainplorp.com`)
-- Update `brainplorp setup` wizard to offer cloud sync as default option
-- Auto-generate client credentials (client ID + encryption secret)
+- ✅ Deploy single public TaskChampion sync server: `https://brainplorp-sync.fly.dev` (COMPLETE)
+- Update `brainplorp setup` wizard to use cloud sync exclusively (no choices)
+- Auto-detect if first computer (generate credentials) or additional computer (enter credentials)
 - Multiple testers share same server, data isolated by client ID
 
-**User Experience:**
+**User Experience - Computer 1 (First Setup):**
 ```bash
-# Tester runs setup wizard
 $ brainplorp setup
 
+Step 1: Vault Path
+  Enter Obsidian vault path [~/vault]: ~/vault
+
 Step 2: TaskWarrior Sync
-  TaskChampion Server Options:
-    1. brainplorp Cloud Sync (recommended for testing)  ← NEW
-    2. Self-hosted (you run the server)
-    3. Skip for now
+  Configuring brainplorp Cloud Sync...
 
-  Choose option [1]: 1
+  ✓ Sync configured and tested!
+  ✓ Uploaded 0 tasks to server.
 
-  ✓ Sync configured!
-
-  📋 IMPORTANT: Save these credentials for other computers:
+  📋 IMPORTANT: Save these credentials for your other computers:
      Client ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890
      Secret: abc123def456...
 
-  On your other Mac, run 'brainplorp setup' and enter these values.
+  These are also saved in: ~/.config/brainplorp/config.yaml
+```
+
+**User Experience - Computer 2+ (Additional Computers):**
+```bash
+$ brainplorp setup
+
+Step 1: Vault Path
+  Enter Obsidian vault path [~/vault]: ~/vault
+
+Step 2: TaskWarrior Sync
+  Do you have sync credentials from another computer? [y/N]: y
+
+  Enter credentials from Computer 1:
+  Client ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  Secret: abc123def456...
+
+  Configuring brainplorp Cloud Sync...
+  Testing connection...
+
+  ✓ Sync successful! Downloaded 15 tasks from server.
+  🎉 Your tasks are now available on this computer!
 ```
 
 **Benefits:**
@@ -851,34 +871,45 @@ User B: client_id=B, secret=Y  ← DIFFERENT
 
 ## Updated Implementation Phases (With Answers Applied)
 
-### Phase 1: Server Deployment (2 hours)
+### Phase 1: Server Deployment - ✅ COMPLETE (2025-10-12)
 
 **Platform:** Fly.io (free tier)
 **URL:** `https://brainplorp-sync.fly.dev`
+**Status:** ✅ Deployed and operational
+**Server Version:** TaskChampion sync server v0.7.2-pre
 
-**Steps:**
+**Deployed Configuration:**
 
-1. **Install flyctl:**
-   ```bash
-   curl -L https://fly.io/install.sh | sh
-   fly auth login
-   ```
-
-2. **Create Dockerfile:**
+1. **Dockerfile** (`deploy/Dockerfile`):
    ```dockerfile
-   FROM rust:1.75-slim
+   FROM rust:latest as builder
 
-   # Install TaskChampion sync server
-   RUN cargo install taskchampion-sync-server
+   # Install build dependencies
+   RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+   # Clone and build TaskChampion sync server
+   WORKDIR /build
+   RUN git clone https://github.com/GothenburgBitFactory/taskchampion-sync-server.git
+   WORKDIR /build/taskchampion-sync-server
+   RUN rm Cargo.lock && cargo build --release
+
+   # Runtime stage
+   FROM debian:bookworm-slim
+
+   # Copy binary from builder
+   COPY --from=builder /build/taskchampion-sync-server/target/release/taskchampion-sync-server /usr/local/bin/
+
+   # Create data directory
+   RUN mkdir -p /data
 
    # Expose port
    EXPOSE 8080
 
    # Run server
-   CMD ["taskchampion-sync-server", "--port", "8080", "--data-dir", "/data"]
+   CMD ["taskchampion-sync-server", "--listen", "0.0.0.0:8080", "--data-dir", "/data"]
    ```
 
-3. **Create fly.toml:**
+2. **fly.toml** (`deploy/fly.toml`):
    ```toml
    app = "brainplorp-sync"
    primary_region = "sjc"  # San Jose
@@ -900,31 +931,54 @@ User B: client_id=B, secret=Y  ← DIFFERENT
      destination = "/data"
    ```
 
-4. **Deploy:**
+3. **Deployment Commands Used:**
    ```bash
-   fly launch --no-deploy --name brainplorp-sync
-   fly volumes create taskchampion_data --size 3  # 3GB
-   fly deploy
+   # Authenticate
+   ~/.fly/bin/flyctl auth login
+
+   # Create app (no deploy)
+   ~/.fly/bin/flyctl launch --no-deploy --name brainplorp-sync
+
+   # Create persistent volume
+   ~/.fly/bin/flyctl volumes create taskchampion_data --size 3 --region sjc
+
+   # Deploy
+   ~/.fly/bin/flyctl deploy --app brainplorp-sync
    ```
 
-5. **Verify:**
+4. **Verification:**
    ```bash
+   # Test HTTP endpoint
    curl https://brainplorp-sync.fly.dev/
-   # Should return 200 OK or TaskChampion response
+   # Returns: TaskChampion sync server v0.7.2-pre
 
-   # Test with real TaskWarrior client
-   task config sync.server.url https://brainplorp-sync.fly.dev
-   task config sync.server.client_id "test-$(uuidgen)"
-   task config sync.encryption_secret "$(openssl rand -hex 32)"
-   task sync  # Should succeed
+   # Check status
+   ~/.fly/bin/flyctl status --app brainplorp-sync
+   # Shows: state=started
+
+   # View logs
+   ~/.fly/bin/flyctl logs --app brainplorp-sync
    ```
+
+**Deployment Details:**
+- **App Name:** brainplorp-sync
+- **Region:** San Jose (sjc)
+- **Resources:** 1x shared-cpu-1x, 256MB RAM
+- **Storage:** 3GB encrypted volume
+- **Cost:** $0/month (free tier)
+- **Uptime:** Continuous (auto_stop_machines = false)
 
 **Completion Criteria:**
 - ✅ Server accessible at `https://brainplorp-sync.fly.dev`
-- ✅ TaskWarrior client can sync successfully
+- ✅ Returns version string: "TaskChampion sync server v0.7.2-pre"
 - ✅ Fly.io dashboard shows healthy status
+- ✅ Persistent volume configured and mounted
 
-### Phase 2: Setup Wizard Enhancement (4 hours)
+**Note for Implementer:** Phase 1 is already complete. You can skip to Phase 2 (setup wizard implementation). The server is live and ready for testing.
+
+### Phase 2: Setup Wizard Enhancement (3 hours)
+
+**Goal:** Simplify setup wizard to use cloud sync exclusively - no choices, just prompt for existing credentials or generate new ones.
 
 **File:** `src/brainplorp/commands/setup.py`
 
@@ -965,146 +1019,130 @@ User B: client_id=B, secret=Y  ← DIFFERENT
            return False
    ```
 
-2. **Update setup wizard (Step 2):**
+2. **Update setup wizard (Step 2) - Cloud Sync Only:**
    ```python
-   # Step 2: TaskWarrior Sync
+   # Step 2: TaskWarrior Sync (Cloud sync only - no menu, just yes/no for existing creds)
    click.echo("\nStep 2: TaskWarrior Sync")
-   click.echo("  TaskChampion Server Options:")
-   click.echo("    1. brainplorp Cloud Sync (recommended for testing)")
-   click.echo("    2. Self-hosted (you run the server)")
-   click.echo("    3. Skip for now")
+   click.echo("  Configuring brainplorp Cloud Sync...")
+   click.echo()
 
-   choice = click.prompt("Choose option", type=click.IntRange(1, 3), default=1)
-
-   if choice == 1:
-       # Cloud sync
-       click.echo()
-
-       # Check if already configured
-       existing = subprocess.run(['task', 'config', 'sync.server.url'],
-                                 capture_output=True, text=True)
-       if existing.stdout.strip():
-           click.echo(f"  ⚠ TaskWarrior sync already configured: {existing.stdout.strip()}")
-           overwrite = click.confirm("  Overwrite with brainplorp cloud sync?", default=False)
-           if not overwrite:
-               click.echo("  Keeping existing sync configuration.")
-               config['taskwarrior_sync'] = {'enabled': True, 'type': 'existing'}
-               return
-
-       # Ask: new or existing credentials
-       use_existing = click.confirm("  Do you have existing credentials from another computer?",
-                                    default=False)
-
-       if use_existing:
-           # Enter existing credentials
+   # Check if already configured
+   existing = subprocess.run(['task', 'config', 'sync.server.url'],
+                             capture_output=True, text=True)
+   if existing.stdout.strip():
+       click.echo(f"  ⚠ TaskWarrior sync already configured: {existing.stdout.strip()}")
+       overwrite = click.confirm("  Overwrite with brainplorp cloud sync?", default=False)
+       if not overwrite:
+           click.echo("  Keeping existing sync configuration.")
+           config['taskwarrior_sync'] = {'enabled': True, 'type': 'existing'}
+           # Continue to next step (don't return)
            click.echo()
-           click.echo("  Enter credentials from your other computer:")
-           server_url = click.prompt("  Server URL",
-                                      default="https://brainplorp-sync.fly.dev")
-           client_id = click.prompt("  Client ID")
-           encryption_secret = click.prompt("  Encryption Secret", hide_input=True)
-       else:
-           # Generate new credentials
-           server_url = "https://brainplorp-sync.fly.dev"
-           creds = generate_sync_credentials()
-           client_id = creds['client_id']
-           encryption_secret = creds['encryption_secret']
-
-       # Configure TaskWarrior
-       click.echo()
-       click.echo("  Configuring TaskWarrior...")
-       success = configure_taskwarrior_sync(server_url, client_id, encryption_secret)
-
-       if not success:
-           click.echo("  ✗ Failed to configure TaskWarrior")
-           config['taskwarrior_sync'] = {'enabled': False}
+           click.echo("Setup complete!")
            return
 
-       # Save to brainplorp config
-       config['taskwarrior_sync'] = {
-           'enabled': True,
-           'type': 'cloud',
-           'server_url': server_url,
-           'client_id': client_id,
-           'encryption_secret': encryption_secret
-       }
+   # Ask: new or existing credentials (simple yes/no)
+   use_existing = click.confirm("  Do you have sync credentials from another computer?",
+                                default=False)
 
-       # Test connection and perform first sync
+   if use_existing:
+       # Enter existing credentials
        click.echo()
-       click.echo("  Testing connection...")
-
-       sync_result = subprocess.run(['task', 'sync'],
-                                     capture_output=True,
-                                     text=True,
-                                     timeout=30)
-
-       if sync_result.returncode == 0:
-           # Successful sync - check if we downloaded tasks
-           task_count_result = subprocess.run(['task', 'count'],
-                                              capture_output=True,
-                                              text=True)
-           task_count = int(task_count_result.stdout.strip()) if task_count_result.returncode == 0 else 0
-
-           if use_existing and task_count > 0:
-               # Computer 2+ downloading existing tasks
-               click.echo(f"  ✓ Sync successful! Downloaded {task_count} tasks from server.")
-               click.echo()
-               click.secho("  🎉 Your tasks are now available on this computer!",
-                          fg='green', bold=True)
-               click.echo(f"     Run 'task list' to see your {task_count} tasks.")
-           elif not use_existing and task_count > 0:
-               # Computer 1 uploading existing tasks
-               click.echo(f"  ✓ Sync successful! Uploaded {task_count} tasks to server.")
-               click.echo()
-               click.echo("  Your tasks are now synced to the cloud.")
-           else:
-               # Fresh start on both sides
-               click.echo("  ✓ Sync successful!")
-       else:
-           # Sync failed
-           click.echo("  ⚠ Couldn't reach server, but config saved.")
-           click.echo("    Try 'task sync' later to verify.")
-           if use_existing:
-               click.echo()
-               click.secho("  💡 First sync will download your tasks from the server.",
-                          fg='cyan')
-               click.echo("     Your tasks from Computer 1 will appear after first successful sync.")
-
-       # Display credentials (for Computer 2 setup)
-       if not use_existing:
-           click.echo()
-           click.secho("  📋 IMPORTANT: Save these credentials for other computers:",
-                       fg='yellow', bold=True)
-           click.echo(f"     Server URL: {server_url}")
-           click.echo(f"     Client ID: {client_id}")
-           click.echo(f"     Secret: {encryption_secret}")
-           click.echo()
-           click.echo("  On your other Mac:")
-           click.echo("    1. Install brainplorp: brew install dimatosj/brainplorp/brainplorp")
-           click.echo("    2. Run: brainplorp setup")
-           click.echo("    3. Choose option 1 (Cloud Sync)")
-           click.echo("    4. Select 'Yes' when asked about existing credentials")
-           click.echo("    5. Enter the credentials above")
-           click.echo("    6. First sync will download all your tasks automatically")
-           click.echo()
-           click.echo("  (Credentials also saved to: ~/.config/brainplorp/config.yaml)")
-       else:
-           # Computer 2+ just finished first sync
-           if sync_result.returncode == 0 and task_count > 0:
-               click.echo()
-               click.echo("  Next steps:")
-               click.echo("    • Run 'brainplorp start' to generate today's daily note")
-               click.echo("    • Add/complete tasks on either computer")
-               click.echo("    • Run 'task sync' periodically to keep computers in sync")
-
-   elif choice == 2:
-       # Self-hosted (existing implementation)
-       # ... keep existing code ...
-
+       click.echo("  Enter credentials from your other computer:")
+       server_url = click.prompt("  Server URL",
+                                  default="https://brainplorp-sync.fly.dev")
+       client_id = click.prompt("  Client ID")
+       encryption_secret = click.prompt("  Encryption Secret", hide_input=True)
    else:
-       # Skip
+       # Generate new credentials
+       server_url = "https://brainplorp-sync.fly.dev"
+       creds = generate_sync_credentials()
+       client_id = creds['client_id']
+       encryption_secret = creds['encryption_secret']
+
+   # Configure TaskWarrior
+   click.echo()
+   click.echo("  Configuring TaskWarrior...")
+   success = configure_taskwarrior_sync(server_url, client_id, encryption_secret)
+
+   if not success:
+       click.echo("  ✗ Failed to configure TaskWarrior")
        config['taskwarrior_sync'] = {'enabled': False}
-       click.echo("  Sync setup skipped. You can configure later in ~/.taskrc")
+       return
+
+   # Save to brainplorp config
+   config['taskwarrior_sync'] = {
+       'enabled': True,
+       'type': 'cloud',
+       'server_url': server_url,
+       'client_id': client_id,
+       'encryption_secret': encryption_secret
+   }
+
+   # Test connection and perform first sync
+   click.echo()
+   click.echo("  Testing connection...")
+
+   sync_result = subprocess.run(['task', 'sync'],
+                                 capture_output=True,
+                                 text=True,
+                                 timeout=30)
+
+   if sync_result.returncode == 0:
+       # Successful sync - check if we downloaded tasks
+       task_count_result = subprocess.run(['task', 'count'],
+                                          capture_output=True,
+                                          text=True)
+       task_count = int(task_count_result.stdout.strip()) if task_count_result.returncode == 0 else 0
+
+       if use_existing and task_count > 0:
+           # Computer 2+ downloading existing tasks
+           click.echo(f"  ✓ Sync successful! Downloaded {task_count} tasks from server.")
+           click.echo()
+           click.secho("  🎉 Your tasks are now available on this computer!",
+                      fg='green', bold=True)
+           click.echo(f"     Run 'task list' to see your {task_count} tasks.")
+       elif not use_existing and task_count > 0:
+           # Computer 1 uploading existing tasks
+           click.echo(f"  ✓ Sync successful! Uploaded {task_count} tasks to server.")
+           click.echo()
+           click.echo("  Your tasks are now synced to the cloud.")
+       else:
+           # Fresh start on both sides
+           click.echo("  ✓ Sync successful!")
+   else:
+       # Sync failed
+       click.echo("  ⚠ Couldn't reach server, but config saved.")
+       click.echo("    Try 'task sync' later to verify.")
+       if use_existing:
+           click.echo()
+           click.secho("  💡 First sync will download your tasks from the server.",
+                      fg='cyan')
+           click.echo("     Your tasks from Computer 1 will appear after first successful sync.")
+
+   # Display credentials (for Computer 2 setup)
+   if not use_existing:
+       click.echo()
+       click.secho("  📋 IMPORTANT: Save these credentials for your other computers:",
+                   fg='yellow', bold=True)
+       click.echo(f"     Client ID: {client_id}")
+       click.echo(f"     Secret: {encryption_secret}")
+       click.echo()
+       click.echo("  On your other Mac:")
+       click.echo("    1. Install brainplorp: brew install dimatosj/brainplorp/brainplorp")
+       click.echo("    2. Run: brainplorp setup")
+       click.echo("    3. Answer 'Yes' when asked about existing credentials")
+       click.echo("    4. Enter the credentials above")
+       click.echo("    5. First sync will download all your tasks automatically")
+       click.echo()
+       click.echo("  (Credentials also saved to: ~/.config/brainplorp/config.yaml)")
+   else:
+       # Computer 2+ just finished first sync
+       if sync_result.returncode == 0 and task_count > 0:
+           click.echo()
+           click.echo("  Next steps:")
+           click.echo("    • Run 'brainplorp start' to generate today's daily note")
+           click.echo("    • Add/complete tasks on either computer")
+           click.echo("    • Run 'task sync' periodically to keep computers in sync")
    ```
 
 3. **Add tests:**
@@ -1144,25 +1182,27 @@ User B: client_id=B, secret=Y  ← DIFFERENT
    ```
 
 **Completion Criteria:**
-- ✅ Wizard offers cloud sync as option 1
-- ✅ New credentials auto-generated and displayed
-- ✅ Existing credentials can be entered on Computer 2
+- ✅ Wizard uses cloud sync exclusively (no menu options)
+- ✅ Simple yes/no prompt for existing credentials
+- ✅ New credentials auto-generated for Computer 1
+- ✅ Existing credentials prompted for Computer 2+
 - ✅ Credentials saved to config.yaml
-- ✅ Connection tested after setup
+- ✅ First sync happens automatically during setup
+- ✅ Shows task count after sync (upload vs download)
 - ✅ Tests pass
 
 ### Phase 3: Documentation Updates (2 hours)
 
 **Update `Docs/MULTI_COMPUTER_SETUP.md`:**
 
-Add new section at top:
+Replace entire file with cloud-only setup (self-hosted moved to advanced docs):
 
 ```markdown
 # Multi-Computer Setup
 
-## Option 1: Cloud Sync (Recommended for Testing)
+## brainplorp Cloud Sync
 
-The easiest way to sync brainplorp across multiple computers is to use the brainplorp cloud sync server.
+brainplorp uses TaskChampion sync to keep your tasks synchronized across multiple computers. The setup wizard automatically configures cloud sync for you.
 
 ### Computer 1 (First Setup)
 
@@ -1171,19 +1211,15 @@ The easiest way to sync brainplorp across multiple computers is to use the brain
    brainplorp setup
    ```
 
-2. Choose option 1 (brainplorp Cloud Sync)
+2. Answer 'No' when asked about existing credentials (this is your first computer)
 
 3. **Save the credentials shown:**
    ```
-   Server URL: https://brainplorp-sync.fly.dev
    Client ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890
    Secret: abc123def456...
    ```
 
-4. Test sync:
-   ```bash
-   task sync
-   ```
+4. Sync happens automatically during setup!
 
 ### Computer 2 (Additional Computers)
 
@@ -1197,16 +1233,13 @@ The easiest way to sync brainplorp across multiple computers is to use the brain
    brainplorp setup
    ```
 
-3. Choose option 1 (brainplorp Cloud Sync)
+3. When asked "Do you have sync credentials from another computer?", answer YES
 
-4. When asked "Do you have existing credentials?", choose YES
-
-5. Enter credentials from Computer 1:
-   - Server URL: `https://brainplorp-sync.fly.dev`
+4. Enter credentials from Computer 1:
    - Client ID: (paste from Computer 1)
    - Encryption Secret: (paste from Computer 1)
 
-6. **First sync happens automatically** - Your tasks download from server!
+5. **First sync happens automatically** - Your tasks download from server!
    ```
    Testing connection...
    ✓ Sync successful! Downloaded 50 tasks from server.
@@ -1215,7 +1248,7 @@ The easiest way to sync brainplorp across multiple computers is to use the brain
        Run 'task list' to see your 50 tasks.
    ```
 
-7. Verify tasks appear:
+6. Verify tasks appear:
    ```bash
    task list
    # You should see all tasks from Computer 1!
@@ -1297,9 +1330,9 @@ Look for the `taskwarrior_sync` section.
 
 ---
 
-## Option 2: Self-Hosted Sync (Advanced)
+## Advanced: Self-Hosted Sync
 
-(Move existing self-hosted documentation here)
+Self-hosted sync is no longer supported in v1.7.0+ for simplicity. If you need custom sync servers, see previous version documentation or deploy your own TaskChampion server and configure TaskWarrior manually.
 ```
 
 **Create `Docs/TESTING_GUIDE.md` (or add section):**
@@ -1527,13 +1560,14 @@ task sync
 - ✅ 3GB persistent volume configured for task data
 
 **Setup Wizard:**
-- ✅ Wizard offers "brainplorp Cloud Sync" as option 1 (default)
-- ✅ Credentials auto-generated securely (UUID + 32-byte secret)
+- ✅ Wizard uses cloud sync exclusively (no menu options)
+- ✅ Simple yes/no prompt: "Do you have sync credentials from another computer?"
+- ✅ Credentials auto-generated securely (UUID + 32-byte secret) for new setups
 - ✅ Credentials displayed to user with step-by-step Computer 2 instructions
 - ✅ Credentials saved to config.yaml for retrieval
-- ✅ "Existing credentials" flow for Computer 2+ setup
+- ✅ Existing credentials prompted for Computer 2+ setup
 - ✅ First sync happens automatically during setup
-- ✅ Wizard shows task count after successful first sync
+- ✅ Wizard shows task count after successful first sync (upload vs download)
 
 **Sync Behavior:**
 - ✅ Computer 2 starts with empty TaskWarrior database
@@ -1544,7 +1578,8 @@ task sync
 - ✅ Multiple testers have isolated data (different client_ids)
 
 **Documentation:**
-- ✅ MULTI_COMPUTER_SETUP.md explains cloud sync option
+- ✅ MULTI_COMPUTER_SETUP.md updated for cloud-only sync
+- ✅ Self-hosted sync moved to "Advanced" section (manual TaskWarrior config)
 - ✅ Documentation clarifies "no username/password" authentication model
 - ✅ Troubleshooting section covers first-sync issues
 - ✅ TESTING_GUIDE.md includes sync testing scenario
@@ -1564,13 +1599,13 @@ task sync
 
 ## Effort Estimate
 
-| Phase | Description | Hours |
-|-------|-------------|-------|
-| Phase 1 | Server Deployment (Fly.io) | 2 |
-| Phase 2 | Setup Wizard Enhancement | 4 |
-| Phase 3 | Documentation Updates | 2 |
-| Phase 4 | Testing (5 scenarios) | 3 |
-| **Total** | | **11 hours** |
+| Phase | Description | Hours | Status |
+|-------|-------------|-------|--------|
+| Phase 1 | Server Deployment (Fly.io) | 2 | ✅ COMPLETE |
+| Phase 2 | Setup Wizard (cloud-only) | 3 | Pending |
+| Phase 3 | Documentation Updates | 2 | Pending |
+| Phase 4 | Testing (5 scenarios) | 3 | Pending |
+| **Total** | | **10 hours** | **2 complete, 8 remaining** |
 
 ---
 
@@ -1612,3 +1647,16 @@ task sync
 - Verify bidirectional sync (mark done on Computer 1, appears on Computer 2)
 - Expanded success criteria (28 checkboxes, organized by category)
 - Status: Ready for implementation (v1.1.0)
+
+**v2.0.0 (2025-10-12):**
+- **MAJOR CHANGE:** Simplified to cloud-only sync (removed self-hosted and skip options)
+- Phase 1 COMPLETE: Server deployed at https://brainplorp-sync.fly.dev/
+- Updated Dockerfile with working build process (multi-stage, build from source)
+- Fixed command arguments: `--listen 0.0.0.0:8080` instead of `--port 8080`
+- Wizard now has single yes/no prompt: "Do you have sync credentials from another computer?"
+- Removed menu options (1/2/3 choice) - cloud sync is automatic
+- Updated all documentation to reflect cloud-only approach
+- Self-hosted sync moved to "Advanced" section (manual TaskWarrior config only)
+- Updated server URL throughout: `brainplorp-sync.fly.dev` (was `sync.brainplorp.com`)
+- Reduced effort estimate: 11 hours → 10 hours (Phase 1 complete, Phase 2 simplified)
+- Status: Ready for implementation (v2.0.0) - Start with Phase 2

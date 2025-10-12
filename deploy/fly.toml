@@ -1,0 +1,18 @@
+app = "brainplorp-sync"
+primary_region = "sjc"  # San Jose (change to "iad" if you prefer East Coast)
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[mounts]
+  source = "taskchampion_data"
+  destination = "/data"

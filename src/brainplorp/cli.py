@@ -42,7 +42,7 @@ from brainplorp.core.process import process_daily_note_step1, process_daily_note
 from brainplorp.integrations.taskwarrior import get_tasks
 from brainplorp.utils.dates import format_date
 from brainplorp.utils.prompts import confirm, prompt
-from brainplorp.commands.setup import setup
+from brainplorp.commands.setup import setup, configure_mcp_standalone
 
 console = Console()
 
@@ -52,12 +52,14 @@ console = Console()
 @click.pass_context
 def cli(ctx):
     """
-    plorp - Workflow automation for TaskWarrior + Obsidian
+    brainplorp - Workflow automation for TaskWarrior + Obsidian
 
-    plorp helps you manage daily workflows by bridging TaskWarrior
+    brainplorp helps you manage daily workflows by bridging TaskWarrior
     (task management) and Obsidian (note-taking).
 
     Key commands:
+      setup       - Interactive setup wizard (run after install)
+      mcp         - Configure Claude Desktop MCP integration
       start       - Generate daily note from TaskWarrior tasks
       tasks       - List pending tasks with filters (fast queries)
       process     - Process informal tasks with NLP (Sprint 7)
@@ -923,6 +925,9 @@ def focus_get(ctx):
 
 # Register setup command
 cli.add_command(setup)
+
+# Register MCP configuration command
+cli.add_command(configure_mcp_standalone, name="mcp")
 
 
 @cli.group()

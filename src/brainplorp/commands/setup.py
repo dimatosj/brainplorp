@@ -198,3 +198,25 @@ def which_command(cmd: str) -> Path | None:
     """Find command in PATH."""
     result = shutil.which(cmd)
     return Path(result) if result else None
+
+
+@click.command()
+def configure_mcp_standalone():
+    """
+    Configure Claude Desktop MCP integration.
+
+    Run this command to add brainplorp to Claude Desktop's MCP servers.
+    Can be run multiple times safely - will update existing configuration.
+    """
+    click.echo("🧠 Configuring Claude Desktop MCP")
+    click.echo("=" * 50)
+    click.echo()
+
+    configure_mcp()
+
+    click.echo()
+    click.echo("Next steps:")
+    click.echo("  1. Restart Claude Desktop")
+    click.echo("  2. Look for brainplorp tools in Claude Desktop")
+    click.echo("  3. Try: 'Start my day' or 'What tasks do I have?'")
+    click.echo()

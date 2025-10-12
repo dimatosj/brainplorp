@@ -7,8 +7,178 @@ This document describes how to create a new release of brainplorp.
 - Maintainer access to both repositories:
   - `dimatosj/brainplorp` (main repo)
   - `dimatosj/homebrew-brainplorp` (Homebrew tap)
-- GitHub CLI (`gh`) installed
+- GitHub CLI (`gh`) installed (optional, can use GitHub UI)
 - All tests passing on `master` branch
+
+---
+
+## Current Release Process (Sprint 10.1+ Wheel-Based)
+
+Starting with v1.6.1, brainplorp uses GitHub Actions to build wheels automatically on version tags.
+Maintainer only needs to update version, tag, and update Homebrew formula.
+
+### Step-by-Step
+
+**1. Update Version Numbers**
+
+Edit these files with new version (e.g., `1.6.1`):
+
+```bash
+# src/brainplorp/__init__.py
+__version__ = "1.6.1"
+
+# pyproject.toml
+version = "1.6.1"
+
+# tests/test_smoke.py (update version assertion if present)
+assert __version__ == "1.6.1"
+
+# tests/test_cli.py (update version check if present)
+assert "1.6.1" in result.output
+```
+
+**2. Commit and Tag**
+
+```bash
+VERSION="1.6.1"
+git add src/brainplorp/__init__.py pyproject.toml tests/test_*.py
+git commit -m "Bump version to ${VERSION}"
+git tag -a "v${VERSION}" -m "Sprint 10.1: Wheel-based Homebrew distribution"
+git push origin master
+git push origin "v${VERSION}"
+```
+
+**3. Wait for GitHub Actions**
+
+- Go to: https://github.com/dimatosj/brainplorp/actions
+- Watch "Release" workflow (triggered by tag push)
+- Wait ~2 minutes for wheel to build
+- Workflow creates GitHub Release automatically
+- Wheel uploaded as release asset: `brainplorp-1.6.1-py3-none-any.whl`
+
+**4. Get Wheel SHA256**
+
+Option A - From GitHub Actions output:
+- Click on the "Release" workflow run
+- Expand "Calculate SHA256" step
+- Copy SHA256 hash from output
+
+Option B - Download and calculate locally:
+```bash
+VERSION="1.6.1"
+curl -L -o brainplorp-${VERSION}-py3-none-any.whl \
+  "https://github.com/dimatosj/brainplorp/releases/download/v${VERSION}/brainplorp-${VERSION}-py3-none-any.whl"
+
+shasum -a 256 brainplorp-${VERSION}-py3-none-any.whl
+# Output: abc123def456... brainplorp-1.6.1-py3-none-any.whl
+```
+
+**5. Update Homebrew Formula**
+
+```bash
+cd /opt/homebrew/Library/Taps/dimatosj/homebrew-brainplorp
+# OR: cd ~/repos/homebrew-brainplorp
+
+# Edit Formula/brainplorp.rb
+vim Formula/brainplorp.rb
+```
+
+Update these two lines:
+```ruby
+url "https://github.com/dimatosj/brainplorp/releases/download/v1.6.1/brainplorp-1.6.1-py3-none-any.whl"
+sha256 "abc123def456..."  # SHA256 from step 4
+```
+
+Commit and push:
+```bash
+git add Formula/brainplorp.rb
+git commit -m "brainplorp ${VERSION} - Wheel-based distribution"
+git push origin master
+```
+
+**6. Test Installation**
+
+```bash
+# On clean Mac or fresh user account
+brew update
+brew untap dimatosj/brainplorp  # Clear cache
+brew tap dimatosj/brainplorp
+brew install brainplorp
+
+# Verify
+brainplorp --version  # Should show: brainplorp v1.6.1
+brainplorp setup      # Should run without errors
+brainplorp mcp        # Should configure Claude Desktop
+```
+
+**7. Update CHANGELOG**
+
+```bash
+cd ~/repos/brainplorp  # Or wherever brainplorp repo is
+
+vim CHANGELOG.md
+```
+
+Example entry:
+```markdown
+## [1.6.1] - 2025-10-12
+
+### Fixed
+- Fixed Homebrew installation hanging on Macs with conda/miniconda
+- Switched to wheel-based distribution (5-10x faster installation)
+
+[1.6.1]: https://github.com/dimatosj/brainplorp/releases/tag/v1.6.1
+```
+
+Commit:
+```bash
+git add CHANGELOG.md
+git commit -m "Update CHANGELOG for v${VERSION}"
+git push origin master
+```
+
+**8. Announce Release**
+
+- Post in community channels
+- Notify testers of new version
+- Update README if needed
+
+### Troubleshooting (Wheel-Based Process)
+
+**Wheel build fails in GitHub Actions:**
+- Check Actions logs for Python errors
+- Verify `pyproject.toml` is valid
+- Ensure all dependencies are in `[project.dependencies]`
+- Test locally: `python -m build --wheel`
+
+**Homebrew install fails:**
+- Double-check SHA256 matches wheel file exactly
+- Verify wheel URL is accessible (test in browser)
+- Check formula syntax: `brew audit dimatosj/brainplorp/brainplorp`
+- Clear Homebrew cache: `rm -rf ~/Library/Caches/Homebrew/downloads/*brainplorp*`
+
+**Version mismatch:**
+- Ensure all 4 files have same version (`__init__.py`, `pyproject.toml`, test files)
+- Re-tag if version was wrong:
+  ```bash
+  git tag -d "v${VERSION}"
+  git push origin --delete "v${VERSION}"
+  # Fix version, then re-tag
+  ```
+
+**Dependencies missing after install:**
+- Wheel should include dependency metadata (check `METADATA` file in wheel)
+- Homebrew formula installs dependencies via pip automatically
+- If missing, verify wheel built correctly: `unzip -l dist/*.whl | grep METADATA`
+
+---
+
+## Legacy Release Process (v1.6.0 and Earlier - Source-Based)
+
+**Note:** This process is deprecated as of Sprint 10.1. Use wheel-based process above for v1.6.1+.
+
+<details>
+<summary>Click to expand old source-based release process</summary>
 
 ## Release Checklist
 
@@ -243,6 +413,8 @@ git push
 - **Update docs first** - release process assumes docs are ready
 - **Homebrew caches** - use `brew update` to refresh tap
 
+</details>
+
 ---
 
-**Last Updated:** 2025-10-11 (Sprint 10)
+**Last Updated:** 2025-10-12 (Sprint 10.1 - Wheel-based distribution)

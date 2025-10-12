@@ -834,9 +834,571 @@ brainplorp-1.6.1-py3-none-any.whl
 
 ---
 
+## Open Questions (Lead Engineer - 2025-10-12)
+
+### Q1: Dependency Management with Wheels
+**Question:** The spec says "No `resource` blocks (dependencies in wheel metadata, Homebrew will handle them)" - but the formula uses `pip install --no-deps`. Won't this break if dependencies aren't already installed?
+
+**Context:**
+- Wheel metadata lists dependencies (click, PyYAML, rich, mcp, taskw2)
+- Formula uses `--no-deps` flag which skips dependency installation
+- If Homebrew Python doesn't have these packages, brainplorp will fail at runtime
+
+**Concern:** Either:
+1. We need to remove `--no-deps` flag and let pip install dependencies, OR
+2. We need to add back `depends_on` declarations for each Python package, OR
+3. We need to verify that Homebrew python@3.12 includes these packages by default (unlikely)
+
+**Proposed Solution:** Remove `--no-deps` flag and let pip handle dependency resolution:
+```ruby
+system Formula["python@3.12"].opt_bin/"pip3.12", "install",
+       "--target=#{libexec}",
+       "--ignore-installed",
+       cached_download
+```
+
+This way pip reads the wheel metadata and installs dependencies automatically.
+
+---
+
+### Q2: Entry Point Script Location
+**Question:** After `pip install --target=#{libexec}`, where exactly does pip put the entry point scripts?
+
+**Context:**
+- Spec assumes scripts appear in `libexec/bin/brainplorp`
+- With `--target`, pip behavior may differ from normal installation
+- If scripts aren't in expected location, wrapper scripts will fail
+
+**Need to verify:**
+1. Does `pip install --target=/path` create a `/path/bin/` directory?
+2. Or are entry points created in `/path/` directly?
+3. Should we use `libexec/brainplorp` instead of `libexec/bin/brainplorp`?
+
+**Proposed Testing:** During Phase 4 local testing, verify actual script locations and document in spec.
+
+---
+
+### Q3: GitHub Actions GITHUB_TOKEN Permissions
+**Question:** Does the default `GITHUB_TOKEN` have permission to create releases and upload assets?
+
+**Context:**
+- Spec uses `secrets.GITHUB_TOKEN` for `softprops/action-gh-release@v1`
+- Some repositories require explicit permissions in workflow
+- If token lacks permissions, release creation will fail
+
+**Proposed Addition:** Add permissions block to workflow:
+```yaml
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create releases and upload assets
+    steps:
+      # ... existing steps ...
+```
+
+---
+
+### Q4: Homebrew Formula `cached_download` Usage
+**Question:** Is `cached_download` the correct method to reference the downloaded wheel file?
+
+**Context:**
+- Spec shows: `system "pip3.12", "install", "...", cached_download`
+- Need to verify this is the Homebrew API for accessing downloaded resources
+- Alternative might be to download to temp file first
+
+**Need to verify:** Check Homebrew formula documentation for correct way to reference downloaded wheel in `install` method.
+
+---
+
+### Q5: Testing on Conda Mac
+**Question:** Can you confirm the Mac with conda/miniconda is still available for testing after formula update?
+
+**Context:**
+- The entire sprint is motivated by fixing installation on conda Macs
+- Critical that we test on the same machine that failed in Sprint 10
+- If that Mac isn't available, we need a different testing strategy
+
+**Confirmation needed:** Is Computer 1 (with miniconda3) available for Sprint 10.1 testing?
+
+---
+
+### Q6: Version Bump Strategy
+**Question:** Should this be v1.6.1 (PATCH) or v1.6.0-wheel.1 (pre-release)?
+
+**Context:**
+- Spec proposes v1.6.1 (PATCH bump)
+- This is packaging/installation change, not functionality change
+- PATCH bump is semantically correct per our versioning rules
+- However, if wheel install fails, users are stuck (can't rollback to v1.6.0 easily)
+
+**Risk:** If v1.6.1 wheel install is broken, users who upgrade from v1.6.0 can't easily downgrade.
+
+**Alternative:** Could test as pre-release first:
+1. Tag v1.6.1-beta.1, build wheel, test thoroughly
+2. If successful, tag v1.6.1 stable
+3. If fails, fix and try v1.6.1-beta.2
+
+**Recommendation:** Stick with v1.6.1 PATCH but test VERY thoroughly before announcing (use local testing extensively).
+
+---
+
+### Q7: State Synchronization Impact
+**Question:** Does this sprint modify any TaskWarrior or Obsidian operations?
+
+**Answer:** NO - This is pure packaging/distribution change. No code changes to brainplorp logic. State Synchronization pattern not applicable.
+
+**Confirmation:** All 561 existing tests should pass without modification.
+
+---
+
+## Answers to Lead Engineer Questions (PM/Architect - 2025-10-12)
+
+### A1: Dependency Management - REMOVE `--no-deps` FLAG
+
+**Decision:** You are absolutely correct. Remove `--no-deps` flag.
+
+**Updated Formula:**
+```ruby
+def install
+  # Install wheel with dependencies
+  system Formula["python@3.12"].opt_bin/"pip3.12", "install",
+         "--target=#{libexec}",
+         "--ignore-installed",
+         cached_download
+
+  # Create wrapper scripts
+  (bin/"brainplorp").write_env_script(
+    libexec/"bin/brainplorp",
+    PYTHONPATH: libexec
+  )
+  (bin/"brainplorp-mcp").write_env_script(
+    libexec/"bin/brainplorp-mcp",
+    PYTHONPATH: libexec
+  )
+end
+```
+
+**Why this works:**
+- Wheel contains metadata in `METADATA` file listing all dependencies
+- `pip install wheel.whl` (without `--no-deps`) reads metadata and installs dependencies to `--target` location
+- Dependencies installed: click, PyYAML, rich, mcp, html2text
+- All packages isolated in `libexec/` (not system-wide)
+
+**Test to verify:**
+```bash
+# After local wheel install
+ls /opt/homebrew/Cellar/brainplorp/1.6.1/libexec/
+# Should see: brainplorp/ click/ yaml/ rich/ mcp/ html2text/
+```
+
+---
+
+### A2: Entry Point Script Location - VERIFY DURING PHASE 4
+
+**Answer:** With `pip install --target=<path>`, entry point scripts are created in `<path>/bin/`.
+
+**Expected behavior:**
+```bash
+pip install --target=/opt/homebrew/Cellar/brainplorp/1.6.1/libexec brainplorp-1.6.1-py3-none-any.whl
+
+# Creates:
+/opt/homebrew/Cellar/brainplorp/1.6.1/libexec/bin/brainplorp
+/opt/homebrew/Cellar/brainplorp/1.6.1/libexec/bin/brainplorp-mcp
+```
+
+**How entry points work:**
+1. `pyproject.toml` declares entry points:
+   ```toml
+   [project.scripts]
+   brainplorp = "brainplorp.cli:cli"
+   brainplorp-mcp = "brainplorp.mcp.server:main"
+   ```
+
+2. Wheel contains `entry_points.txt` in `brainplorp-1.6.1.dist-info/`
+
+3. Pip reads entry points and creates wrapper scripts in `<target>/bin/`
+
+**Verification during Phase 4:**
+```bash
+# After pip install --target=/tmp/test
+ls -la /tmp/test/bin/
+# Should show: brainplorp, brainplorp-mcp
+
+cat /tmp/test/bin/brainplorp
+# Should be Python shebang script that imports brainplorp.cli:cli
+```
+
+**If scripts appear elsewhere:** Update formula's wrapper script paths accordingly. But standard pip behavior puts them in `bin/`.
+
+---
+
+### A3: GitHub Actions Permissions - YES, ADD PERMISSIONS BLOCK
+
+**Decision:** Add permissions block to workflow as you suggested.
+
+**Updated Workflow:**
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create releases and upload assets
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ... rest of steps ...
+```
+
+**Why this is needed:**
+- Default `GITHUB_TOKEN` has read-only permissions by default (GitHub security change ~2022)
+- `softprops/action-gh-release@v1` requires `contents: write` to create releases
+- Without this, workflow will fail with 403 Forbidden error
+
+**Test:** After creating workflow, check Actions tab for permission errors. If seen, this is the fix.
+
+---
+
+### A4: Homebrew Formula `cached_download` - CORRECT USAGE
+
+**Answer:** Yes, `cached_download` is the correct Homebrew API.
+
+**What it does:**
+- Returns path to the downloaded file in Homebrew's cache
+- For our wheel: `/Users/user/Library/Caches/Homebrew/downloads/<hash>--brainplorp-1.6.1-py3-none-any.whl`
+- Homebrew downloads once, caches, reuses on reinstall
+
+**Usage in formula:**
+```ruby
+url "https://github.com/.../brainplorp-1.6.1-py3-none-any.whl"
+
+def install
+  system "pip3.12", "install", "--target=#{libexec}", cached_download
+  # cached_download expands to: /Users/.../downloads/abc123--brainplorp-1.6.1-py3-none-any.whl
+end
+```
+
+**Alternative (not recommended):**
+```ruby
+# Don't do this - downloads twice
+url "https://..."
+def install
+  wheel_file = cached_download  # Already downloaded by Homebrew
+  system "curl", "-o", "/tmp/wheel.whl", url  # Redundant download
+end
+```
+
+**Verification:** Check existing Homebrew Python formulas that install wheels - they all use `cached_download`.
+
+---
+
+### A5: Testing on Conda Mac - YES, AVAILABLE
+
+**Confirmation:** Yes, Computer 1 (the development Mac with miniconda3 at `/opt/miniconda3/`) is available for testing.
+
+**Testing plan:**
+1. Run `./scripts/clean_test_environment.sh` to remove current brainplorp installation
+2. Update local Homebrew tap: `cd /opt/homebrew/Library/Taps/dimatosj/homebrew-brainplorp && git pull`
+3. Install via Homebrew: `brew install brainplorp`
+4. Verify installation succeeds without hanging
+5. Test commands: `brainplorp --version`, `brainplorp setup`, `brainplorp mcp`
+
+**Critical test:** If wheel-based install succeeds on this Mac (which failed with source-based install in Sprint 10), we've validated the entire sprint.
+
+**Backup plan:** If Computer 1 becomes unavailable, can test on:
+- Docker container with conda installed
+- GitHub Actions with miniconda setup
+- Request tester with conda Mac to test
+
+---
+
+### A6: Version Bump Strategy - USE v1.6.1 (PATCH) WITH THOROUGH TESTING
+
+**Decision:** Stick with v1.6.1 PATCH bump as originally specified.
+
+**Rationale:**
+- This is a bug fix (installation broken on 30-40% of Macs)
+- PATCH bump is semantically correct per our versioning (MAJOR.MINOR.PATCH)
+- Pre-release (v1.6.1-beta.1) adds complexity for minimal benefit
+
+**Risk mitigation (before tagging v1.6.1):**
+1. **Phase 4 local testing - MANDATORY:**
+   ```bash
+   # Build wheel locally
+   python -m build --wheel
+
+   # Test wheel installs
+   pip install dist/brainplorp-1.6.1-py3-none-any.whl
+   brainplorp --version  # Must work
+
+   # Test Homebrew formula with local wheel
+   # (Update formula to use file:// URL temporarily)
+   brew install --build-from-source dimatosj/brainplorp/brainplorp
+   ```
+
+2. **Test on conda Mac (Computer 1) - MANDATORY:**
+   - If this fails, DO NOT proceed to GitHub release
+   - Fix issue, rebuild wheel, test again
+
+3. **Test on clean Mac (if available) - RECOMMENDED:**
+   - Borrow another Mac or use fresh user account
+   - Verify installation on non-conda environment
+
+4. **Only after all tests pass:**
+   - Tag v1.6.1
+   - Push tag (triggers GitHub Actions)
+   - Update Homebrew formula with wheel SHA256
+   - Announce to testers
+
+**Rollback plan (if v1.6.1 fails in production):**
+- Update Homebrew formula to point back to v1.6.0 source tarball
+- Users can `brew upgrade brainplorp` to get v1.6.0 back
+- Fix issue in v1.6.2
+
+**Why not pre-release:**
+- Adds tag naming complexity (v1.6.1-beta.1 vs v1.6.1)
+- Homebrew formula would need to support beta tags
+- Our testing (local + conda Mac) is sufficient validation
+- If we're not confident after local testing, we shouldn't release at all
+
+---
+
+### A7: State Synchronization - CONFIRMED NOT APPLICABLE
+
+**Confirmed:** No State Synchronization implications.
+
+**What's changing:**
+- ✅ Packaging only (how brainplorp is distributed)
+- ✅ Installation method (wheel vs source)
+- ❌ No changes to `src/brainplorp/**/*.py`
+- ❌ No changes to TaskWarrior integration
+- ❌ No changes to Obsidian integration
+- ❌ No changes to MCP server
+
+**Test verification:**
+```bash
+# After wheel-based install
+pytest tests/  # All 561 tests must pass
+
+# Specifically verify integrations work:
+brainplorp start          # TaskWarrior integration
+brainplorp inbox process  # Obsidian integration
+brainplorp-mcp            # MCP server
+```
+
+**If any tests fail:** That indicates a packaging issue (missing dependency, broken import path, etc.), not a logic issue. Fix in formula, not in code.
+
+---
+
+## Updated Implementation Notes (Based on Answers)
+
+### Phase 2 Formula - Final Version
+
+```ruby
+class Brainplorp < Formula
+  desc "Workflow automation for TaskWarrior + Obsidian with MCP integration"
+  homepage "https://github.com/dimatosj/brainplorp"
+  url "https://github.com/dimatosj/brainplorp/releases/download/v1.6.1/brainplorp-1.6.1-py3-none-any.whl"
+  sha256 "UPDATED_BY_MAINTAINER"
+  license "MIT"
+
+  depends_on "python@3.12"
+  depends_on "task"
+
+  def install
+    # Install wheel with dependencies (NO --no-deps flag)
+    system Formula["python@3.12"].opt_bin/"pip3.12", "install",
+           "--target=#{libexec}",
+           "--ignore-installed",
+           cached_download
+
+    # Entry points created at libexec/bin/ by pip
+    # Wrap them to set PYTHONPATH
+    (bin/"brainplorp").write_env_script(
+      libexec/"bin/brainplorp",
+      PYTHONPATH: libexec
+    )
+    (bin/"brainplorp-mcp").write_env_script(
+      libexec/"bin/brainplorp-mcp",
+      PYTHONPATH: libexec
+    )
+  end
+
+  def post_install
+    ohai "brainplorp installed successfully!"
+    ohai "Next steps:"
+    ohai "  1. Run 'brainplorp setup' to configure your installation"
+    ohai "  2. Run 'brainplorp mcp' to configure Claude Desktop integration"
+    ohai "  3. Restart Claude Desktop to load brainplorp tools"
+  end
+
+  test do
+    assert_match "brainplorp", shell_output("#{bin}/brainplorp --version")
+  end
+end
+```
+
+### Phase 1 Workflow - Final Version
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # A3: Required for release creation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          cd dist
+          sha256sum *.whl > SHA256SUMS.txt
+          echo "sha256=$(sha256sum *.whl | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/SHA256SUMS.txt
+          body: |
+            ## brainplorp ${{ github.ref_name }}
+
+            **Homebrew Installation:**
+            ```bash
+            brew tap dimatosj/brainplorp
+            brew install brainplorp
+            ```
+
+            **SHA256:** `${{ steps.sha256.outputs.sha256 }}`
+
+            See [CHANGELOG.md](https://github.com/dimatosj/brainplorp/blob/master/CHANGELOG.md) for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Phase 4 Testing Checklist - Updated
+
+**Pre-Release Testing (MANDATORY):**
+
+- [ ] **Local wheel build:**
+  ```bash
+  python -m build --wheel
+  ls -lh dist/  # Verify .whl created, ~50-100 KB
+  ```
+
+- [ ] **Local wheel install:**
+  ```bash
+  python -m venv /tmp/test-venv
+  /tmp/test-venv/bin/pip install dist/brainplorp-1.6.1-py3-none-any.whl
+  /tmp/test-venv/bin/brainplorp --version  # Must show v1.6.1
+  /tmp/test-venv/bin/brainplorp-mcp --version  # Must not error
+  ```
+
+- [ ] **Verify dependencies installed:**
+  ```bash
+  ls /tmp/test-venv/lib/python3.*/site-packages/
+  # Must see: brainplorp/ click/ yaml/ rich/ mcp/ html2text/
+  ```
+
+- [ ] **Verify entry point location:**
+  ```bash
+  ls -la /tmp/test-venv/bin/
+  # Must see: brainplorp, brainplorp-mcp
+  cat /tmp/test-venv/bin/brainplorp  # Verify it's a Python script
+  ```
+
+- [ ] **Test Homebrew formula (local wheel):**
+  ```bash
+  # Copy wheel to temp location
+  cp dist/brainplorp-1.6.1-py3-none-any.whl /tmp/
+
+  # Update formula temporarily to use file:// URL
+  cd /opt/homebrew/Library/Taps/dimatosj/homebrew-brainplorp
+  # Edit Formula/brainplorp.rb: url "file:///tmp/brainplorp-1.6.1-py3-none-any.whl"
+
+  # Install
+  brew install --build-from-source dimatosj/brainplorp/brainplorp
+
+  # Verify
+  brainplorp --version  # Must show v1.6.1
+  brainplorp setup  # Must run without errors
+  ```
+
+- [ ] **Test on conda Mac (Computer 1) - CRITICAL:**
+  ```bash
+  ./scripts/clean_test_environment.sh
+  brew tap dimatosj/brainplorp
+  brew install brainplorp
+  # Must complete in <30 seconds without hanging
+  brainplorp --version  # Must work
+  ```
+
+- [ ] **Run test suite:**
+  ```bash
+  pytest tests/
+  # All 561 tests must pass
+  ```
+
+**Only proceed to GitHub release if ALL checkboxes pass.**
+
+---
+
 ## Version History
 
 **v1.0.0 (2025-10-12):**
 - Initial spec created
 - Based on real-world installation failures during Sprint 10 testing
 - Wheel-based distribution approach validated
+
+**v1.1.0 (2025-10-12):**
+- Lead Engineer questions added (7 questions)
+- Identified dependency management concern (--no-deps flag)
+- Requested clarification on entry point locations
+- Added GitHub Actions permissions note
+- Confirmed State Sync not applicable (packaging-only sprint)
+
+**v1.2.0 (2025-10-12):**
+- PM/Architect answers to all 7 Lead Engineer questions
+- A1: Remove `--no-deps` flag (let pip install dependencies)
+- A2: Entry points created at `libexec/bin/` (standard pip behavior)
+- A3: Add `permissions: contents: write` to workflow
+- A4: Confirmed `cached_download` is correct Homebrew API
+- A5: Confirmed conda Mac available for testing
+- A6: Use v1.6.1 PATCH with thorough testing (not pre-release)
+- A7: Confirmed no State Sync implications
+- Updated "Final Version" code blocks with corrected implementation
+- Added comprehensive pre-release testing checklist
+- Status: Ready for implementation

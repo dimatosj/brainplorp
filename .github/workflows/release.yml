@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags (v1.6.1, v2.0.0, etc.)
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create releases and upload assets
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          cd dist
+          sha256sum *.whl > SHA256SUMS.txt
+          echo "sha256=$(sha256sum *.whl | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/SHA256SUMS.txt
+          body: |
+            ## brainplorp ${{ github.ref_name }}
+
+            **Homebrew Installation:**
+            ```bash
+            brew tap dimatosj/brainplorp
+            brew install brainplorp
+            ```
+
+            **SHA256:** `${{ steps.sha256.outputs.sha256 }}`
+
+            See [CHANGELOG.md](https://github.com/dimatosj/brainplorp/blob/master/CHANGELOG.md) for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

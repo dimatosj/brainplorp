@@ -1431,3 +1431,867 @@ brainplorp doctor --verbose
 - Diagnostic tooling design
 - Testing plan defined
 - Status: Ready for implementation
+
+---
+
+## Lead Engineer Questions
+
+**Date:** 2025-10-12
+**Status:** Awaiting PM/Architect Answers
+
+### Phase 1: TaskWarrior Version Fix
+
+**Q1 (BLOCKING):** TaskWarrior Version Availability in Homebrew
+- The spec assumes we can install specific TaskWarrior versions like `task@3.3`
+- **Question:** Are versioned TaskWarrior formulas actually available in Homebrew?
+- **Context:** When I check `brew search task`, I only see `task` (latest) and `tasksh`
+- **Impact:** If versioned formulas don't exist, we may need:
+  - Option A: Create our own versioned formula in homebrew-brainplorp
+  - Option B: Build TaskWarrior from source
+  - Option C: Document manual downgrade process
+- **Need clarification on:** What's the actual available version matrix in Homebrew?
+
+**Q2 (HIGH):** Testing Procedure for conda Environment
+- Sprint 10 original issue was hang on "conda Mac" (arm64, macOS 15.4, with conda)
+- **Question:** Do I need to test inside the conda environment, or with conda just installed but not activated?
+- **Context:** The test script uses system `brew` commands which would be outside conda
+- **Need clarification on:** Exact test procedure for conda Mac scenario
+
+**Q3 (MEDIUM):** Test Script File Location
+- Spec provides `test_taskwarrior_version.sh` script
+- **Question:** Where should this test script live in the repo?
+- **Options:**
+  - `scripts/test_taskwarrior_version.sh` (alongside other scripts)
+  - `tests/integration/test_taskwarrior_version.sh` (with integration tests)
+  - Standalone in repo root (temporary testing tool)
+- **Recommendation:** `scripts/` directory for utility scripts
+
+**Q4 (MEDIUM):** TaskWarrior Data Cleanup Safety
+- Test script includes `rm -rf ~/.task ~/.taskrc`
+- **Question:** Should we warn the user before running this destructive operation?
+- **Context:** If someone runs this script on a production Mac with real tasks, they'll lose data
+- **Recommendation:** Add confirmation prompt or document as "destructive test only"
+
+**Q5 (LOW):** Fallback to TaskWarrior 2.6.x
+- Spec mentions 2.6.2 as fallback if no 3.x works
+- **Question:** Is TaskWarrior 2.6.x compatible with brainplorp?
+- **Context:** We assume TaskChampion (3.x) for sync functionality
+- **Need clarification on:** Do we support 2.x at all, or is 3.x required?
+
+### Phase 2: Diagnostic Tooling
+
+**Q6 (HIGH):** Doctor Command Import Structure
+- Spec shows `from brainplorp.commands.doctor import doctor`
+- **Question:** Should this be in `commands/` or at the top level like other commands?
+- **Context:** Looking at existing code structure:
+  - `src/brainplorp/cli.py` imports from various locations
+  - Some commands are in main modules (e.g., `workflows/daily.py`)
+  - Others might be in `commands/` (need to verify)
+- **Recommendation:** Check existing pattern and match it
+
+**Q7 (MEDIUM):** Doctor Command Timeout Values
+- Spec uses 5-second timeout for TaskWarrior checks
+- **Question:** Is 5 seconds appropriate for all TaskWarrior operations?
+- **Context:**
+  - `task count` on large databases might take longer
+  - Sync operations definitely take longer (spec shows 10s for sync)
+- **Recommendation:** Use different timeouts per operation type?
+  - Version check: 5s
+  - Count/export: 10s
+  - Sync: 30s
+
+**Q8 (MEDIUM):** Doctor Verbose Mode Output
+- Spec includes `--verbose` flag but doesn't show what additional info is displayed
+- **Question:** What should verbose mode show?
+- **Options:**
+  - Full command outputs (stdout/stderr)
+  - Timing information per check
+  - System environment details (PATH, Python version, etc.)
+  - All of the above
+- **Recommendation:** Show command outputs and timing at minimum
+
+**Q9 (LOW):** Doctor Command and State Synchronization
+- **Question:** Does the doctor command need to verify State Synchronization is working?
+- **Context:** State Sync is a critical architectural pattern
+- **Possible check:** Create test task in TaskWarrior, verify it appears in project frontmatter
+- **Recommendation:** Defer to Sprint 10.1.2 (more comprehensive validation sprint)
+
+**Q10 (LOW):** MCP Configuration Check Depth
+- Spec checks if 'brainplorp' key exists in MCP config
+- **Question:** Should we validate the MCP config more deeply?
+- **Checks that could be added:**
+  - Command path exists and is executable
+  - Args array is valid
+  - brainplorp-mcp entry point exists
+- **Recommendation:** Basic check is sufficient for Sprint 10.1.1
+
+### Phase 3: Setup Wizard Hardening
+
+**Q11 (BLOCKING):** Import Statement for check_taskwarrior
+- Spec shows: `from brainplorp.commands.doctor import check_taskwarrior`
+- **Question:** Is this circular dependency safe?
+- **Context:**
+  - `setup.py` imports from `doctor.py`
+  - Both are in `commands/` directory
+  - If they both import from `cli.py`, could create issues
+- **Recommendation:** Extract check functions to separate utility module?
+  - `src/brainplorp/utils/diagnostics.py`
+  - Both `doctor.py` and `setup.py` import from there
+
+**Q12 (HIGH):** Setup Wizard Behavior on TaskWarrior Failure
+- Spec shows confirmation prompt: "Continue setup anyway?"
+- **Question:** Should we allow setup to continue if TaskWarrior is broken?
+- **Consideration:** If user continues, they'll have:
+  - Valid config file pointing to vault
+  - MCP server configured
+  - But brainplorp commands won't work
+- **Alternative:** Always abort setup if TaskWarrior fails (stronger stance)
+- **Need clarification on:** Product decision - allow continuation or enforce requirements?
+
+**Q13 (MEDIUM):** Timeout Error Handling in Commands
+- Spec shows timeout wrapper in `taskwarrior.py`
+- **Question:** How should individual commands handle TaskWarriorTimeoutError?
+- **Context:** Spec shows example for one command, but we have:
+  - `start.py`, `review.py`, `tasks.py`, `inbox.py`, etc.
+  - Daily workflows, review workflows, etc.
+- **Pattern needed:** Should all commands follow the same error handling pattern?
+- **Recommendation:** Create common error handler function in CLI utils
+
+**Q14 (MEDIUM):** Refactoring Scope for Timeout Addition
+- Spec says "Update all commands that call TaskWarrior"
+- **Question:** How many files/functions are affected?
+- **Need to audit:**
+  - All direct `subprocess.run(['task', ...])` calls
+  - All functions in `integrations/taskwarrior.py`
+  - All workflow files that call TaskWarrior
+- **Recommendation:** Do comprehensive grep to find all call sites first
+
+**Q15 (LOW):** Timeout for Non-Critical Operations
+- **Question:** Should non-critical TaskWarrior operations have longer timeouts?
+- **Examples:**
+  - Task export for reporting (could be 30s)
+  - Sync operations (could be 60s)
+  - Interactive review (could be infinite?)
+- **Recommendation:** Context-specific timeouts, not global 10s default
+
+### Phase 4: Documentation
+
+**Q16 (MEDIUM):** Known Issues Section Location
+- Spec adds Known Issues to README.md
+- **Question:** Should this also be in installation docs?
+- **Context:** Users might read installation guide without reading full README
+- **Recommendation:** Add to both with cross-references
+
+**Q17 (LOW):** Troubleshooting Guide Maintenance
+- **Question:** Who maintains INSTALLATION_TROUBLESHOOTING.md as new issues arise?
+- **Process needed:**
+  - GitHub issues → documented in troubleshooting guide
+  - Regular review and updates
+- **Recommendation:** Add maintenance note in PM handoff docs
+
+### Cross-Phase Questions
+
+**Q18 (HIGH):** Test Coverage for This Sprint
+- **Question:** How many new tests should be added?
+- **Estimated:**
+  - `test_doctor.py`: ~15 tests (one per check, plus error cases)
+  - `test_setup_validation.py`: ~5 tests (TaskWarrior validation scenarios)
+  - `test_taskwarrior_timeout.py`: ~8 tests (timeout scenarios)
+  - **Total: ~28 new tests**
+- **Need clarification on:** Are these estimates reasonable?
+
+**Q19 (HIGH):** Manual Testing Requirements
+- Spec describes 4 test scenarios requiring manual testing
+- **Question:** Who performs these tests?
+- **Options:**
+  - Lead Engineer (me) during implementation
+  - John (user) after implementation
+  - Both (lead engineer smoke test, John comprehensive test)
+- **Need clarification on:** Testing responsibility and timing
+
+**Q20 (MEDIUM):** Version Bump Timing
+- Target version: v1.6.2
+- **Question:** When should I bump the version?
+- **Options:**
+  - At start of sprint (commit 1)
+  - At end of sprint (final commit)
+  - Before releasing to Homebrew
+- **Recommendation:** End of sprint, just before release
+
+**Q21 (MEDIUM):** Homebrew Formula Update Process
+- **Question:** Do I update the Homebrew formula or does John?
+- **Context:** Homebrew formula is in separate repo (homebrew-brainplorp)
+- **Need clarification on:** Who has write access and who publishes the update?
+
+**Q22 (LOW):** Sprint Dependencies on Sprint 10.2
+- Spec says this sprint blocks Sprint 10.2 (Cloud Sync)
+- **Question:** What specifically does Sprint 10.2 need from this sprint?
+- **Assumption:** Working TaskWarrior is prerequisite for sync testing
+- **Confirmation needed:** Is this the only dependency?
+
+### Architecture Questions
+
+**Q23 (MEDIUM):** State Synchronization Validation
+- This sprint adds diagnostics but doesn't validate State Sync pattern
+- **Question:** Should State Sync validation be in this sprint or deferred?
+- **Consideration:**
+  - This is a CRITICAL pattern (per role docs)
+  - `brainplorp doctor` would be perfect place to validate it
+- **Recommendation:** Add basic State Sync check to doctor command
+
+**Q24 (LOW):** Backend Abstraction Impact
+- Sprint 10 added backend abstraction layer
+- **Question:** Do timeout wrappers need to be added to backend layer too?
+- **Context:** If backends delegate to integrations, timeouts should propagate
+- **Recommendation:** Audit backend code for timeout handling
+
+---
+
+## Summary of Blocking Questions
+
+**Must be answered before implementation:**
+1. **Q1:** TaskWarrior version availability in Homebrew (affects entire Phase 1)
+2. **Q11:** Circular dependency concern with setup.py importing from doctor.py
+3. **Q12:** Product decision on setup continuation with broken TaskWarrior
+
+**High priority (affect implementation approach):**
+4. **Q2:** conda Mac testing procedure
+5. **Q6:** Doctor command module location
+6. **Q13:** Error handling pattern for all commands
+7. **Q19:** Manual testing responsibility
+8. **Q18:** Test coverage expectations
+
+**Can proceed without (implementation details):**
+- All MEDIUM and LOW priority questions
+- Can make reasonable assumptions and document decisions
+
+---
+
+## Proposed Next Steps After Q&A
+
+1. **Phase 1 Start:** Only after Q1 answered (Homebrew version availability)
+2. **Phase 2 Start:** After Q6 and Q11 answered (module structure)
+3. **Phase 3 Start:** After Q12 and Q13 answered (error handling pattern)
+4. **Phase 4 Start:** Can proceed in parallel with other phases
+
+**Estimated time for Q&A:** 30-45 minutes for PM/Architect to review and answer
+
+---
+
+## PM/Architect Answers
+
+**Date:** 2025-10-12
+**Answered By:** PM/Architect
+**Status:** ✅ All questions answered - Ready to proceed
+
+### Phase 1 Answers
+
+**A1 (BLOCKING): TaskWarrior Version Availability**
+
+**Answer:** You're correct - Homebrew doesn't have versioned TaskWarrior formulas like `task@3.3`.
+
+**Approach:** Create our own pinned TaskWarrior formula in the `homebrew-brainplorp` repo.
+
+**Implementation:**
+1. Copy the Homebrew core TaskWarrior formula as a baseline
+2. Pin to a specific git commit/tag that works (test to find it)
+3. Name it `taskwarrior-pinned.rb` in our tap
+4. Update brainplorp formula to `depends_on "dimatosj/brainplorp/taskwarrior-pinned"`
+
+**Testing approach:**
+```bash
+# Test TaskWarrior from different git commits
+git clone https://github.com/GothenburgBitFactory/taskwarrior.git
+cd taskwarrior
+git checkout v3.3.0  # Try tags/commits until one works
+mkdir build && cd build
+cmake ..
+make
+./src/task --version
+# Test if it hangs
+```
+
+**Fallback:** If no 3.x version works cleanly, we'll test 2.6.2 (answer in A5).
+
+---
+
+**A2 (HIGH): conda Mac Testing Procedure**
+
+**Answer:** Test with conda **installed but not activated** (normal user state).
+
+**Rationale:**
+- Sprint 10's original issue was conda interfering with Python path resolution
+- Wheel distribution fixed this by bundling everything
+- We just need to verify TaskWarrior itself doesn't hang (independent of Python)
+
+**Test procedure:**
+```bash
+# On conda Mac:
+which python    # Should show Homebrew Python, not conda
+which task      # Should show Homebrew TaskWarrior
+echo $PATH      # Should show Homebrew before conda
+
+# Run tests normally with system brew/task
+task --version
+brainplorp setup
+```
+
+**No need** to test inside activated conda environment - that's not our target use case.
+
+---
+
+**A3 (MEDIUM): Test Script Location**
+
+**Answer:** `scripts/test_taskwarrior_version.sh` ✅
+
+**Rationale:**
+- It's a utility script for development/testing, not a pytest test
+- Aligns with existing `scripts/` directory pattern
+- Can be run manually during development
+
+---
+
+**A4 (MEDIUM): TaskWarrior Data Cleanup Safety**
+
+**Answer:** Add a BIG warning comment at top of script + confirmation prompt.
+
+**Implementation:**
+```bash
+#!/bin/bash
+# ⚠️  WARNING: This script deletes ~/.task and ~/.taskrc
+# ⚠️  Only run on a test Mac with no important tasks!
+
+echo "⚠️  This script will DELETE ~/.task and ~/.taskrc"
+echo "⚠️  All TaskWarrior data will be lost!"
+read -p "Continue? (type 'yes' to confirm): " confirm
+
+if [ "$confirm" != "yes" ]; then
+    echo "Aborted."
+    exit 1
+fi
+
+# ... rest of script
+```
+
+---
+
+**A5 (LOW): TaskWarrior 2.6.x Compatibility**
+
+**Answer:** TaskWarrior 2.x is **NOT compatible** with brainplorp. Require 3.x.
+
+**Rationale:**
+- brainplorp assumes TaskChampion (3.x) architecture
+- 2.x uses flat files, 3.x uses SQLite
+- Sync functionality requires TaskChampion protocol (3.x only)
+- Sprint 10.2 (cloud sync) requires 3.x
+
+**Fallback strategy if no 3.x works:**
+- Find the oldest 3.x commit that works (even pre-release)
+- Build from source if necessary
+- Document as "experimental TaskWarrior build"
+
+---
+
+### Phase 2 Answers
+
+**A6 (HIGH): Doctor Command Module Location**
+
+**Answer:** Create new `src/brainplorp/commands/` directory pattern.
+
+**Structure:**
+```
+src/brainplorp/
+├── commands/
+│   ├── __init__.py
+│   ├── doctor.py       # NEW
+│   ├── setup.py        # Existing (if not already here)
+│   └── ...
+├── cli.py              # Imports from commands/
+```
+
+**Import pattern:**
+```python
+# In cli.py
+from brainplorp.commands.doctor import doctor
+from brainplorp.commands.setup import setup
+```
+
+**Note:** If commands don't currently live in `commands/`, create the directory and move them there as part of this sprint (code organization improvement).
+
+---
+
+**A7 (MEDIUM): Doctor Command Timeout Values**
+
+**Answer:** Use context-specific timeouts. Your recommendation is correct.
+
+**Timeout matrix:**
+- `task --version`: 5 seconds (should be instant)
+- `task count`: 10 seconds (database query)
+- `task export`: 15 seconds (larger output)
+- `task sync init`: 30 seconds (network operation)
+
+**Implementation:**
+```python
+def check_taskwarrior(verbose: bool = False) -> Dict[str, Any]:
+    # Version check (5s)
+    version_result = subprocess.run(['task', '--version'], timeout=5, ...)
+
+    # Count check (10s)
+    count_result = subprocess.run(['task', 'count'], timeout=10, ...)
+```
+
+---
+
+**A8 (MEDIUM): Doctor Verbose Mode Output**
+
+**Answer:** Show **all of the above** - command outputs, timing, and environment.
+
+**Verbose output example:**
+```
+Checking TaskWarrior... ✓ 3.3.0 working (0 tasks)
+  [VERBOSE] Path: /opt/homebrew/bin/task
+  [VERBOSE] Version check: 0.234s
+  [VERBOSE] Count check: 0.456s
+  [VERBOSE] Command output:
+    $ task --version
+    TaskWarrior 3.3.0
+```
+
+**Keep it simple for v1.6.2** - just show command outputs and timing.
+
+---
+
+**A9 (LOW): State Synchronization Validation**
+
+**Answer:** **Defer to future sprint** (10.1.2 or later). Don't add to this sprint.
+
+**Rationale:**
+- Sprint 10.1.1 is already substantial (7.5 hours)
+- State Sync validation requires test task creation (side effects)
+- Focus on critical diagnostics first
+- Can add comprehensive validation in dedicated sprint
+
+---
+
+**A10 (LOW): MCP Configuration Check Depth**
+
+**Answer:** Basic check is sufficient. ✅ Your recommendation accepted.
+
+**What to check:**
+- ✅ `claude_desktop_config.json` exists
+- ✅ `mcpServers.brainplorp` key exists
+- ✅ Command field is populated
+
+**Don't validate:**
+- ❌ Binary existence (PATH could change)
+- ❌ Args validity (too complex, low value)
+
+---
+
+### Phase 3 Answers
+
+**A11 (BLOCKING): Import Statement Circular Dependency**
+
+**Answer:** Extract checks to `src/brainplorp/utils/diagnostics.py`. ✅ Your recommendation accepted.
+
+**Structure:**
+```python
+# src/brainplorp/utils/diagnostics.py (NEW)
+def check_taskwarrior(verbose: bool = False) -> Dict[str, Any]:
+    """Check TaskWarrior functionality."""
+    # ... implementation
+
+def check_python_dependencies(verbose: bool = False) -> Dict[str, Any]:
+    """Check Python packages."""
+    # ... implementation
+
+# And so on for all checks
+```
+
+**Usage:**
+```python
+# src/brainplorp/commands/doctor.py
+from brainplorp.utils.diagnostics import (
+    check_taskwarrior,
+    check_python_dependencies,
+    # ...
+)
+
+# src/brainplorp/commands/setup.py
+from brainplorp.utils.diagnostics import check_taskwarrior
+```
+
+**No circular dependency** - both import from `utils/`, neither imports from each other.
+
+---
+
+**A12 (HIGH): Setup Wizard Behavior on Broken TaskWarrior**
+
+**Answer:** **Always abort** if TaskWarrior is broken (stronger stance).
+
+**Rationale:**
+- brainplorp is useless without TaskWarrior
+- No point in continuing setup
+- User will just be frustrated when commands don't work
+- Better to fail fast with clear fix instructions
+
+**Implementation:**
+```python
+if not tw_check['passed']:
+    click.secho(f"✗ TaskWarrior issue: {tw_check['message']}", fg='red')
+    click.echo(f"Fix: {tw_check['fix']}")
+    click.echo()
+    click.echo("Setup cannot continue until TaskWarrior is working.")
+    click.echo("Run 'brainplorp setup' again after fixing TaskWarrior.")
+    sys.exit(1)  # Always abort, no confirmation prompt
+```
+
+---
+
+**A13 (MEDIUM): Timeout Error Handling Pattern**
+
+**Answer:** Create common error handler in `utils/`. ✅ Your recommendation accepted.
+
+**Implementation:**
+```python
+# src/brainplorp/utils/taskwarrior_errors.py (NEW)
+import click
+import sys
+
+def handle_taskwarrior_error(error: Exception, context: str = "TaskWarrior operation"):
+    """
+    Common error handler for TaskWarrior exceptions.
+
+    Args:
+        error: The exception raised
+        context: Description of what was being attempted
+    """
+    from brainplorp.integrations.taskwarrior import TaskWarriorTimeoutError, TaskWarriorError
+
+    if isinstance(error, TaskWarriorTimeoutError):
+        click.secho(f"✗ {context} timed out", fg='red')
+        click.echo(str(error))
+        click.echo()
+        click.echo("This usually indicates TaskWarrior is hanging.")
+        click.echo("Run 'brainplorp doctor' to diagnose the issue.")
+        sys.exit(1)
+    elif isinstance(error, TaskWarriorError):
+        click.secho(f"✗ {context} failed", fg='red')
+        click.echo(str(error))
+        sys.exit(1)
+    else:
+        raise  # Re-raise unexpected errors
+```
+
+**Usage in commands:**
+```python
+# In start.py, review.py, etc.
+from brainplorp.utils.taskwarrior_errors import handle_taskwarrior_error
+from brainplorp.integrations.taskwarrior import run_task_command, TaskWarriorTimeoutError
+
+try:
+    result = run_task_command(['export', 'status:pending'])
+except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+    handle_taskwarrior_error(e, "Fetching tasks")
+```
+
+---
+
+**A14 (MEDIUM): Refactoring Scope**
+
+**Answer:** Do the audit first, document all call sites, then refactor systematically.
+
+**Audit command:**
+```bash
+# Find all direct TaskWarrior subprocess calls
+grep -r "subprocess.run.*task" src/
+
+# Find all functions in taskwarrior.py
+grep "^def " src/brainplorp/integrations/taskwarrior.py
+```
+
+**Expected files to update:**
+- `src/brainplorp/integrations/taskwarrior.py` (all functions)
+- `src/brainplorp/workflows/daily.py`
+- `src/brainplorp/workflows/review.py`
+- `src/brainplorp/workflows/inbox.py`
+- `src/brainplorp/commands/tasks.py`
+- Any MCP tool that calls TaskWarrior
+
+**Estimate:** ~10-15 call sites total
+
+---
+
+**A15 (LOW): Context-Specific Timeouts**
+
+**Answer:** Yes, use context-specific timeouts. ✅ Your recommendation accepted.
+
+**Timeout guidelines:**
+- **Quick operations** (version, status): 5s
+- **Database queries** (count, export small filters): 10s
+- **Large exports** (all tasks): 30s
+- **Sync operations**: 60s
+- **Interactive operations** (review loops): No timeout (user-driven)
+
+**Implementation:**
+```python
+# Allow timeout to be specified per operation
+def run_task_command(args: List[str], timeout: int = 10) -> subprocess.CompletedProcess:
+    # Default 10s, but can override:
+    # run_task_command(['sync'], timeout=60)
+```
+
+---
+
+### Phase 4 Answers
+
+**A16 (MEDIUM): Known Issues Location**
+
+**Answer:** Add to both README and installation docs with cross-references. ✅
+
+**README.md:**
+```markdown
+## Known Issues
+
+### TaskWarrior 3.4.1 Hang
+[Full description and fix]
+
+For more troubleshooting, see [Installation Troubleshooting](Docs/INSTALLATION_TROUBLESHOOTING.md).
+```
+
+**Docs/INSTALLATION_TROUBLESHOOTING.md:**
+```markdown
+## Common Issues
+
+### TaskWarrior Hangs
+[Detailed troubleshooting steps]
+
+See also: [Known Issues in README](../README.md#known-issues)
+```
+
+---
+
+**A17 (LOW): Troubleshooting Guide Maintenance**
+
+**Answer:** PM (you, John) maintains it during PM handoff updates.
+
+**Process:**
+1. GitHub issues → PM reviews
+2. Recurring issues → Add to troubleshooting guide
+3. Each sprint PM handoff → Review and update guide
+4. Lead Engineer can propose additions during implementation
+
+---
+
+### Cross-Phase Answers
+
+**A18 (HIGH): Test Coverage**
+
+**Answer:** Your estimates are reasonable. Aim for ~20-25 tests.
+
+**Priority:**
+- `test_doctor.py`: ~12 tests (critical checks + error cases)
+- `test_setup_validation.py`: ~5 tests (TaskWarrior validation)
+- `test_taskwarrior_timeout.py`: ~5 tests (timeout scenarios)
+- **Total: ~22 tests**
+
+**Focus on:**
+- Critical path tests (TaskWarrior checks, timeout detection)
+- Skip exhaustive edge cases (can add later)
+
+---
+
+**A19 (HIGH): Manual Testing Responsibility**
+
+**Answer:** **Both** - Lead Engineer smoke test, John comprehensive test.
+
+**Lead Engineer during implementation:**
+- Test Scenario 1: Fresh install (basic functionality)
+- Test Scenario 2: Broken TaskWarrior detection (error handling)
+
+**John (PM) after implementation:**
+- Test Scenario 3: Multiple Mac configurations (real-world validation)
+- Test Scenario 4: Diagnostic accuracy (comprehensive validation)
+
+**Handoff:** Lead Engineer provides test results document, John validates on 2+ Macs.
+
+---
+
+**A20 (MEDIUM): Version Bump Timing**
+
+**Answer:** **End of sprint, before final commit**. ✅ Your recommendation accepted.
+
+**Timing:**
+1. Implement all phases
+2. Tests pass
+3. Lead Engineer smoke test passes
+4. Bump version: `__init__.py` and `pyproject.toml` → v1.6.2
+5. Final commit with version bump
+6. Tag release: `git tag v1.6.2 && git push --tags`
+
+---
+
+**A21 (MEDIUM): Homebrew Formula Update**
+
+**Answer:** **Lead Engineer updates formula**, John reviews and publishes.
+
+**Process:**
+1. Lead Engineer: Update formula in `homebrew-brainplorp` repo
+2. Lead Engineer: Open PR with changes
+3. John: Review PR, test locally
+4. John: Merge PR (publishes to users)
+
+**Note:** Lead Engineer should have write access to homebrew-brainplorp repo.
+
+---
+
+**A22 (LOW): Sprint 10.2 Dependencies**
+
+**Answer:** Yes, working TaskWarrior is the only blocker. ✅
+
+**Sprint 10.2 needs:**
+- TaskWarrior functional (doesn't hang)
+- `brainplorp setup` works
+- `task sync init` works
+
+**Doesn't need:**
+- `brainplorp doctor` (nice to have, not required)
+- All timeout handling complete (only critical paths)
+
+---
+
+### Architecture Answers
+
+**A23 (MEDIUM): State Synchronization Validation**
+
+**Answer:** Defer to future sprint (same as A9).
+
+**Rationale:**
+- Not critical for v1.6.2 production readiness
+- State Sync is working (no reported issues)
+- Can add comprehensive validation in Sprint 10.3 or 11
+
+---
+
+**A24 (LOW): Backend Abstraction Timeout Handling**
+
+**Answer:** Yes, audit backend layer for timeout propagation.
+
+**Approach:**
+1. Check if backend layer calls `integrations/taskwarrior.py`
+2. If yes, timeouts should propagate automatically (our wrapper handles it)
+3. If backend has direct subprocess calls, add timeouts there too
+
+**Low priority** - likely already covered by taskwarrior.py wrapper.
+
+---
+
+## Revised Implementation Plan
+
+### Unblocked - Ready to Start
+
+**Phase 1:**
+- ✅ Create pinned TaskWarrior formula approach (A1)
+- ✅ Test with conda installed but not activated (A2)
+- ✅ Put test script in `scripts/` (A3)
+- ✅ Add safety warnings (A4)
+- ✅ Require 3.x, no 2.x fallback (A5)
+
+**Phase 2:**
+- ✅ Create `commands/` directory if needed (A6)
+- ✅ Extract checks to `utils/diagnostics.py` (A11)
+- ✅ Use context-specific timeouts (A7)
+- ✅ Verbose mode shows commands + timing (A8)
+- ✅ Skip State Sync validation (A9)
+- ✅ Basic MCP check only (A10)
+
+**Phase 3:**
+- ✅ Always abort setup if TaskWarrior broken (A12)
+- ✅ Common error handler in `utils/` (A13)
+- ✅ Audit call sites first (A14)
+- ✅ Context-specific timeouts (A15)
+
+**Phase 4:**
+- ✅ Add to both README and troubleshooting doc (A16)
+- ✅ PM maintains guide (A17)
+
+**Testing:**
+- ✅ ~20-25 tests (A18)
+- ✅ Lead Engineer smoke test, John comprehensive test (A19)
+
+**Process:**
+- ✅ Version bump at end (A20)
+- ✅ Lead Engineer updates formula, John publishes (A21)
+
+---
+
+## Additional Implementation Notes
+
+### File Structure Changes
+
+**New files to create:**
+```
+src/brainplorp/
+├── commands/
+│   └── doctor.py              # NEW
+├── utils/
+│   ├── diagnostics.py         # NEW (extracted checks)
+│   └── taskwarrior_errors.py  # NEW (common error handling)
+scripts/
+└── test_taskwarrior_version.sh  # NEW (testing utility)
+```
+
+**Files to modify:**
+```
+src/brainplorp/
+├── commands/
+│   └── setup.py               # Add TaskWarrior validation
+├── integrations/
+│   └── taskwarrior.py         # Add timeout wrapper
+├── workflows/
+│   ├── daily.py               # Update TaskWarrior calls
+│   ├── review.py              # Update TaskWarrior calls
+│   └── inbox.py               # Update TaskWarrior calls
+├── cli.py                     # Register doctor command
+├── __init__.py                # Version bump to 1.6.2
+pyproject.toml                 # Version bump to 1.6.2
+```
+
+### Homebrew Changes
+
+**In `homebrew-brainplorp` repo:**
+```
+Formula/
+├── brainplorp.rb              # Update depends_on
+└── taskwarrior-pinned.rb      # NEW (pinned TaskWarrior version)
+```
+
+---
+
+## Effort Estimate Validation
+
+| Phase | Original | With Q&A | Notes |
+|-------|----------|----------|-------|
+| Phase 1 | 2h | 3h | Added formula creation |
+| Phase 2 | 2h | 2h | Unchanged |
+| Phase 3 | 2h | 2.5h | Added common error handler |
+| Phase 4 | 1.5h | 1.5h | Unchanged |
+| **Total** | **7.5h** | **9h** | More realistic with custom formula |
+
+**Revised total effort:** 9 hours
+
+---
+
+## Final Status
+
+✅ **All 24 questions answered**
+✅ **No blocking issues remain**
+✅ **Ready for implementation**
+
+**Lead Engineer can now proceed with:**
+1. Phase 1: TaskWarrior version fix (3 hours)
+2. Phase 2: Diagnostic tooling (2 hours)
+3. Phase 3: Setup wizard hardening (2.5 hours)
+4. Phase 4: Documentation (1.5 hours)
+
+**Total:** 9 hours → v1.6.2 release

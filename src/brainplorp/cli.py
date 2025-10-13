@@ -1014,5 +1014,83 @@ def config_validate(ctx):
     return 0 if not errors else 1
 
 
+@cli.group()
+@click.pass_context
+def vault(ctx):
+    """Manage vault sync across devices."""
+    pass
+
+
+@vault.command('status')
+@click.pass_context
+def vault_status(ctx):
+    """
+    Show vault sync status.
+
+    Displays sync status, detects conflicts, and shows last sync time.
+    """
+    config = ctx.obj['config']
+    vault_path = Path(config.get('vault_path', ''))
+
+    if not vault_path or not vault_path.exists():
+        click.secho("⚠️  Vault path not configured or does not exist", fg='yellow')
+        return
+
+    vault_sync = config.get('vault_sync', {})
+
+    if not vault_sync.get('enabled'):
+        click.secho("❌ Vault sync not configured", fg='red')
+        click.echo()
+        click.echo("To configure vault sync:")
+        click.echo("  1. Run 'brainplorp setup'")
+        click.echo("  2. Choose 'Yes' for vault sync")
+        click.echo()
+        return
+
+    # Display sync status
+    click.echo("Vault Sync Status")
+    click.echo("━" * 60)
+    click.echo()
+
+    click.echo(f"  Status: ✓ Configured")
+    click.echo(f"  Server: {vault_sync.get('server')}")
+    click.echo(f"  Database: {vault_sync.get('database')}")
+    click.echo(f"  Username: {vault_sync.get('username')}")
+    click.echo()
+
+    # Check for conflicts
+    conflicts = list(vault_path.rglob("*.conflicted.md"))
+
+    if conflicts:
+        click.echo()
+        click.secho("⚠️  Conflicts detected:", fg='yellow', bold=True)
+        for conflict_file in conflicts:
+            original = str(conflict_file).replace('.conflicted.md', '.md')
+            relative_path = conflict_file.relative_to(vault_path)
+            click.echo(f"   • {relative_path.parent / conflict_file.stem}.md")
+
+        click.echo()
+        click.echo("Resolve conflicts:")
+        click.echo("  1. Open conflicted file in Obsidian")
+        click.echo("  2. Merge changes manually")
+        click.echo("  3. Delete .conflicted.md file")
+        click.echo()
+    else:
+        click.echo("  ✓ No conflicts detected")
+        click.echo()
+
+    # Instructions for other computers
+    if vault_sync.get('enabled'):
+        click.echo("To sync on another computer:")
+        click.echo("  1. Install brainplorp on the new computer")
+        click.echo("  2. Run 'brainplorp setup'")
+        click.echo("  3. Enter these credentials when prompted:")
+        click.echo(f"     Server:   {vault_sync.get('server')}")
+        click.echo(f"     Database: {vault_sync.get('database')}")
+        click.echo(f"     Username: {vault_sync.get('username')}")
+        click.echo("     Password: [from your first computer]")
+        click.echo()
+
+
 if __name__ == "__main__":
     cli()

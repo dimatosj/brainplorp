@@ -1,0 +1,25 @@
+app = "couch-brainplorp-sync"
+primary_region = "sjc"  # San Jose - same region as TaskChampion server
+
+[build]
+  dockerfile = "couchdb.Dockerfile"
+
+[http_service]
+  internal_port = 5984
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[mounts]
+  source = "couchdb_data"
+  destination = "/opt/couchdb/data"
+
+[env]
+  COUCHDB_USER = "admin"
+
+# CouchDB admin password should be set via fly secrets:
+# fly secrets set COUCHDB_PASSWORD=<secure-password> -a couch-brainplorp-sync

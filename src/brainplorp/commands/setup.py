@@ -8,8 +8,18 @@ from pathlib import Path
 import json
 import yaml
 import shutil
+import keyring
 
 from brainplorp.utils.diagnostics import check_taskwarrior
+from brainplorp.utils.livesync_config import (
+    check_livesync_installed,
+    check_livesync_configured,
+    generate_credentials,
+    generate_livesync_config,
+    write_livesync_config,
+    LIVESYNC_PLUGIN_NAME
+)
+from brainplorp.integrations.couchdb import CouchDBClient, CouchDBError, CouchDBAuthError
 
 
 @click.command()
@@ -122,8 +132,22 @@ def setup():
 
     click.echo()
 
-    # Step 5: Save configuration
-    click.echo("Step 5: Save Configuration")
+    # Step 5: Vault Sync (Optional - Sprint 10.3)
+    click.echo("Step 5: Vault Sync (Optional)")
+    click.echo("  Sync your vault across devices (Mac, iPhone, iPad, etc.)")
+    setup_vault_sync = click.confirm("  Configure vault sync?", default=False)
+
+    if setup_vault_sync:
+        vault_sync_config = configure_vault_sync(config.get('vault_path'))
+        if vault_sync_config:
+            config['vault_sync'] = vault_sync_config
+    else:
+        config['vault_sync'] = {'enabled': False}
+
+    click.echo()
+
+    # Step 6: Save configuration
+    click.echo("Step 6: Save Configuration")
     config_path = Path.home() / '.config' / 'brainplorp' / 'config.yaml'
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -133,8 +157,8 @@ def setup():
     click.echo(f"  ✓ Config saved to {config_path}")
     click.echo()
 
-    # Step 6: Configure Claude Desktop MCP
-    click.echo("Step 6: Claude Desktop MCP Configuration")
+    # Step 7: Configure Claude Desktop MCP
+    click.echo("Step 7: Claude Desktop MCP Configuration")
     setup_mcp = click.confirm("  Configure MCP for Claude Desktop?", default=True)
 
     if setup_mcp:
@@ -231,6 +255,150 @@ def which_command(cmd: str) -> Path | None:
     """Find command in PATH."""
     result = shutil.which(cmd)
     return Path(result) if result else None
+
+
+def configure_vault_sync(vault_path_str: str | None) -> dict | None:
+    """
+    Configure vault sync via CouchDB + Obsidian LiveSync.
+
+    Args:
+        vault_path_str: Path to Obsidian vault
+
+    Returns:
+        Vault sync configuration dict, or None if setup failed/skipped
+    """
+    # Constants
+    COUCHDB_SERVER_URL = "https://couch-brainplorp-sync.fly.dev"
+    COUCHDB_ADMIN_USER = "admin"
+    COUCHDB_ADMIN_PASSWORD = "CZzAQ7wnpPHY-tL0dYu20VY9-vcQHWdvENs0rLkye_0"
+
+    # Validate vault path
+    if not vault_path_str:
+        click.echo("  ⚠ Vault path not configured. Please configure vault first.")
+        return None
+
+    vault_path = Path(vault_path_str)
+
+    if not vault_path.exists():
+        click.echo(f"  ⚠ Vault path does not exist: {vault_path}")
+        return None
+
+    # Check if LiveSync plugin is installed
+    if not check_livesync_installed(vault_path):
+        click.echo(f"  ⚠ {LIVESYNC_PLUGIN_NAME} plugin not installed")
+        click.echo()
+        click.echo("  To install:")
+        click.echo("    1. Open Obsidian")
+        click.echo("    2. Settings → Community Plugins → Browse")
+        click.echo(f"    3. Search '{LIVESYNC_PLUGIN_NAME}'")
+        click.echo("    4. Click Install, then Enable")
+        click.echo("    5. Run 'brainplorp setup' again")
+        click.echo()
+        return None
+
+    # Check if LiveSync is already configured
+    existing_server = check_livesync_configured(vault_path)
+    if existing_server:
+        click.echo(f"  ⚠ LiveSync already configured")
+        click.echo(f"     Current server: {existing_server}")
+        click.echo()
+        click.echo("  To reconfigure:")
+        click.echo("    1. Open Obsidian → Settings → Self-hosted LiveSync")
+        click.echo("    2. Disable sync")
+        click.echo("    3. Run 'brainplorp setup' again")
+        click.echo()
+        return None
+
+    click.echo(f"  ✓ {LIVESYNC_PLUGIN_NAME} plugin installed")
+    click.echo()
+
+    # Ask if user has credentials from another computer
+    has_credentials = click.confirm("  Do you have CouchDB credentials from another computer?", default=False)
+
+    if has_credentials:
+        # Flow 2: Additional computer - use existing credentials
+        click.echo()
+        click.echo("  Enter credentials from your other computer:")
+        username = click.prompt("  Username")
+        database = click.prompt("  Database")
+        password = click.prompt("  Password", hide_input=True)
+
+    else:
+        # Flow 1: First computer - generate new credentials
+        click.echo()
+        click.echo("  Generating CouchDB credentials...")
+
+        username, database, password = generate_credentials(os.getlogin())
+
+        # Create database and user in CouchDB
+        try:
+            client = CouchDBClient(COUCHDB_SERVER_URL, COUCHDB_ADMIN_USER, COUCHDB_ADMIN_PASSWORD)
+
+            click.echo("  Connecting to CouchDB server...")
+            client.test_connection()
+
+            click.echo(f"  Creating database: {database}")
+            client.setup_vault_database(database, username, password)
+
+            click.echo("  ✓ CouchDB configured")
+
+        except CouchDBAuthError as e:
+            click.echo(f"  ✗ Authentication failed: {e}")
+            return None
+
+        except CouchDBError as e:
+            click.echo(f"  ✗ CouchDB error: {e}")
+            return None
+
+    # Write LiveSync configuration
+    try:
+        config = generate_livesync_config(COUCHDB_SERVER_URL, database, username, password)
+        write_livesync_config(vault_path, config)
+        click.echo("  ✓ LiveSync plugin configured")
+
+    except Exception as e:
+        click.echo(f"  ✗ Failed to write LiveSync config: {e}")
+        return None
+
+    # Store credentials in OS keychain
+    try:
+        keyring.set_password("brainplorp-vault-sync", username, password)
+        click.echo("  ✓ Credentials stored in OS keychain")
+
+    except Exception as e:
+        click.echo(f"  ⚠ Failed to store password in keychain: {e}")
+        # Non-fatal - config still works
+
+    # Display credentials for user to save
+    click.echo()
+    click.echo("  " + "=" * 60)
+    click.echo("  📋 SAVE THESE CREDENTIALS FOR YOUR OTHER COMPUTERS:")
+    click.echo("  " + "=" * 60)
+    click.echo(f"  Server:   {COUCHDB_SERVER_URL}")
+    click.echo(f"  Database: {database}")
+    click.echo(f"  Username: {username}")
+    click.echo(f"  Password: {password}")
+    click.echo("  " + "=" * 60)
+    click.echo()
+
+    # Instructions for user
+    click.echo("  📋 To complete setup:")
+    click.echo("    1. Open Obsidian")
+    click.echo("    2. Go to Settings → Community Plugins")
+    click.echo(f"    3. Enable '{LIVESYNC_PLUGIN_NAME}'")
+    click.echo("    4. Plugin will start syncing automatically")
+    click.echo()
+    click.echo("  🎉 Your vault will now sync across all devices!")
+    click.echo()
+
+    # Return configuration
+    return {
+        'enabled': True,
+        'server': COUCHDB_SERVER_URL,
+        'database': database,
+        'username': username,
+        'password_keyring': True  # Flag that password is in keyring
+    }
 
 
 @click.command()

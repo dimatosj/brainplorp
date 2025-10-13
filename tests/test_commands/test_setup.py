@@ -130,6 +130,7 @@ class TestSetupCommand:
                             'n\n'  # skip TaskWarrior sync
                             'vim\n'  # editor
                             'n\n'  # skip email
+                            'n\n'  # skip vault sync
                             'n\n'  # skip MCP
                         ))
 
@@ -159,6 +160,7 @@ class TestSetupCommand:
                             'n\n'  # skip TaskWarrior sync
                             'vim\n'  # editor
                             'n\n'  # skip email
+                            'n\n'  # skip vault sync
                             'n\n'  # skip MCP
                         ))
 
@@ -183,6 +185,7 @@ class TestSetupCommand:
                             'user@gmail.com\n'  # email
                             'app-password-here\n'  # password
                             'work\n'  # label
+                            'n\n'  # skip vault sync
                             'n\n'  # skip MCP
                         ))
 

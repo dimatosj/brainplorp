@@ -1,57 +1,156 @@
-# Sprint 10.3: Vault Sync via Git Automation
+# Sprint 10.3: Vault Sync via CouchDB + Obsidian LiveSync
 
 **Created:** 2025-10-12
 **Status:** 📋 READY FOR IMPLEMENTATION
 **Sprint Type:** Major Feature (MINOR version increment)
 **Target Version:** v1.7.0
-**Estimated Effort:** 6 hours
+**Estimated Effort:** 9 hours
 **Dependencies:** Sprint 10.2 (Cloud Sync) must be complete
 
 ---
 
 ## Executive Summary
 
-Implement automatic vault synchronization across multiple computers using Git as the sync protocol. Users get one-command sync (`brainplorp vault sync`) that handles all Git operations automatically - no Git knowledge required.
+Implement automatic, real-time vault synchronization across multiple devices (Mac, iPhone, iPad, Android) using CouchDB as the sync server and Obsidian's LiveSync plugin as the client.
 
-**Key Philosophy:** brainplorp manages Git, not the user. Users never touch Git directly.
+**Key Philosophy:** Users get automatic, real-time sync without managing anything. Edit on Mac, see changes on iPhone instantly.
 
-**Sync Scope:** Only brainplorp-managed directories (selective sync):
-- `vault/daily/` - Daily notes
-- `vault/inbox/` - Monthly inbox files
-- `vault/notes/` - brainplorp-created notes
+**Architecture:** Pure CouchDB - single source of truth for vault data, accessed by both users (via LiveSync plugin) and brainplorp server (via HTTP API).
 
-**Why Git?**
-- ✅ No Obsidian plugins required
-- ✅ Selective sync (don't sync entire vault)
-- ✅ Version history built-in
-- ✅ Smart conflict resolution
-- ✅ Standard protocol (works anywhere)
-- ✅ Server integration (programmatic access on Fly.io)
-- ✅ Expandable (add more directories as brainplorp grows)
+**Why CouchDB?**
+- ✅ Real-time automatic sync (2-5 seconds)
+- ✅ Mobile support (iOS/Android via LiveSync)
+- ✅ No manual sync commands needed
+- ✅ Server HTTP API for automation
+- ✅ Built-in conflict resolution (MVCC)
+- ✅ Battle-tested replication protocol
+- ✅ Self-hostable on Fly.io (free tier)
 
-**User Experience:**
+---
 
-```bash
-# Computer 1 (first time)
-$ brainplorp vault sync
-📦 Initializing vault sync...
-✓ Vault Git repository created
-✓ Connected to sync server
-✓ Synced 3 daily notes, 2 inbox files
-🎉 Vault sync complete!
+## User Experience
 
-# Computer 2 (first time)
-$ brainplorp vault sync
-📦 Downloading vault from server...
-✓ Downloaded 5 files from server
-✓ Vault sync complete!
+### Computer 1 Setup (First Time)
 
-# Daily usage (any computer)
-$ brainplorp vault sync
-📦 Syncing vault...
-✓ Uploaded 1 new file
-✓ Downloaded 2 updated files
-✓ Vault sync complete! (Last sync: 3 hours ago)
+```
+$ brainplorp setup
+
+Step 1: Vault Path
+  Where is your Obsidian vault? /Users/jsd/vault
+  ✓ Vault found
+
+Step 2: TaskWarrior Sync
+  Do you have sync credentials from another computer? [y/N]: n
+
+  Configuring brainplorp Cloud Sync...
+  ✓ Sync configured and tested!
+  ✓ Uploaded 0 tasks to server.
+
+  📋 IMPORTANT: Save these credentials for your other computers:
+     Client ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+     Secret: abc123def456...
+
+Step 3: Vault Sync
+  Setting up automatic vault sync...
+
+  ✓ CouchDB credentials generated
+  ✓ Obsidian LiveSync plugin configured
+
+  📋 To complete setup:
+     1. Open Obsidian
+     2. Go to Settings → Community Plugins
+     3. Enable "Self-hosted LiveSync" (already installed)
+     4. Plugin will start syncing automatically
+
+  🎉 Setup complete! Your vault will sync across all devices.
+
+$ brainplorp start
+🔄 Vault synced 2 seconds ago
+📅 Generating today's daily note...
+✓ Created vault/daily/2025-10-12.md
+```
+
+### iPhone/iPad (Later That Day)
+
+```
+User opens Obsidian on iPhone
+→ LiveSync syncs automatically in background
+→ Today's daily note appears
+→ User adds task: "Buy milk"
+→ Syncs to CouchDB automatically (3 seconds)
+```
+
+### Computer 1 (Continues Working)
+
+```
+User switches back to Mac
+→ Opens Obsidian
+→ Sees "Buy milk" task appear automatically
+→ No sync command needed, LiveSync handled it
+```
+
+### Computer 2 Setup (New Mac)
+
+```
+$ brainplorp setup
+
+Step 1: Vault Path
+  Where is your Obsidian vault? /Users/jsd/vault
+  ✓ Vault found
+
+Step 2: TaskWarrior Sync
+  Do you have sync credentials from another computer? [y/N]: y
+
+  Enter credentials from Computer 1:
+  Client ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  Secret: abc123def456...
+
+  ✓ Sync successful! Downloaded 15 tasks from server.
+
+Step 3: Vault Sync
+  Do you have CouchDB credentials from another computer? [y/N]: y
+
+  Enter CouchDB credentials:
+  Server: https://couch-brainplorp-sync.fly.dev
+  Database: user-jsd-vault
+  Username: user-jsd
+  Password: [paste password from Computer 1]
+
+  ✓ Vault sync configured
+
+  📋 To complete setup:
+     1. Open Obsidian
+     2. Go to Settings → Community Plugins → Self-hosted LiveSync
+     3. Click "Start sync"
+     4. All your notes will download automatically
+
+  🎉 Setup complete! Vault is syncing.
+
+$ brainplorp start
+🔄 Vault synced 1 second ago
+📅 Today's daily note already exists
+✓ vault/daily/2025-10-12.md
+```
+
+### Daily Workflow (Any Device)
+
+**User never thinks about syncing - it just works:**
+- Edit note in Obsidian → Syncs in 2-5 seconds automatically
+- Create task via `brainplorp start` → Syncs to all devices
+- Add inbox item on phone → Appears on Mac automatically
+- Run `brainplorp review` → Updates sync to all devices
+
+**If user wants to check sync status:**
+```
+$ brainplorp vault status
+
+Vault Sync Status
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Status: ✓ Syncing
+  Last sync: 2 seconds ago
+  Server: https://couch-brainplorp-sync.fly.dev
+  Documents: 127 synced
+  Pending: 0
 ```
 
 ---
@@ -60,1055 +159,478 @@ $ brainplorp vault sync
 
 ### Current Pain Points
 
-**Manual Sync is Error-Prone:**
-- Users must remember to sync vault manually via iCloud/Dropbox/Git
+**No Multi-Device Support:**
+- brainplorp only works on one Mac
+- Can't capture tasks on iPhone
+- Can't access vault from multiple computers
+- Manual file syncing via iCloud/Dropbox is error-prone
+
+**Manual Sync is Fragile:**
+- User must remember to sync before switching devices
+- iCloud/Dropbox conflicts corrupt files
 - No conflict resolution built-in
-- Risk of data loss if files conflict
-- No visibility into what changed
+- Lost work when conflicts happen
 
-**Obsidian Sync is Paid:**
-- $8/month per user
-- Not self-hostable
-- Syncs entire vault (brainplorp only needs selective sync)
-
-**Obsidian Git Plugin Requires Expertise:**
-- Users must know Git
-- Manual conflict resolution
-- Not suitable for non-technical users
-- Plugin maintenance (can break with Obsidian updates)
+**No Mobile Capture:**
+- User has great idea on iPhone
+- Can't add to inbox until back at Mac
+- Ideas forgotten, tasks missed
 
 ### Success Criteria
 
-1. **One-Command Sync:** `brainplorp vault sync` handles everything
-2. **Automatic Conflict Resolution:** Smart merge strategies for common conflicts
-3. **Selective Sync:** Only sync brainplorp-managed directories
-4. **No Git Knowledge Required:** Users never see Git commands or errors
-5. **Integrated with Setup:** Vault sync configured during `brainplorp setup`
-6. **Works Offline:** Queue changes, sync when online
-7. **Clear Status:** Show last sync time, pending changes
+1. **Automatic Sync:** User never runs sync commands, happens in background
+2. **Real-Time:** Changes sync within 5 seconds across all devices
+3. **Mobile Support:** Works on iPhone, iPad, Android (via Obsidian mobile)
+4. **Conflict Resolution:** Automatic handling of simultaneous edits
+5. **Transparent Setup:** `brainplorp setup` configures everything, user just enables plugin
+6. **Server Integration:** brainplorp server can read/write vault via HTTP API
+7. **Offline Support:** User can work offline, changes sync when reconnected
+8. **Status Visibility:** User can check sync health with `brainplorp vault status`
 
 ---
 
 ## Architecture
 
-### Git-Based Sync Model
+### System Overview
 
 ```
-┌─────────────────────────────────────────┐
-│  brainplorp Sync Server (Fly.io)        │
-│                                         │
-│  ┌───────────────────────────────────┐ │
-│  │ Bare Git Repository               │ │
-│  │                                   │ │
-│  │  vault/                           │ │
-│  │  ├── daily/                       │ │
-│  │  ├── inbox/                       │ │
-│  │  └── notes/                       │ │
-│  └───────────────────────────────────┘ │
-│                                         │
-│  Accessible via SSH: git@server:vault  │
-└─────────────────────────────────────────┘
-                    ▲
-                    │ git push/pull
-        ┌───────────┴───────────┐
-        │                       │
-┌───────▼─────────┐   ┌─────────▼───────┐
-│   Computer 1    │   │   Computer 2    │
-│                 │   │                 │
-│  Obsidian Vault │   │  Obsidian Vault │
-│  (full vault)   │   │  (full vault)   │
-│                 │   │                 │
-│  .git/ (hidden) │   │  .git/ (hidden) │
-│  ├── daily/  ✓  │   │  ├── daily/  ✓  │
-│  ├── inbox/  ✓  │   │  ├── inbox/  ✓  │
-│  ├── notes/  ✓  │   │  ├── notes/  ✓  │
-│  └── other/  ✗  │   │  └── other/  ✗  │
-│    (not synced) │   │    (not synced) │
-└─────────────────┘   └─────────────────┘
+┌─────────────────────────────────────────────────────┐
+│          CouchDB Server (Fly.io)                     │
+│                                                      │
+│  Database: user-jsd-vault                            │
+│  ├─ daily/2025-10-12.md (doc)                       │
+│  ├─ inbox/2025-10.md (doc)                          │
+│  ├─ notes/project-alpha.md (doc)                    │
+│  └─ ... (all vault files as documents)              │
+│                                                      │
+│  Features:                                           │
+│  • HTTP/WebSocket API                                │
+│  • Multi-version concurrency control (MVCC)         │
+│  • Automatic conflict detection                     │
+│  • Incremental replication protocol                 │
+└─────────────────────────────────────────────────────┘
+              ▲                ▲                ▲
+              │                │                │
+         WebSocket        WebSocket          HTTP API
+              │                │                │
+    ┌─────────┴────┐   ┌──────┴────┐   ┌──────┴──────┐
+    │   Mac 1      │   │  iPhone   │   │   Server    │
+    │              │   │           │   │             │
+    │  Obsidian    │   │ Obsidian  │   │ brainplorp  │
+    │  + LiveSync  │   │ + LiveSync│   │  automation │
+    │              │   │           │   │             │
+    │  Reads/writes│   │Reads/writes   │ HTTP client │
+    │  via plugin  │   │via plugin │   │ for email,  │
+    │              │   │           │   │ tasks, etc  │
+    └──────────────┘   └───────────┘   └─────────────┘
 ```
 
-### Selective Sync via .gitignore
+**Single Source of Truth:** CouchDB database contains all vault files as documents.
 
-brainplorp creates `.gitignore` in vault root:
+**Three Clients:**
+1. **Obsidian + LiveSync** (Mac, iPhone, iPad, Android) - Real-time sync for users
+2. **brainplorp server** (Fly.io) - HTTP API for automation (email fetch, scheduled tasks)
+3. **Other Obsidian clients** (future) - Any device running Obsidian mobile
 
-```gitignore
-# brainplorp vault sync - only sync managed directories
-# Generated by brainplorp v1.7.0
+### Document Structure in CouchDB
 
-# Sync these directories (brainplorp-managed)
-!daily/
-!inbox/
-!notes/
+Each vault file becomes a CouchDB document:
 
-# Ignore everything else
-/*
-!.gitignore
-!README_SYNC.md
-
-# Obsidian metadata (never sync)
-.obsidian/
-.trash/
+```json
+{
+  "_id": "daily/2025-10-12.md",
+  "_rev": "3-abc123def",
+  "type": "markdown",
+  "path": "daily/2025-10-12.md",
+  "content": "# Daily Note - 2025-10-12\n\n## Tasks\n- [ ] Review inbox",
+  "mtime": "2025-10-12T14:30:00Z",
+  "ctime": "2025-10-12T08:00:00Z",
+  "size": 256,
+  "deleted": false
+}
 ```
 
-**Result:** Only `daily/`, `inbox/`, `notes/` are versioned and synced.
+**Key fields:**
+- `_id`: File path (unique identifier)
+- `_rev`: CouchDB revision (for MVCC conflict detection)
+- `content`: Actual markdown content
+- `mtime`: Last modified timestamp
+- `deleted`: Tombstone for deleted files
 
-### Conflict Resolution Strategy
+**LiveSync manages this structure automatically** - users and brainplorp server just see files.
 
-**Common Conflict Scenarios:**
+### Conflict Resolution via MVCC
 
-1. **Same file modified on two computers** (e.g., today's daily note)
-   - **Strategy:** Use Git's merge tool with "theirs" preference for metadata, "ours" for content
-   - **Fallback:** Create conflict copy: `YYYY-MM-DD.conflicted-TIMESTAMP.md`
+**Multi-Version Concurrency Control (MVCC)** means each document update requires the current revision number.
 
-2. **Task added in daily note on Computer 1, task deleted via review on Computer 2**
-   - **Strategy:** Deletion wins (TaskWarrior is source of truth for tasks)
-   - **Implementation:** Before sync, regenerate daily note from TaskWarrior
+**Scenario: User edits on Mac while server adds email to inbox**
 
-3. **Inbox file modified simultaneously**
-   - **Strategy:** Merge additions (new inbox items never conflict)
-   - **Implementation:** Parse both versions, combine unprocessed items
-
-**Conflict Resolution Flow:**
-
-```python
-def resolve_conflict(file_path: str) -> str:
-    """
-    Resolve Git conflict for brainplorp-managed file.
-
-    Strategy:
-    1. Daily notes: Regenerate from TaskWarrior (source of truth)
-    2. Inbox files: Merge unprocessed items from both versions
-    3. Notes: Create conflict copy, let user choose
-    """
-    if file_path.startswith('daily/'):
-        return regenerate_daily_note(file_path)
-
-    elif file_path.startswith('inbox/'):
-        return merge_inbox_items(file_path)
-
-    elif file_path.startswith('notes/'):
-        return create_conflict_copy(file_path)
-
-    else:
-        raise ValueError(f"Unknown file type: {file_path}")
 ```
+Step 1: Initial State
+  inbox/2025-10.md (_rev: "1-xyz")
+  Content: "- [ ] Old task"
+
+Step 2: Simultaneous Edits
+  Mac LiveSync:
+    Reads: _rev "1-xyz"
+    Adds: "- [ ] Buy groceries"
+    Attempts update with _rev "1-xyz"
+    → Success! New _rev: "2-abc"
+
+  Server HTTP API:
+    Reads: _rev "1-xyz" (stale)
+    Adds: "- [ ] Email: Client meeting"
+    Attempts update with _rev "1-xyz"
+    → Rejected! CouchDB says: "Conflict - rev mismatch"
+
+Step 3: Server Retries
+  Server reads latest: _rev "2-abc"
+  Sees Mac's changes: "- [ ] Buy groceries"
+  Merges: "- [ ] Buy groceries\n- [ ] Email: Client meeting"
+  Updates with _rev "2-abc"
+  → Success! New _rev: "3-def"
+
+Step 4: Mac Syncs
+  LiveSync polls CouchDB
+  Sees _rev "3-def" (newer than local "2-abc")
+  Downloads merged content
+  User sees both items in Obsidian
+```
+
+**Result:** No data loss, automatic conflict resolution.
+
+**If true conflict (same line edited):**
+- CouchDB keeps both versions
+- LiveSync creates conflict file: `inbox/2025-10.conflicted.md`
+- User reviews and merges manually
+
+### Server HTTP API Access
+
+brainplorp server can read/write vault directly via CouchDB HTTP API:
+
+**Example 1: Fetch emails to inbox (Sprint 10.2 feature)**
+
+```
+1. Server fetches emails from Gmail
+2. Server reads current inbox document via HTTP GET:
+   GET https://couch.brainplorp.com/user-jsd-vault/inbox%2F2025-10.md
+
+3. Server appends emails to content:
+   - [ ] Email: Project deadline moved
+   - [ ] Email: Team standup at 2pm
+
+4. Server updates document via HTTP PUT:
+   PUT https://couch.brainplorp.com/user-jsd-vault/inbox%2F2025-10.md
+   Body: {content: "...", _rev: "5-abc"}
+
+5. Mac LiveSync polls, sees new _rev, downloads changes
+6. User opens Obsidian, sees new emails in inbox automatically
+```
+
+**Example 2: Read today's tasks for analytics**
+
+```
+1. Server queries CouchDB:
+   GET https://couch.brainplorp.com/user-jsd-vault/daily%2F2025-10-12.md
+
+2. Server parses markdown content
+3. Server analyzes tasks (completed, pending, overdue)
+4. Server generates metrics (no write needed)
+```
+
+**Example 3: Batch read for weekly summary**
+
+```
+1. Server queries multiple documents:
+   POST https://couch.brainplorp.com/user-jsd-vault/_all_docs?include_docs=true
+   Body: {
+     "keys": [
+       "daily/2025-10-06.md",
+       "daily/2025-10-07.md",
+       "daily/2025-10-08.md",
+       "daily/2025-10-09.md",
+       "daily/2025-10-10.md",
+       "daily/2025-10-11.md",
+       "daily/2025-10-12.md"
+     ]
+   }
+
+2. Receives all 7 documents in one HTTP response
+3. Analyzes week's task completion rate
+4. Sends summary email to user
+```
+
+**No Git needed, no working directories, just HTTP requests.**
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Git Repository Setup (2 hours)
-
-**1.1: Git Initialization**
-
-Create `src/brainplorp/integrations/git.py`:
-
-```python
-"""
-Git integration for vault sync.
-
-This module wraps Git operations to provide user-friendly vault sync.
-Users never interact with Git directly - brainplorp handles everything.
-"""
-
-import subprocess
-from pathlib import Path
-from typing import List, Optional, Tuple
-from rich.console import Console
-
-console = Console()
-
-
-class GitError(Exception):
-    """Base exception for Git operations."""
-    pass
-
-
-class GitConflictError(GitError):
-    """Raised when Git conflict cannot be automatically resolved."""
-    pass
-
-
-def git_init(vault_path: Path) -> None:
-    """
-    Initialize Git repository in vault.
-
-    Creates:
-    - .git/ directory
-    - .gitignore (selective sync rules)
-    - README_SYNC.md (explains what's synced)
-    - Initial commit
-    """
-    # Check if already initialized
-    if (vault_path / '.git').exists():
-        return
-
-    # Initialize repo
-    subprocess.run(
-        ['git', 'init'],
-        cwd=vault_path,
-        check=True,
-        capture_output=True
-    )
-
-    # Create .gitignore for selective sync
-    gitignore_content = """# brainplorp vault sync - only sync managed directories
-# Generated by brainplorp v1.7.0
-
-# Sync these directories (brainplorp-managed)
-!daily/
-!inbox/
-!notes/
-
-# Ignore everything else
-/*
-!.gitignore
-!README_SYNC.md
-
-# Obsidian metadata (never sync)
-.obsidian/
-.trash/
-"""
-    (vault_path / '.gitignore').write_text(gitignore_content)
-
-    # Create README
-    readme_content = """# brainplorp Vault Sync
-
-This vault is synced via brainplorp's Git-based sync system.
-
-## What's Synced
-
-- `daily/` - Daily notes generated by brainplorp
-- `inbox/` - Monthly inbox files
-- `notes/` - Notes created by brainplorp
-
-## What's NOT Synced
-
-- Other directories (your personal notes, attachments, etc.)
-- Obsidian settings (`.obsidian/`)
-- Trash (`.trash/`)
-
-## How to Sync
-
-Run `brainplorp vault sync` to sync your vault across computers.
-
-## Conflicts
-
-brainplorp automatically resolves most conflicts. If manual resolution
-is needed, you'll see a `.conflicted-TIMESTAMP.md` file.
-"""
-    (vault_path / 'README_SYNC.md').write_text(readme_content)
-
-    # Initial commit
-    subprocess.run(
-        ['git', 'add', '.gitignore', 'README_SYNC.md'],
-        cwd=vault_path,
-        check=True,
-        capture_output=True
-    )
-
-    subprocess.run(
-        ['git', 'commit', '-m', 'Initialize brainplorp vault sync'],
-        cwd=vault_path,
-        check=True,
-        capture_output=True
-    )
-
-
-def git_add_remote(vault_path: Path, remote_url: str) -> None:
-    """
-    Add remote Git server.
-
-    Args:
-        vault_path: Path to vault
-        remote_url: Git remote URL (e.g., ssh://git@server/vault)
-    """
-    # Check if remote already exists
-    result = subprocess.run(
-        ['git', 'remote', 'get-url', 'origin'],
-        cwd=vault_path,
-        capture_output=True,
-        text=True
-    )
-
-    if result.returncode == 0:
-        # Remote exists, update URL
-        subprocess.run(
-            ['git', 'remote', 'set-url', 'origin', remote_url],
-            cwd=vault_path,
-            check=True,
-            capture_output=True
-        )
-    else:
-        # Add new remote
-        subprocess.run(
-            ['git', 'remote', 'add', 'origin', remote_url],
-            cwd=vault_path,
-            check=True,
-            capture_output=True
-        )
-
-
-def git_status(vault_path: Path) -> Tuple[int, int, bool]:
-    """
-    Get vault sync status.
-
-    Returns:
-        (pending_changes, unsynced_commits, needs_pull)
-    """
-    # Check for uncommitted changes
-    result = subprocess.run(
-        ['git', 'status', '--porcelain'],
-        cwd=vault_path,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    pending_changes = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-
-    # Check for unpushed commits
-    result = subprocess.run(
-        ['git', 'rev-list', '--count', 'origin/master..HEAD'],
-        cwd=vault_path,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    unsynced_commits = int(result.stdout.strip()) if result.stdout.strip() else 0
-
-    # Check if remote has new commits
-    subprocess.run(
-        ['git', 'fetch', 'origin'],
-        cwd=vault_path,
-        capture_output=True,
-        check=True
-    )
-
-    result = subprocess.run(
-        ['git', 'rev-list', '--count', 'HEAD..origin/master'],
-        cwd=vault_path,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    needs_pull = int(result.stdout.strip()) > 0 if result.stdout.strip() else False
-
-    return (pending_changes, unsynced_commits, needs_pull)
-```
-
-**1.2: Remote Server Setup**
-
-Extend `deploy/Dockerfile` to include Git server:
-
-```dockerfile
-FROM rust:latest as builder
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-
-# Clone and build TaskChampion sync server
-WORKDIR /build
-RUN git clone https://github.com/GothenburgBitFactory/taskchampion-sync-server.git
-WORKDIR /build/taskchampion-sync-server
-RUN rm Cargo.lock && cargo build --release
-
-# Runtime stage
-FROM debian:bookworm-slim
-
-# Install Git and SSH server
-RUN apt-get update && \
-    apt-get install -y git openssh-server && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy binary from builder
-COPY --from=builder /build/taskchampion-sync-server/target/release/taskchampion-sync-server /usr/local/bin/
-
-# Create data directories
-RUN mkdir -p /data /data/git-repos /data/taskchampion
-
-# Setup SSH for Git
-RUN mkdir -p /var/run/sshd && \
-    useradd -m -s /usr/bin/git-shell git && \
-    mkdir -p /home/git/.ssh
-
-# Expose ports
-EXPOSE 8080 22
-
-# Startup script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-CMD ["/entrypoint.sh"]
-```
-
-Create `deploy/entrypoint.sh`:
-
-```bash
-#!/bin/bash
-set -e
-
-# Start SSH server
-service ssh start
-
-# Start TaskChampion sync server
-exec taskchampion-sync-server --listen 0.0.0.0:8080 --data-dir /data/taskchampion
-```
-
-**1.3: SSH Key Management**
-
-Update `src/brainplorp/commands/setup.py` to generate SSH key for Git:
-
-```python
-def setup_vault_sync(config: dict) -> dict:
-    """
-    Configure vault sync (Phase 4 of setup wizard).
-
-    Creates:
-    - SSH key pair for Git authentication
-    - Git repository in vault
-    - Remote connection to sync server
-    """
-    console.print("\n[bold cyan]Step 4: Vault Sync[/bold cyan]")
-    console.print("  brainplorp can sync your vault across multiple computers.\n")
-
-    # Check if already configured
-    ssh_key_path = Path.home() / '.config' / 'brainplorp' / 'vault_sync_key'
-    if ssh_key_path.exists():
-        console.print("  ✓ Vault sync already configured")
-        return config
-
-    # Generate SSH key
-    console.print("  Generating SSH key for vault sync...")
-    subprocess.run(
-        ['ssh-keygen', '-t', 'ed25519', '-f', str(ssh_key_path), '-N', '', '-C', 'brainplorp-vault-sync'],
-        check=True,
-        capture_output=True
-    )
-
-    # Read public key
-    public_key = (ssh_key_path.with_suffix('.pub')).read_text().strip()
-
-    # Upload public key to server
-    vault_sync_url = config.get('taskwarrior_sync', {}).get('server', '').replace('8080', '22')
-
-    console.print(f"  Registering key with sync server...")
-    # TODO: API call to register public key with server
-
-    # Initialize Git repo in vault
-    vault_path = Path(config['vault_path'])
-    git_init(vault_path)
-
-    # Add remote
-    git_remote = f"ssh://git@{vault_sync_url}/vault"
-    git_add_remote(vault_path, git_remote)
-
-    # Update config
-    config['vault_sync'] = {
-        'enabled': True,
-        'remote_url': git_remote,
-        'ssh_key_path': str(ssh_key_path)
-    }
-
-    console.print("  [green]✓ Vault sync configured![/green]")
-    return config
-```
-
-### Phase 2: Sync Command (2 hours)
-
-**2.1: Core Sync Logic**
-
-Create `src/brainplorp/commands/vault_sync.py`:
-
-```python
-"""
-Vault sync command - synchronize vault across computers.
-"""
-
-import click
-from pathlib import Path
-from rich.console import Console
-from datetime import datetime
-import subprocess
-
-from ..config import load_config
-from ..integrations.git import (
-    git_status,
-    git_add_remote,
-    GitError,
-    GitConflictError
-)
-
-console = Console()
-
-
-@click.group()
-def vault():
-    """Vault synchronization commands."""
-    pass
-
-
-@vault.command()
-@click.option('--verbose', '-v', is_flag=True, help='Show detailed sync information')
-@click.option('--dry-run', is_flag=True, help='Show what would be synced without syncing')
-def sync(verbose: bool, dry_run: bool):
-    """
-    Sync vault with remote server.
-
-    This command:
-    1. Commits local changes
-    2. Pulls remote changes
-    3. Resolves conflicts automatically
-    4. Pushes local changes
-
-    Users never need to know Git - brainplorp handles everything.
-    """
-    try:
-        config = load_config()
-        vault_path = Path(config['vault_path'])
-
-        # Check if vault sync is enabled
-        if not config.get('vault_sync', {}).get('enabled'):
-            console.print("[yellow]Vault sync not configured.[/yellow]")
-            console.print("Run [bold]brainplorp setup[/bold] to configure vault sync.")
-            return
-
-        console.print("\n[bold cyan]📦 Syncing vault...[/bold cyan]\n")
-
-        # Get current status
-        pending_changes, unsynced_commits, needs_pull = git_status(vault_path)
-
-        if verbose:
-            console.print(f"  Pending changes: {pending_changes}")
-            console.print(f"  Unsynced commits: {unsynced_commits}")
-            console.print(f"  Needs pull: {needs_pull}\n")
-
-        if dry_run:
-            console.print("[yellow]Dry run mode - no changes will be made[/yellow]")
-            if pending_changes > 0:
-                console.print(f"  Would commit {pending_changes} changed files")
-            if needs_pull:
-                console.print("  Would download remote changes")
-            if unsynced_commits > 0:
-                console.print(f"  Would upload {unsynced_commits} commits")
-            return
-
-        # Step 1: Commit local changes
-        if pending_changes > 0:
-            _commit_changes(vault_path, verbose)
-
-        # Step 2: Pull remote changes
-        if needs_pull:
-            _pull_changes(vault_path, verbose)
-
-        # Step 3: Push local changes
-        if unsynced_commits > 0 or pending_changes > 0:
-            _push_changes(vault_path, verbose)
-
-        # Show sync summary
-        console.print("\n[green]✓ Vault sync complete![/green]")
-        console.print(f"  Last sync: {datetime.now().strftime('%I:%M %p')}")
-
-    except GitConflictError as e:
-        console.print(f"\n[red]Conflict detected:[/red] {e}")
-        console.print("Run [bold]brainplorp vault conflicts[/bold] to resolve.")
-        raise click.Abort()
-
-    except GitError as e:
-        console.print(f"\n[red]Sync failed:[/red] {e}")
-        raise click.Abort()
-
-
-def _commit_changes(vault_path: Path, verbose: bool) -> None:
-    """Commit local changes to Git."""
-    if verbose:
-        console.print("  Committing local changes...")
-
-    # Stage brainplorp-managed files
-    subprocess.run(
-        ['git', 'add', 'daily/', 'inbox/', 'notes/', '.gitignore', 'README_SYNC.md'],
-        cwd=vault_path,
-        check=True,
-        capture_output=True
-    )
-
-    # Commit with timestamp
-    hostname = subprocess.run(
-        ['hostname'],
-        capture_output=True,
-        text=True,
-        check=True
-    ).stdout.strip()
-
-    commit_message = f"Sync from {hostname} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-
-    subprocess.run(
-        ['git', 'commit', '-m', commit_message],
-        cwd=vault_path,
-        check=True,
-        capture_output=True
-    )
-
-    if verbose:
-        console.print("  [green]✓ Changes committed[/green]")
-
-
-def _pull_changes(vault_path: Path, verbose: bool) -> None:
-    """Pull remote changes with conflict resolution."""
-    if verbose:
-        console.print("  Downloading remote changes...")
-
-    try:
-        # Pull with rebase to avoid merge commits
-        subprocess.run(
-            ['git', 'pull', '--rebase', 'origin', 'master'],
-            cwd=vault_path,
-            check=True,
-            capture_output=True
-        )
-
-        if verbose:
-            console.print("  [green]✓ Remote changes downloaded[/green]")
-
-    except subprocess.CalledProcessError as e:
-        # Check if it's a conflict
-        if b'CONFLICT' in e.stderr or b'conflict' in e.stderr.lower():
-            raise GitConflictError("Merge conflict detected during pull")
-        else:
-            raise GitError(f"Pull failed: {e.stderr.decode()}")
-
-
-def _push_changes(vault_path: Path, verbose: bool) -> None:
-    """Push local changes to remote."""
-    if verbose:
-        console.print("  Uploading changes to server...")
-
-    subprocess.run(
-        ['git', 'push', 'origin', 'master'],
-        cwd=vault_path,
-        check=True,
-        capture_output=True
-    )
-
-    if verbose:
-        console.print("  [green]✓ Changes uploaded[/green]")
-
-
-@vault.command()
-def status():
-    """Show vault sync status."""
-    try:
-        config = load_config()
-        vault_path = Path(config['vault_path'])
-
-        if not config.get('vault_sync', {}).get('enabled'):
-            console.print("[yellow]Vault sync not configured.[/yellow]")
-            return
-
-        pending_changes, unsynced_commits, needs_pull = git_status(vault_path)
-
-        console.print("\n[bold cyan]Vault Sync Status[/bold cyan]\n")
-
-        if pending_changes > 0:
-            console.print(f"  [yellow]●[/yellow] {pending_changes} uncommitted changes")
-        else:
-            console.print("  [green]✓[/green] No uncommitted changes")
-
-        if unsynced_commits > 0:
-            console.print(f"  [yellow]●[/yellow] {unsynced_commits} commits not uploaded")
-        else:
-            console.print("  [green]✓[/green] All commits uploaded")
-
-        if needs_pull:
-            console.print("  [yellow]●[/yellow] Remote changes available")
-        else:
-            console.print("  [green]✓[/green] Up to date with server")
-
-        # Show last sync time
-        result = subprocess.run(
-            ['git', 'log', '-1', '--format=%cr'],
-            cwd=vault_path,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        last_sync = result.stdout.strip()
-        console.print(f"\n  Last sync: {last_sync}")
-
-    except GitError as e:
-        console.print(f"\n[red]Error:[/red] {e}")
-        raise click.Abort()
-```
-
-**2.2: Register Command**
-
-Update `src/brainplorp/cli.py`:
-
-```python
-from .commands.vault_sync import vault
-
-@click.group()
-def cli():
-    """brainplorp - Workflow automation for TaskWarrior + Obsidian"""
-    pass
-
-# ... existing commands ...
-
-cli.add_command(vault)
-```
-
-### Phase 3: Conflict Resolution (1.5 hours)
-
-**3.1: Automatic Conflict Resolution**
-
-Create `src/brainplorp/utils/conflict_resolution.py`:
-
-```python
-"""
-Automatic conflict resolution for vault sync.
-
-brainplorp uses domain knowledge to resolve most conflicts automatically:
-- Daily notes: Regenerate from TaskWarrior (source of truth)
-- Inbox files: Merge unprocessed items
-- Notes: Create conflict copy for user review
-"""
-
-from pathlib import Path
-from typing import Optional
-from datetime import datetime
-
-from ..workflows.daily import generate_daily_note
-from ..parsers.markdown import parse_inbox_file
-
-
-def resolve_conflict(vault_path: Path, file_path: str) -> Optional[str]:
-    """
-    Automatically resolve Git conflict for brainplorp-managed file.
-
-    Returns:
-        Resolved content, or None if manual resolution needed
-    """
-    if file_path.startswith('daily/'):
-        return _resolve_daily_note_conflict(vault_path, file_path)
-
-    elif file_path.startswith('inbox/'):
-        return _resolve_inbox_conflict(vault_path, file_path)
-
-    elif file_path.startswith('notes/'):
-        return _create_conflict_copy(vault_path, file_path)
-
-    else:
-        return None  # Unknown file type
-
-
-def _resolve_daily_note_conflict(vault_path: Path, file_path: str) -> str:
-    """
-    Resolve daily note conflict by regenerating from TaskWarrior.
-
-    Strategy: TaskWarrior is source of truth for tasks.
-    Regenerate daily note from TaskWarrior, discarding both conflict versions.
-    """
-    # Extract date from filename (daily/YYYY-MM-DD.md)
-    date_str = Path(file_path).stem  # "YYYY-MM-DD"
-
-    # Regenerate from TaskWarrior
-    content = generate_daily_note(date_str)
-
-    return content
-
-
-def _resolve_inbox_conflict(vault_path: Path, file_path: str) -> str:
-    """
-    Resolve inbox conflict by merging unprocessed items.
-
-    Strategy: Combine all unprocessed items from both versions.
-    Duplicates are OK (user will skip during processing).
-    """
-    full_path = vault_path / file_path
-
-    # Read both versions (Git creates conflict markers)
-    conflict_content = full_path.read_text()
-
-    # Parse conflict markers
-    ours_content = _extract_conflict_section(conflict_content, 'ours')
-    theirs_content = _extract_conflict_section(conflict_content, 'theirs')
-
-    # Parse both inbox versions
-    ours_items = parse_inbox_file(ours_content).get('unprocessed', [])
-    theirs_items = parse_inbox_file(theirs_content).get('unprocessed', [])
-
-    # Merge unprocessed items
-    merged_items = list(set(ours_items + theirs_items))  # Remove duplicates
-
-    # Reconstruct inbox file
-    merged_content = f"""# Inbox - {Path(file_path).stem}
-
-## Unprocessed
-
-"""
-    for item in merged_items:
-        merged_content += f"- [ ] {item}\n"
-
-    merged_content += "\n## Processed\n\n"
-
-    return merged_content
-
-
-def _create_conflict_copy(vault_path: Path, file_path: str) -> None:
-    """
-    Create conflict copy for manual user resolution.
-
-    Strategy: Can't automatically resolve note conflicts.
-    Create `.conflicted-TIMESTAMP.md` copy and let user choose.
-    """
-    full_path = vault_path / file_path
-    conflict_content = full_path.read_text()
-
-    # Create conflict copy
-    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-    conflict_file = full_path.with_name(f"{full_path.stem}.conflicted-{timestamp}.md")
-    conflict_file.write_text(conflict_content)
-
-    # Keep "ours" version in original file
-    ours_content = _extract_conflict_section(conflict_content, 'ours')
-    full_path.write_text(ours_content)
-
-    return None  # Signal manual resolution needed
-
-
-def _extract_conflict_section(content: str, section: str) -> str:
-    """
-    Extract content from Git conflict markers.
-
-    Git conflict format:
-    <<<<<<< HEAD (ours)
-    Our content
-    =======
-    Their content
-    >>>>>>> origin/master (theirs)
-    """
-    lines = content.split('\n')
-
-    if section == 'ours':
-        start_marker = '<<<<<<< HEAD'
-        end_marker = '======='
-    else:  # theirs
-        start_marker = '======='
-        end_marker = '>>>>>>> '
-
-    in_section = False
-    section_lines = []
-
-    for line in lines:
-        if line.startswith(start_marker):
-            in_section = True
-            continue
-        elif line.startswith(end_marker):
-            break
-        elif in_section:
-            section_lines.append(line)
-
-    return '\n'.join(section_lines)
-```
-
-### Phase 4: Integration with Existing Commands (0.5 hours)
-
-**4.1: Auto-sync on Start**
-
-Update `src/brainplorp/commands/start.py`:
-
-```python
-@click.command()
-@click.option('--auto-sync/--no-auto-sync', default=True, help='Automatically sync vault before start')
-def start(auto_sync: bool):
-    """Generate today's daily note."""
-
-    # Auto-sync vault before generating daily note
-    if auto_sync:
-        config = load_config()
-        if config.get('vault_sync', {}).get('enabled'):
-            console.print("🔄 Syncing vault...")
-            # Call vault sync internally
-            from .vault_sync import sync as vault_sync_cmd
-            try:
-                vault_sync_cmd(verbose=False, dry_run=False)
-            except Exception as e:
-                console.print(f"[yellow]Warning: Vault sync failed: {e}[/yellow]")
-                console.print("Continuing with start command...\n")
-
-    # ... rest of start command ...
-```
-
-**4.2: Auto-sync on Review**
-
-Update `src/brainplorp/commands/review.py`:
-
-```python
-@click.command()
-@click.option('--auto-sync/--no-auto-sync', default=True, help='Automatically sync vault after review')
-def review(auto_sync: bool):
-    """Interactive review of incomplete tasks."""
-
-    # ... review workflow ...
-
-    # Auto-sync vault after review (to upload changes)
-    if auto_sync:
-        config = load_config()
-        if config.get('vault_sync', {}).get('enabled'):
-            console.print("\n🔄 Syncing vault...")
-            from .vault_sync import sync as vault_sync_cmd
-            try:
-                vault_sync_cmd(verbose=False, dry_run=False)
-            except Exception as e:
-                console.print(f"[yellow]Warning: Vault sync failed: {e}[/yellow]")
-```
+### Phase 1: CouchDB Server Deployment (2 hours)
+
+**Goal:** Deploy self-hosted CouchDB instance on Fly.io
+
+**Deliverables:**
+- CouchDB Docker container running on Fly.io
+- HTTPS endpoint with SSL certificate
+- Admin credentials configured
+- Volume mounted for persistent data
+- Fly.io app configured for auto-restart
+
+**Files to create/modify:**
+- `deploy/couchdb.Dockerfile` - CouchDB container image
+- `deploy/couchdb-fly.toml` - Fly.io configuration
+- `deploy/couchdb-config.ini` - CouchDB settings (CORS, auth)
+
+**Deployment steps:**
+1. Build CouchDB Docker image with custom config
+2. Deploy to Fly.io (alongside TaskChampion sync server)
+3. Create persistent volume for database storage
+4. Configure HTTPS with Fly.io's automatic SSL
+5. Test: HTTP GET to verify CouchDB responds
+
+**Success criteria:**
+- `curl https://couch-brainplorp-sync.fly.dev/` returns CouchDB welcome JSON
+- Admin panel accessible: `https://couch-brainplorp-sync.fly.dev/_utils/`
+- Database persists across container restarts
 
 ---
 
-## Testing Strategy
+### Phase 2: User Setup Wizard Integration (2 hours)
 
-### Manual Testing Checklist
+**Goal:** Extend `brainplorp setup` to configure CouchDB + LiveSync
 
-**Setup (Two Test Computers Required):**
+**User flows:**
 
-- [ ] Computer 1: Fresh brainplorp install, run setup wizard
-- [ ] Computer 1: Verify `.git/` directory created in vault
-- [ ] Computer 1: Verify `.gitignore` created with selective sync rules
-- [ ] Computer 1: Create test daily note with `brainplorp start`
-- [ ] Computer 1: Run `brainplorp vault sync`
-- [ ] Computer 1: Verify sync completes successfully
+**Flow 1: First Computer**
+1. User runs `brainplorp setup`
+2. brainplorp creates CouchDB database for user via HTTP API
+3. brainplorp generates unique username/password
+4. brainplorp creates `vault/.obsidian/plugins/obsidian-livesync/data.json` with credentials
+5. brainplorp installs LiveSync plugin if not present
+6. brainplorp displays credentials for user to save
+7. User opens Obsidian, enables LiveSync plugin
+8. LiveSync syncs vault to CouchDB automatically
 
-**Computer 2 First Sync:**
+**Flow 2: Additional Computer**
+1. User runs `brainplorp setup` on new Mac
+2. brainplorp prompts: "Do you have CouchDB credentials?"
+3. User pastes credentials from Computer 1
+4. brainplorp configures LiveSync with same database
+5. User opens Obsidian, enables LiveSync
+6. Vault downloads from CouchDB automatically
 
-- [ ] Computer 2: Fresh brainplorp install, run setup wizard
-- [ ] Computer 2: Run `brainplorp vault sync`
-- [ ] Computer 2: Verify daily note downloaded from Computer 1
-- [ ] Computer 2: Verify `daily/`, `inbox/`, `notes/` directories synced
-- [ ] Computer 2: Verify other vault directories NOT synced
+**Flow 3: Mobile Device**
+1. User installs Obsidian on iPhone
+2. User creates empty vault
+3. User goes to Settings → Community Plugins → Browse
+4. User installs "Self-hosted LiveSync"
+5. User enters CouchDB credentials (from Computer 1)
+6. Vault syncs automatically
 
-**Bidirectional Sync:**
+**Files to create/modify:**
+- `src/brainplorp/commands/setup.py` - Add vault sync step
+- `src/brainplorp/integrations/couchdb.py` - HTTP client for CouchDB API
+- `src/brainplorp/utils/livesync_config.py` - Generate LiveSync config JSON
 
-- [ ] Computer 1: Add task to today's daily note
-- [ ] Computer 1: Run `brainplorp vault sync`
-- [ ] Computer 2: Run `brainplorp vault sync`
-- [ ] Computer 2: Verify task appears in daily note
+**Key functions:**
+- `create_couchdb_database(username)` - Create user's vault database
+- `generate_couchdb_credentials()` - Create username/password pair
+- `configure_livesync_plugin(vault_path, credentials)` - Write plugin config
+- `verify_livesync_sync(vault_path)` - Check if LiveSync is syncing
 
-**Conflict Resolution:**
+**Success criteria:**
+- `brainplorp setup` on Computer 1 completes without errors
+- User can paste credentials into Computer 2's setup
+- LiveSync plugin config JSON is valid and loads in Obsidian
+- User opens Obsidian and sees sync happening (status indicator)
 
-- [ ] Computer 1: Add "Task A" to daily note, DON'T sync yet
-- [ ] Computer 2: Add "Task B" to same daily note, sync immediately
-- [ ] Computer 1: Run `brainplorp vault sync`
-- [ ] Computer 1: Verify conflict resolved automatically (daily note regenerated from TaskWarrior)
+---
 
-**Offline Mode:**
+### Phase 3: Server HTTP API Client (2 hours)
 
-- [ ] Computer 1: Disconnect from internet
-- [ ] Computer 1: Run `brainplorp vault sync`
-- [ ] Computer 1: Verify graceful error message (queued for next sync)
-- [ ] Computer 1: Reconnect to internet
-- [ ] Computer 1: Run `brainplorp vault sync`
-- [ ] Computer 1: Verify changes uploaded successfully
+**Goal:** Python library for brainplorp server to access vault via CouchDB
 
-**Status Command:**
+**Use cases:**
+1. **Email to inbox** (Sprint 10.2): Append email bullets to `inbox/YYYY-MM.md`
+2. **Read daily note** (analytics): Parse today's tasks for completion tracking
+3. **Batch reads** (reporting): Read week's daily notes for summary
+4. **Create notes** (automation): Generate project notes from templates
 
-- [ ] Run `brainplorp vault status` with no changes
-- [ ] Verify shows "Up to date"
-- [ ] Modify daily note without syncing
-- [ ] Run `brainplorp vault status`
-- [ ] Verify shows "N uncommitted changes"
+**Library interface:**
 
-### Automated Tests
-
-Create `tests/test_vault_sync.py`:
-
-```python
-"""Tests for vault sync functionality."""
-
-import pytest
-from pathlib import Path
-import subprocess
-import tempfile
-
-from brainplorp.integrations.git import git_init, git_status, git_add_remote
-from brainplorp.utils.conflict_resolution import resolve_conflict
-
-
-def test_git_init_creates_repo(tmp_path):
-    """Test Git initialization creates .git directory."""
-    git_init(tmp_path)
-
-    assert (tmp_path / '.git').exists()
-    assert (tmp_path / '.gitignore').exists()
-    assert (tmp_path / 'README_SYNC.md').exists()
-
-
-def test_gitignore_selective_sync(tmp_path):
-    """Test .gitignore only syncs brainplorp directories."""
-    git_init(tmp_path)
-
-    # Create test files
-    (tmp_path / 'daily').mkdir()
-    (tmp_path / 'daily' / 'test.md').write_text('daily note')
-    (tmp_path / 'other').mkdir()
-    (tmp_path / 'other' / 'test.md').write_text('other file')
-
-    # Stage all files
-    subprocess.run(['git', 'add', '.'], cwd=tmp_path, check=True)
-
-    # Check what's staged
-    result = subprocess.run(
-        ['git', 'diff', '--cached', '--name-only'],
-        cwd=tmp_path,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-
-    staged_files = result.stdout.strip().split('\n')
-
-    assert 'daily/test.md' in staged_files
-    assert 'other/test.md' not in staged_files
-
-
-def test_git_status_reports_changes(tmp_path):
-    """Test git_status reports pending changes."""
-    git_init(tmp_path)
-
-    # Create uncommitted file
-    (tmp_path / 'daily').mkdir()
-    (tmp_path / 'daily' / 'test.md').write_text('test')
-
-    pending, unsynced, needs_pull = git_status(tmp_path)
-
-    assert pending > 0  # Uncommitted change detected
-
-
-def test_conflict_resolution_daily_note(tmp_path):
-    """Test daily note conflict resolved by regeneration."""
-    # Create conflict scenario
-    conflict_content = """<<<<<<< HEAD
-- [ ] Task A (uuid: abc-123)
-=======
-- [ ] Task B (uuid: def-456)
->>>>>>> origin/master
-"""
-
-    (tmp_path / 'daily').mkdir()
-    conflict_file = tmp_path / 'daily' / '2025-10-12.md'
-    conflict_file.write_text(conflict_content)
-
-    # Resolve conflict
-    resolved = resolve_conflict(tmp_path, 'daily/2025-10-12.md')
-
-    # Should regenerate from TaskWarrior (not contain conflict markers)
-    assert '<<<<<<< HEAD' not in resolved
-    assert '>>>>>>>' not in resolved
 ```
+VaultClient(server_url, database, username, password)
+  .read_document(path) → document content
+  .write_document(path, content) → success/failure
+  .update_document(path, update_fn) → handles MVCC retries
+  .list_documents(prefix) → list of document IDs
+  .batch_read(paths) → dict of path → content
+```
+
+**Features:**
+- Automatic MVCC retry on conflict (exponential backoff)
+- Connection pooling for performance
+- Error handling with clear messages
+- Logging for debugging
+- Unit tests with mock CouchDB
+
+**Files to create:**
+- `src/brainplorp/integrations/vault_client.py` - HTTP client library
+- `tests/test_vault_client.py` - Unit tests
+
+**Example usage (email to inbox):**
+
+```
+High-level pseudocode:
+
+vault = VaultClient(couch_url, "user-jsd-vault", username, password)
+
+def append_email(email_text):
+    current_month = "2025-10"
+    inbox_path = f"inbox/{current_month}.md"
+
+    def add_bullet(content):
+        return content + f"\n- [ ] Email: {email_text}"
+
+    vault.update_document(inbox_path, add_bullet)
+    # update_document handles MVCC retries automatically
+```
+
+**Success criteria:**
+- Can read document from CouchDB via HTTP GET
+- Can write document via HTTP PUT with MVCC
+- MVCC conflicts retry automatically (tested with concurrent writes)
+- Error messages are clear ("Document not found", "Auth failed", etc.)
+- Unit tests pass with 100% coverage
+
+---
+
+### Phase 4: CouchDB Views for Analytics (1 hour)
+
+**Goal:** Optimize batch queries using CouchDB map/reduce views
+
+**Problem:** Reading 30 daily notes individually = 30 HTTP requests (slow)
+
+**Solution:** CouchDB views index documents, allow fast queries
+
+**Views to create:**
+
+**View 1: Daily notes by date**
+```
+Purpose: Get all daily notes in date range for weekly/monthly summaries
+Query: /vault/_design/brainplorp/_view/daily_by_date?startkey="2025-10-01"&endkey="2025-10-31"
+Returns: List of daily note documents for October
+```
+
+**View 2: Tasks by status**
+```
+Purpose: Count completed vs pending tasks across all daily notes
+Query: /vault/_design/brainplorp/_view/tasks_by_status?group=true
+Returns: {pending: 42, completed: 158}
+```
+
+**View 3: Inbox items by month**
+```
+Purpose: Track inbox processing rate (unprocessed vs processed items per month)
+Query: /vault/_design/brainplorp/_view/inbox_items?group=true
+Returns: {"2025-10": {unprocessed: 12, processed: 45}}
+```
+
+**Implementation:**
+- Create design document with map/reduce functions
+- Upload to CouchDB via HTTP PUT
+- Query views in analytics code
+- Compare performance (view vs. multiple doc reads)
+
+**Files to create:**
+- `deploy/couchdb-design-docs.json` - View definitions
+- `src/brainplorp/analytics/views.py` - Query view helper functions
+
+**Success criteria:**
+- Views return correct results (validated against manual parsing)
+- Query performance: <1 second for 30 days of data
+- Views update automatically as documents change
+
+---
+
+### Phase 5: Testing & Documentation (2 hours)
+
+**Testing scenarios:**
+
+**Multi-device sync:**
+1. Edit file on Mac 1
+2. Verify appears on iPhone within 5 seconds
+3. Edit same file on iPhone
+4. Verify Mac 1 sees changes
+5. Edit simultaneously on Mac 1 and iPhone
+6. Verify conflict handled (no data loss)
+
+**Offline/online:**
+1. Disconnect Mac 1 from internet
+2. Create new daily note
+3. Reconnect
+4. Verify syncs to CouchDB
+5. Verify Mac 2 receives new note
+
+**Server operations:**
+1. Server appends email to inbox via API
+2. Verify Mac sees email in Obsidian
+3. Server reads daily note via API
+4. Verify content matches Obsidian view
+
+**MVCC conflict resolution:**
+1. Server reads inbox (rev: 1-abc)
+2. Mac edits inbox (creates rev: 2-def)
+3. Server tries to write with stale rev 1-abc
+4. Verify server detects conflict
+5. Verify server retries with rev 2-def
+6. Verify no data lost
+
+**Performance:**
+1. Sync 100 small files (daily notes)
+2. Measure time to sync
+3. Goal: <10 seconds
+4. Sync 10MB file (PDF attachment)
+5. Goal: <30 seconds
+
+**Documentation to write:**
+
+1. **User Guide: Setting up vault sync**
+   - First computer setup
+   - Additional computer setup
+   - Mobile device setup
+   - Troubleshooting common issues
+
+2. **Developer Guide: Server HTTP API**
+   - Reading documents
+   - Writing documents
+   - Handling MVCC conflicts
+   - Batch operations
+   - View queries
+
+3. **Architecture Doc: Why CouchDB**
+   - Comparison with other solutions
+   - Trade-offs and limitations
+   - Performance characteristics
+   - Scaling considerations
+
+**Files to create:**
+- `Docs/VAULT_SYNC_USER_GUIDE.md`
+- `Docs/VAULT_SYNC_DEVELOPER_GUIDE.md`
+- `Docs/VAULT_SYNC_ARCHITECTURE.md`
+
+**Success criteria:**
+- All test scenarios pass
+- Documentation is clear and complete
+- User can follow guide and set up vault sync successfully
+- Developer can write server automation using API guide
 
 ---
 
 ## Configuration
 
-### Updated config.yaml Schema
+### User Config (~/.config/brainplorp/config.yaml)
 
 ```yaml
 vault_path: /Users/jsd/vault
@@ -1121,141 +643,652 @@ taskwarrior_sync:
 
 vault_sync:
   enabled: true
-  remote_url: ssh://git@brainplorp-sync.fly.dev/vault
-  ssh_key_path: ~/.config/brainplorp/vault_sync_key
-  auto_sync: true  # Auto-sync on start/review commands
+  method: couchdb
+  server: https://couch-brainplorp-sync.fly.dev
+  database: user-jsd-vault
+  username: user-jsd
+  password: [encrypted password]
 ```
+
+### LiveSync Plugin Config (vault/.obsidian/plugins/obsidian-livesync/data.json)
+
+```json
+{
+  "couchDB_URI": "https://couch-brainplorp-sync.fly.dev",
+  "couchDB_USER": "user-jsd",
+  "couchDB_PASSWORD": "...",
+  "couchDB_DBNAME": "user-jsd-vault",
+  "liveSync": true,
+  "syncOnSave": true,
+  "syncOnStart": true,
+  "conflictResolutionStrategy": "automatic"
+}
+```
+
+**brainplorp setup writes this file automatically.**
 
 ---
 
-## User Documentation
+## User Workflows
 
-### Quick Start Guide
+### Workflow 1: Capture Task on iPhone
 
-**Enable vault sync:**
+```
+Context: User at grocery store, remembers task
 
-```bash
-# Already enabled during setup wizard
-brainplorp vault sync
+1. User opens Obsidian on iPhone
+2. Opens inbox/2025-10.md
+3. Adds: "- [ ] Buy milk"
+4. Closes Obsidian
+5. LiveSync syncs automatically (3 seconds)
+
+Later that day:
+6. User opens Obsidian on Mac
+7. Runs: brainplorp inbox process
+8. Sees "Buy milk" in inbox
+9. Creates TaskWarrior task from inbox item
+10. TaskWarrior syncs to server
+11. Task appears in today's daily note on all devices
 ```
 
-**Check sync status:**
+**Key insight:** User never thought about syncing - it just worked.
 
-```bash
-brainplorp vault status
+### Workflow 2: Server Fetches Emails to Inbox
+
+```
+Context: Cron job runs on brainplorp server every 15 minutes
+
+1. Server fetches emails from Gmail via IMAP
+2. For each unread email:
+   - Parse subject/body to markdown bullet
+   - Read current month's inbox via CouchDB HTTP GET
+   - Append email bullet to inbox content
+   - Update inbox via CouchDB HTTP PUT (with MVCC)
+3. If MVCC conflict (user edited inbox simultaneously):
+   - Server retries with latest revision
+   - Merges server's emails with user's edits
+4. User opens Obsidian on Mac
+5. LiveSync synced new emails automatically
+6. User sees emails in inbox, processes with `brainplorp inbox process`
 ```
 
-**Sync manually:**
+**Key insight:** Server and user can both write to vault without conflicts.
 
-```bash
-brainplorp vault sync
+### Workflow 3: Weekly Summary Report
+
+```
+Context: User wants weekly task completion summary
+
+1. User runs: brainplorp report weekly
+2. brainplorp server queries CouchDB view:
+   - Get all daily notes from last 7 days
+   - View returns indexed data (fast)
+3. brainplorp parses task lists from each daily note
+4. brainplorp calculates:
+   - Total tasks: 87
+   - Completed: 64 (74%)
+   - Pending: 23 (26%)
+   - Overdue: 5
+5. brainplorp displays rich table in terminal
+6. Optional: Email summary to user
 ```
 
-**Disable auto-sync:**
+**Key insight:** CouchDB views make analytics fast, no need to read 7 documents individually.
 
-```bash
-# Edit ~/.config/brainplorp/config.yaml
-vault_sync:
-  auto_sync: false
-```
+---
 
-### Troubleshooting
+## Trade-offs and Limitations
 
-**Q: What if sync fails with "authentication failed"?**
+### What CouchDB + LiveSync Does Well
 
-A: Your SSH key may not be registered with the server. Run:
+✅ **Real-time automatic sync** - Best-in-class UX, no manual commands
+✅ **Mobile support** - Works on iPhone/iPad/Android via Obsidian mobile
+✅ **Conflict resolution** - MVCC handles simultaneous edits gracefully
+✅ **Server HTTP API** - Easy for brainplorp server to read/write vault
+✅ **Battle-tested** - CouchDB is mature, used by millions
+✅ **Self-hostable** - Runs on Fly.io free tier, user owns data
+✅ **Offline support** - Edit offline, syncs when reconnected
+✅ **Scalable** - CouchDB handles large vaults (GBs) efficiently
 
-```bash
-brainplorp setup  # Re-run setup to re-register key
-```
+### Limitations and Workarounds
 
-**Q: What if I see a `.conflicted-TIMESTAMP.md` file?**
+❌ **Requires Obsidian plugin** - Users must install and enable LiveSync
+**Mitigation:** brainplorp setup installs plugin automatically, user just enables it
 
-A: brainplorp couldn't automatically resolve a conflict in a note. Open both files, choose the content you want to keep, and delete the `.conflicted-*` file.
+❌ **Entire vault syncs** - Can't selectively sync only brainplorp directories
+**Mitigation:** CouchDB is efficient with incremental sync, bandwidth not a problem for text files
+**Future:** Could extend LiveSync to support selective sync (advanced feature)
 
-**Q: Can I sync my entire vault?**
+❌ **CouchDB is another service** - More complexity than Git
+**Mitigation:** Docker makes deployment trivial, Fly.io handles restarts/SSL automatically
 
-A: Not with brainplorp's built-in sync. brainplorp only syncs directories it manages (`daily/`, `inbox/`, `notes/`). Use Obsidian Sync or iCloud for full vault sync.
+❌ **No built-in encryption at rest** - CouchDB stores data unencrypted on disk
+**Mitigation:** Fly.io volumes are encrypted, network traffic is HTTPS
+**Future:** Could implement application-level encryption (encrypt content before storing in CouchDB)
 
-**Q: What if I'm offline?**
+❌ **Plugin maintenance** - If LiveSync breaks, users can't sync
+**Mitigation:** LiveSync is widely used (10,000+ users), actively maintained
+**Fallback:** Users can still use brainplorp on single device, export vault to file
 
-A: Changes are queued locally. Next time you run `brainplorp vault sync` while online, changes will be uploaded.
+### Compared to Git Automation
+
+**CouchDB wins on:**
+- Real-time automatic sync (Git requires manual `brainplorp vault sync`)
+- Mobile support (Git requires CLI, not available on iOS/Android)
+- Server API simplicity (HTTP requests vs. Git subprocess calls)
+- Conflict resolution (MVCC built-in vs. custom merge logic)
+
+**Git would win on:**
+- Selective sync (only brainplorp directories)
+- Familiarity (developers know Git)
+- Version history (full audit trail)
+
+**Decision:** Real-time sync + mobile support are critical for user experience. CouchDB is the right choice.
+
+---
+
+## Security Considerations
+
+### Authentication
+
+**Per-user credentials:**
+- Each user gets unique CouchDB username/password
+- Generated by brainplorp during setup (strong random password)
+- Stored in user's config file (encrypted at rest by OS)
+- Never shared across users
+
+**HTTP authentication:**
+- All requests require username/password (HTTP Basic Auth)
+- HTTPS enforces encrypted transport (Fly.io automatic SSL)
+- CouchDB validates credentials on every request
+
+### Data Privacy
+
+**User data isolation:**
+- Each user gets separate CouchDB database (e.g., `user-jsd-vault`)
+- CouchDB enforces database-level permissions
+- User A cannot read User B's database
+
+**Network security:**
+- All communication over HTTPS (TLS 1.3)
+- Fly.io provides automatic SSL certificates
+- No plaintext passwords on wire
+
+**At-rest encryption:**
+- Fly.io volumes encrypted by default
+- CouchDB data files encrypted at OS level
+- Future: Application-level encryption (encrypt content field before storing)
+
+### Threat Model
+
+**Protected against:**
+- ✅ Network eavesdropping (HTTPS)
+- ✅ Unauthorized database access (per-user auth)
+- ✅ Cross-user data leakage (separate databases)
+- ✅ Server disk theft (Fly.io volume encryption)
+
+**Not protected against:**
+- ⚠️ brainplorp server compromise (server has access to all user vaults via HTTP API)
+- ⚠️ User credential theft (if attacker gets username/password, can access vault)
+- ⚠️ Obsidian plugin vulnerability (malicious plugin could read vault)
+
+**Future improvements:**
+- End-to-end encryption (encrypt on client, decrypt on client, server stores ciphertext)
+- Token-based auth (refresh tokens, scope-limited access)
+- Audit logs (track all vault modifications)
+
+---
+
+## Performance Characteristics
+
+### Sync Speed
+
+**Initial sync (new device):**
+- Small vault (50 notes, 500KB): <5 seconds
+- Medium vault (500 notes, 5MB): <30 seconds
+- Large vault (5000 notes, 50MB): <3 minutes
+
+**Incremental sync (daily use):**
+- Single file edit (5KB): 2-5 seconds
+- 10 files edited (50KB): 5-10 seconds
+- Large file (1MB): 10-15 seconds
+
+**Factors:**
+- Network latency (Fly.io to user)
+- CouchDB server load
+- Number of concurrent users
+- File size
+
+### Server API Performance
+
+**Single document read:**
+- HTTP GET: <100ms (including network round-trip)
+- Document size: No impact for typical notes (<100KB)
+
+**Batch read (7 daily notes):**
+- Using `_all_docs?include_docs=true`: <200ms
+- Without view: 7 HTTP requests = ~700ms
+- Recommendation: Use batch endpoint for >3 documents
+
+**CouchDB view query:**
+- Indexed query (e.g., daily notes by date): <100ms
+- First query builds index: <1 second for 100 documents
+- Subsequent queries: Fast (index cached)
+
+**Write operations:**
+- HTTP PUT: <150ms (including MVCC validation)
+- MVCC conflict retry: +100ms per retry (rare)
+
+### Scalability
+
+**Fly.io free tier limits:**
+- 3 shared VMs
+- 256MB RAM per VM
+- 3GB storage
+- 160GB bandwidth/month
+
+**CouchDB on 256MB RAM:**
+- Can handle ~1000 documents (typical vault size)
+- Performance degrades with >10,000 documents (rare)
+- Upgrade to paid tier if needed ($7/month for 1GB RAM)
+
+**Concurrent users:**
+- Free tier: 1-5 users comfortable
+- Paid tier: 50+ users per instance
+- CouchDB replication allows multi-datacenter scaling (future)
+
+---
+
+## Migration Path
+
+### From No Sync → CouchDB
+
+**User currently has local-only vault:**
+
+1. User runs `brainplorp setup` → configures CouchDB
+2. User enables LiveSync in Obsidian
+3. LiveSync uploads entire vault to CouchDB (one-time, <1 minute)
+4. User sets up additional devices with same credentials
+5. All devices sync automatically
+
+**No data loss risk:** Original vault stays local, CouchDB is additive.
+
+### From iCloud/Dropbox → CouchDB
+
+**User currently syncs via iCloud:**
+
+1. User runs `brainplorp setup` → configures CouchDB
+2. User enables LiveSync in Obsidian
+3. LiveSync uploads vault to CouchDB
+4. User can keep iCloud as backup (no conflict)
+5. LiveSync takes over as primary sync method
+
+**Recommendation:** Disable iCloud sync for vault folder to avoid conflicts.
+
+### From Git (if Sprint 10.3 had used Git) → CouchDB
+
+**Future migration if we change approaches:**
+
+1. Export Git repository to filesystem
+2. Run `brainplorp vault migrate-to-couchdb`
+3. brainplorp reads all files, uploads to CouchDB as documents
+4. Git history preserved in CouchDB revision history (partial)
+5. User enables LiveSync, continues with CouchDB
+
+**Estimated migration time:** 10 files/second = 100 files in 10 seconds.
+
+---
+
+## Comparison with Other Solutions
+
+### vs. Obsidian Sync (Official, $8/month)
+
+| Feature | Obsidian Sync | brainplorp CouchDB |
+|---------|---------------|-------------------|
+| Real-time sync | ✅ Yes | ✅ Yes |
+| Mobile support | ✅ Yes | ✅ Yes (via LiveSync) |
+| Self-hosted | ❌ No | ✅ Yes |
+| Cost | $8/month | Free (Fly.io free tier) |
+| Server API access | ❌ No | ✅ Yes (HTTP API) |
+| End-to-end encryption | ✅ Yes | ⚠️ Future |
+| Version history | ✅ 1 year | ⚠️ Limited (CouchDB revisions) |
+
+**Verdict:** brainplorp CouchDB is free and self-hosted, with server API access. Obsidian Sync has better E2E encryption and version history.
+
+### vs. iCloud Drive
+
+| Feature | iCloud Drive | brainplorp CouchDB |
+|---------|-------------|-------------------|
+| Real-time sync | ⚠️ Eventual | ✅ Real-time (2-5s) |
+| Mobile support | ✅ Yes | ✅ Yes |
+| Conflict resolution | ❌ Creates .conflict files | ✅ Automatic (MVCC) |
+| Server API access | ❌ No | ✅ Yes |
+| Cost | Free (5GB) | Free (Fly.io) |
+
+**Verdict:** brainplorp CouchDB has better conflict resolution and server API. iCloud is simpler (no setup).
+
+### vs. Syncthing (P2P)
+
+| Feature | Syncthing | brainplorp CouchDB |
+|---------|----------|-------------------|
+| Real-time sync | ✅ Yes | ✅ Yes |
+| Mobile support | ⚠️ Android only | ✅ iOS + Android |
+| Server API access | ❌ No | ✅ Yes |
+| Setup complexity | ⚠️ High (install on all devices) | ✅ Low (brainplorp setup) |
+| Conflict resolution | ⚠️ Creates .conflict files | ✅ Automatic (MVCC) |
+
+**Verdict:** brainplorp CouchDB has better conflict resolution, iOS support, and server API. Syncthing is more private (P2P).
+
+### vs. Git + Obsidian Git Plugin
+
+| Feature | Git Plugin | brainplorp CouchDB |
+|---------|-----------|-------------------|
+| Real-time sync | ❌ Manual/scheduled | ✅ Automatic (2-5s) |
+| Mobile support | ❌ No (Git not on mobile) | ✅ Yes |
+| Server API access | ✅ Yes (git clone) | ✅ Yes (HTTP) |
+| Version history | ✅ Full Git history | ⚠️ Limited |
+| Selective sync | ✅ Yes (.gitignore) | ❌ No (entire vault) |
+| Conflict resolution | ⚠️ Manual merge | ✅ Automatic (MVCC) |
+| Setup complexity | ⚠️ High (Git knowledge) | ✅ Low (brainplorp setup) |
+
+**Verdict:** brainplorp CouchDB has better UX (real-time, mobile, auto-conflicts). Git has better version history and selective sync.
+
+**Decision:** For brainplorp's target users (non-technical), CouchDB is the clear winner.
+
+---
+
+## Future Enhancements
+
+### Sprint 11+: Advanced Features
+
+**End-to-end encryption:**
+- Encrypt document content on client before uploading to CouchDB
+- Server stores ciphertext, can't read user's vault
+- Encryption key derived from user's password
+- Implementation: 4-6 hours
+
+**Selective sync:**
+- Allow user to specify which folders sync
+- Example: Sync `daily/` and `inbox/`, skip `journal/` (personal)
+- Requires LiveSync plugin modification or custom sync client
+- Implementation: 8-12 hours
+
+**Conflict resolution UI:**
+- When automatic merge fails, show visual diff in terminal
+- `brainplorp vault conflicts` command to list conflicts
+- `brainplorp vault resolve <file>` to merge manually
+- Implementation: 3-4 hours
+
+**Vault analytics dashboard:**
+- Web UI showing sync activity, storage usage, device list
+- Real-time sync status for all devices
+- Conflict history and resolution rate
+- Implementation: 12-16 hours (web app)
+
+**Multi-vault support:**
+- User has multiple Obsidian vaults (work, personal)
+- Each vault gets separate CouchDB database
+- `brainplorp setup --vault work` to configure second vault
+- Implementation: 2-3 hours
 
 ---
 
 ## Success Metrics
 
 **Must Have (Sprint 10.3):**
-- [ ] `brainplorp vault sync` command works end-to-end
-- [ ] Selective sync (only brainplorp directories)
-- [ ] Automatic conflict resolution for daily notes and inbox files
-- [ ] SSH key generation and registration during setup
-- [ ] `brainplorp vault status` shows sync state
-- [ ] Git server deployed to Fly.io
+- [ ] CouchDB server running on Fly.io (accessible via HTTPS)
+- [ ] `brainplorp setup` configures LiveSync plugin automatically
+- [ ] User can enable LiveSync in Obsidian, vault syncs
+- [ ] Vault syncs across Mac 1 → CouchDB → Mac 2
+- [ ] Mobile device (iPhone) can sync vault via LiveSync
+- [ ] brainplorp server can read document via HTTP API
+- [ ] brainplorp server can write document via HTTP API (with MVCC)
+- [ ] `brainplorp vault status` shows sync health
+- [ ] Documentation complete (user guide + developer guide)
 
-**Should Have (Sprint 10.4):**
-- [ ] Auto-sync on `brainplorp start` and `brainplorp review`
-- [ ] Offline mode (queue changes, sync when online)
-- [ ] Clear error messages for auth failures
-- [ ] Performance: <5 seconds for typical sync
+**Should Have (Nice to have for Sprint 10.3):**
+- [ ] MVCC conflict automatically retries (tested with concurrent writes)
+- [ ] CouchDB views for analytics (daily notes by date)
+- [ ] Offline edit syncs when reconnected (tested)
+- [ ] Sync performance: <10 seconds for 100 files
+- [ ] Error messages are clear and actionable
 
-**Could Have (Future):**
-- [ ] `brainplorp vault history` to view sync history
-- [ ] `brainplorp vault conflicts` to list unresolved conflicts
-- [ ] Web UI to view vault sync activity
-- [ ] Webhook notifications on sync events
+**Could Have (Future sprints):**
+- [ ] End-to-end encryption
+- [ ] Selective sync (choose folders)
+- [ ] Conflict resolution UI
+- [ ] Web dashboard for sync monitoring
+- [ ] Multi-vault support
 
 ---
 
 ## Risk Assessment
 
-**High Risk:**
-- **Git complexity for users** - Mitigated by abstracting Git entirely
-- **SSH key management** - Mitigated by automated key generation and registration
-- **Conflict resolution failures** - Mitigated by conservative strategies (regenerate from source of truth)
+### High Risk
 
-**Medium Risk:**
-- **Server storage limits** - Fly.io free tier has 3GB, adequate for text files
-- **Network failures during sync** - Mitigated by atomic Git operations (all-or-nothing)
+**Risk:** LiveSync plugin breaks in future Obsidian update
+**Impact:** Users can't sync vault
+**Mitigation:**
+- LiveSync is actively maintained with 10,000+ users
+- Community would fix critical issues quickly
+- Fallback: Users can still use brainplorp on single device
+**Contingency:** Fork LiveSync if abandoned, maintain our own version
 
-**Low Risk:**
-- **Performance** - Git is fast for small text files (daily notes, inbox files)
-- **User adoption** - Optional feature, doesn't affect existing workflows
+**Risk:** CouchDB data corruption (rare but catastrophic)
+**Impact:** User loses vault data
+**Mitigation:**
+- CouchDB is battle-tested, data corruption extremely rare
+- Fly.io volumes have automatic snapshots (daily)
+- User's local Obsidian vault is always source of truth (can re-upload)
+**Contingency:** Implement automatic daily backups to S3 (Sprint 11)
+
+### Medium Risk
+
+**Risk:** MVCC conflicts cause data loss (implementation bug)
+**Impact:** User's edits overwritten by server/other device
+**Mitigation:**
+- Extensive testing of concurrent writes (Phase 5)
+- Start with conservative retry logic (abort on ambiguous conflicts)
+- Monitor conflict rate in production
+**Contingency:** Add conflict logging, alert on high conflict rate
+
+**Risk:** CouchDB performance degrades with large vault (>10,000 files)
+**Impact:** Slow sync, poor user experience
+**Mitigation:**
+- Most vaults have <1,000 files (typical user)
+- CouchDB handles 10,000 documents comfortably on 256MB RAM
+- Can upgrade Fly.io instance if needed ($7/month for 1GB RAM)
+**Contingency:** Implement sharding (split vault across multiple databases)
+
+### Low Risk
+
+**Risk:** Setup wizard fails to install LiveSync plugin
+**Impact:** User must install plugin manually
+**Mitigation:**
+- Document manual installation steps clearly
+- Most users already have LiveSync installed
+**Contingency:** User installs plugin from Community Plugins (5 seconds)
+
+**Risk:** HTTP API authentication credentials leak
+**Impact:** Attacker can read/write user's vault
+**Mitigation:**
+- Credentials stored encrypted in user's config file
+- HTTPS prevents network sniffing
+- Each user has unique credentials (blast radius limited)
+**Contingency:** Implement token rotation, audit logs
 
 ---
 
-## Future Enhancements (Post-Sprint 10.3)
+## Testing Strategy
 
-**Sprint 11: Advanced Conflict Resolution**
-- Smart merge for inbox items (deduplicate based on content similarity)
-- Interactive conflict resolution UI
-- Conflict history and rollback
+### Manual Testing Checklist
 
-**Sprint 12: Sync Monitoring**
-- Web dashboard for sync activity
-- Email notifications on conflicts
-- Sync analytics (files synced, bandwidth used)
+**Setup (two Macs, one iPhone):**
 
-**Sprint 13: Expanded Sync Scope**
-- Sync `projects/` directory as brainplorp manages more of vault
-- Sync attachments referenced in brainplorp notes
-- Selective sync configuration (user chooses directories)
+- [ ] Mac 1: Fresh brainplorp install, no existing vault sync
+- [ ] Mac 1: Run `brainplorp setup`, configure CouchDB
+- [ ] Mac 1: Verify LiveSync config file created
+- [ ] Mac 1: Open Obsidian, enable LiveSync plugin
+- [ ] Mac 1: Verify sync status shows "Connected"
+- [ ] Mac 1: Create test file `test-sync.md`
+- [ ] Mac 1: Verify file uploads to CouchDB (check CouchDB Fauxton UI)
+
+**Multi-device sync:**
+
+- [ ] Mac 2: Fresh brainplorp install, empty vault
+- [ ] Mac 2: Run `brainplorp setup`, paste credentials from Mac 1
+- [ ] Mac 2: Open Obsidian, enable LiveSync
+- [ ] Mac 2: Verify `test-sync.md` downloads from CouchDB
+- [ ] Mac 2: Edit `test-sync.md`, add line "Hello from Mac 2"
+- [ ] Mac 1: Verify sees "Hello from Mac 2" within 5 seconds
+
+**Mobile sync:**
+
+- [ ] iPhone: Install Obsidian, create empty vault
+- [ ] iPhone: Install Self-hosted LiveSync plugin
+- [ ] iPhone: Enter CouchDB credentials from Mac 1
+- [ ] iPhone: Verify vault downloads (all files)
+- [ ] iPhone: Create file `mobile-test.md`
+- [ ] Mac 1: Verify sees `mobile-test.md` within 5 seconds
+
+**Conflict resolution:**
+
+- [ ] Mac 1: Edit `test-sync.md`, add "Line from Mac 1"
+- [ ] Mac 2: Edit `test-sync.md` (same file), add "Line from Mac 2"
+- [ ] Both Macs: Save files simultaneously (within 1 second)
+- [ ] Verify: LiveSync creates conflict file (e.g., `test-sync.conflicted.md`)
+- [ ] Verify: No data lost (both lines present in one of the files)
+
+**Server API:**
+
+- [ ] Server: Read `test-sync.md` via HTTP GET
+- [ ] Verify: Content matches what's in Obsidian
+- [ ] Server: Append line "Hello from server" via HTTP PUT
+- [ ] Mac 1: Verify sees "Hello from server" within 5 seconds
+- [ ] Verify: No conflicts (MVCC worked)
+
+**Offline/online:**
+
+- [ ] Mac 1: Disconnect from internet (airplane mode)
+- [ ] Mac 1: Edit `test-sync.md`, add "Offline edit"
+- [ ] Mac 1: Verify LiveSync shows "Disconnected" status
+- [ ] Mac 1: Reconnect to internet
+- [ ] Mac 1: Verify LiveSync syncs automatically
+- [ ] Mac 2: Verify sees "Offline edit" within 5 seconds
+
+**Performance:**
+
+- [ ] Create 100 small files (1KB each)
+- [ ] Mac 2: Enable LiveSync, measure time to download all files
+- [ ] Goal: <10 seconds
+- [ ] Create 1 large file (10MB PDF)
+- [ ] Measure time to sync
+- [ ] Goal: <30 seconds
+
+### Automated Tests
+
+**Unit tests:**
+- CouchDB client (read, write, MVCC retry)
+- LiveSync config generation
+- Credentials encryption/decryption
+- Document parsing (markdown to JSON)
+
+**Integration tests:**
+- `brainplorp setup` end-to-end (mock CouchDB server)
+- Server HTTP API (real CouchDB in Docker)
+- MVCC concurrent writes (simulate race conditions)
+
+**Files to create:**
+- `tests/test_couchdb_client.py` - Unit tests for HTTP client
+- `tests/test_livesync_config.py` - Config generation tests
+- `tests/test_vault_sync_integration.py` - End-to-end sync tests
+
+---
+
+## Documentation Deliverables
+
+### 1. User Guide: Vault Sync Setup
+
+**Docs/VAULT_SYNC_USER_GUIDE.md**
+
+Contents:
+- Introduction to vault sync (why it's useful)
+- Prerequisites (Obsidian installed, brainplorp installed)
+- Setup walkthrough (first computer)
+- Setup walkthrough (additional computers)
+- Setup walkthrough (mobile devices)
+- Troubleshooting (common errors and fixes)
+- FAQ (selective sync, encryption, conflicts)
+
+### 2. Developer Guide: Server HTTP API
+
+**Docs/VAULT_SYNC_DEVELOPER_GUIDE.md**
+
+Contents:
+- CouchDB HTTP API basics
+- Reading documents (GET)
+- Writing documents (PUT with MVCC)
+- Batch operations (_all_docs)
+- CouchDB views (queries)
+- Error handling
+- Example code (Python)
+
+### 3. Architecture Document
+
+**Docs/VAULT_SYNC_ARCHITECTURE.md**
+
+Contents:
+- System overview (diagram)
+- Why CouchDB (trade-offs)
+- MVCC conflict resolution (detailed explanation)
+- Security model (auth, encryption)
+- Performance characteristics
+- Scalability considerations
+- Comparison with alternatives (Git, Syncthing, etc.)
+
+---
+
+## Sprint Completion Checklist
+
+- [ ] Phase 1: CouchDB deployed on Fly.io (2h)
+- [ ] Phase 2: Setup wizard integration (2h)
+- [ ] Phase 3: Server HTTP API client (2h)
+- [ ] Phase 4: CouchDB views for analytics (1h)
+- [ ] Phase 5: Testing & documentation (2h)
+- [ ] All manual tests pass
+- [ ] All automated tests pass
+- [ ] User guide complete
+- [ ] Developer guide complete
+- [ ] Architecture doc complete
+- [ ] Git commit and push changes
+- [ ] Update PM_HANDOFF.md with completion notes
+- [ ] Version bump to v1.7.0
+- [ ] Tag release: `git tag v1.7.0`
+
+**Total Estimated Effort:** 9 hours
+
+**Sign-off Requirements:**
+- [ ] PM reviews implementation
+- [ ] PM tests on two Macs + iPhone
+- [ ] PM verifies documentation is complete
+- [ ] PM approves Sprint 10.3 as complete
 
 ---
 
 ## Document Maintenance
 
 **Created:** 2025-10-12 by PM Claude
-**Last Updated:** 2025-10-12
+**Last Updated:** 2025-10-12 (rewritten from Git to CouchDB)
 **Related Sprints:**
 - Sprint 10.2 (Cloud Sync - TaskWarrior)
 - Sprint 10.1.1 (Installation Hardening)
 
 **Dependencies:**
-- Sprint 10.2 must be complete (sync server deployed)
-- Git must be installed on user's Mac (Homebrew dependency)
+- Sprint 10.2 must be complete (Fly.io infrastructure deployed)
+- Obsidian installed on user's device
+- LiveSync plugin available (Community Plugin)
 
 **Update Protocol:**
-- Update spec if conflict resolution strategies change
-- Update if Git server architecture changes
-- Update when expanding sync scope (new directories)
+- Update spec if CouchDB architecture changes
+- Update if LiveSync plugin interface changes
+- Update when adding new features (encryption, selective sync)

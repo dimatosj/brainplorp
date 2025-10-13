@@ -40,7 +40,7 @@ Claude: [Generates your daily note with intelligent summaries]
 ### Prerequisites
 
 - **Python 3.10+** (check with `python3 --version`)
-- **TaskWarrior 3.4.1+** (check with `task --version`)
+- **TaskWarrior 3.4.0+** (check with `task --version`) - **Note:** Version 3.4.1 has known issues, see below
 - **Obsidian** with a vault configured
 
 ### Installation
@@ -260,7 +260,7 @@ plorp/
 ## Requirements
 
 - **Python**: 3.10+ (for MCP support)
-- **TaskWarrior**: 3.4.1+ (SQLite backend via TaskChampion)
+- **TaskWarrior**: 3.4.0+ (SQLite backend via TaskChampion) - **Avoid 3.4.1** (see Known Issues)
 - **Obsidian**: Any recent version (for vault access)
 - **Claude Desktop**: Optional (for MCP integration)
 
@@ -312,10 +312,56 @@ brainplorp follows these design principles:
 - **Testable**: Pure functions, no hidden dependencies
 - **Interoperable**: Works with existing TaskWarrior/Obsidian workflows
 
+## Known Issues
+
+### TaskWarrior 3.4.1 Hang Bug
+
+**Issue**: TaskWarrior 3.4.1 hangs indefinitely on first initialization (`task --version` never returns).
+
+**Symptoms**:
+- `brainplorp start` hangs forever
+- `brainplorp doctor` reports timeout errors
+- `task --version` never completes on first run
+
+**Why**: This is an upstream TaskWarrior bug in version 3.4.1, not a brainplorp issue.
+
+**Fix** (macOS with Homebrew):
+```bash
+# Uninstall broken version
+brew uninstall task
+
+# Install pinned working version (3.4.0)
+brew install dimatosj/brainplorp/taskwarrior-pinned
+
+# Verify working
+brainplorp doctor
+```
+
+**Fix** (other platforms):
+- Compile TaskWarrior v3.4.0 from source
+- See [INSTALLATION_TROUBLESHOOTING.md](Docs/INSTALLATION_TROUBLESHOOTING.md) for detailed instructions
+
+**Status**: Fixed in brainplorp v1.6.2+ by pinning to TaskWarrior 3.4.0 in Homebrew formula.
+
+### Diagnostics
+
+If you encounter any TaskWarrior-related issues, run:
+```bash
+brainplorp doctor
+```
+
+This will check:
+- TaskWarrior installation and version
+- Python dependencies
+- Configuration validity
+- Obsidian vault accessibility
+- Claude Desktop MCP setup
+
 ## Support
 
 - **Issues**: https://github.com/dimatosj/brainplorp/issues
 - **Documentation**: See `Docs/` directory
+- **Troubleshooting**: See [INSTALLATION_TROUBLESHOOTING.md](Docs/INSTALLATION_TROUBLESHOOTING.md)
 - **Questions**: Open a GitHub Discussion
 
 ## License

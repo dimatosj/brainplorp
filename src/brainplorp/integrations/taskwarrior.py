@@ -23,29 +23,57 @@ from typing import List, Dict, Any, Optional
 from subprocess import CompletedProcess
 
 
-def run_task_command(args: List[str], capture: bool = True) -> CompletedProcess:
+class TaskWarriorError(Exception):
+    """Raised when TaskWarrior operations fail."""
+    pass
+
+
+class TaskWarriorTimeoutError(TaskWarriorError):
+    """Raised when TaskWarrior operations timeout."""
+    pass
+
+
+def run_task_command(args: List[str], capture: bool = True, timeout: int = 10) -> CompletedProcess:
     """
-    Run a TaskWarrior command via subprocess.
+    Run a TaskWarrior command via subprocess with timeout.
 
     Args:
         args: Command arguments (without 'task' prefix)
         capture: Whether to capture output (False for interactive commands)
+        timeout: Timeout in seconds (default: 10). Use different values for:
+                 - Version check: 5s
+                 - Count/export: 10s
+                 - Large exports: 30s
+                 - Sync operations: 60s
 
     Returns:
         CompletedProcess object with returncode, stdout, stderr
 
+    Raises:
+        TaskWarriorTimeoutError: If command times out
+        TaskWarriorError: If command fails
+
     Example:
         run_task_command(['export']) -> runs 'task export'
         run_task_command(['1', 'done'], capture=False) -> runs 'task 1 done' interactively
+        run_task_command(['sync'], timeout=60) -> runs 'task sync' with 60s timeout
     """
     cmd = ["task"] + args
 
-    if capture:
-        result = subprocess.run(cmd, capture_output=True, text=True)
-    else:
-        result = subprocess.run(cmd)
+    try:
+        if capture:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        else:
+            result = subprocess.run(cmd, timeout=timeout)
 
-    return result
+        return result
+
+    except subprocess.TimeoutExpired:
+        raise TaskWarriorTimeoutError(
+            f"TaskWarrior command timed out after {timeout}s: {' '.join(args)}\n"
+            f"This may indicate TaskWarrior is hanging.\n"
+            f"Try: brainplorp doctor"
+        )
 
 
 def get_tasks(filters: List[str]) -> List[Dict[str, Any]]:

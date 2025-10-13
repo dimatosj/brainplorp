@@ -39,10 +39,12 @@ from brainplorp.core import (
     InboxNotFoundError,
 )
 from brainplorp.core.process import process_daily_note_step1, process_daily_note_step2
-from brainplorp.integrations.taskwarrior import get_tasks
+from brainplorp.integrations.taskwarrior import get_tasks, TaskWarriorError, TaskWarriorTimeoutError
 from brainplorp.utils.dates import format_date
 from brainplorp.utils.prompts import confirm, prompt
+from brainplorp.utils.taskwarrior_errors import handle_taskwarrior_error
 from brainplorp.commands.setup import setup, configure_mcp_standalone
+from brainplorp.commands.doctor import doctor
 
 console = Console()
 
@@ -58,6 +60,7 @@ def cli(ctx):
     (task management) and Obsidian (note-taking).
 
     Key commands:
+      doctor      - Diagnose system health and configuration issues
       setup       - Interactive setup wizard (run after install)
       mcp         - Configure Claude Desktop MCP integration
       start       - Generate daily note from TaskWarrior tasks
@@ -97,6 +100,8 @@ def start(ctx, date_str):
         console.print(f"  Recurring: {summary['recurring_count']}")
         console.print(f"  [bold]Total: {summary['total_count']}[/bold]")
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Generating daily note")
     except DailyNoteExistsError as e:
         console.print(f"[red]❌ Daily note already exists:[/red] {e.note_path}")
         console.print("[dim]💡 Tip: Open the existing note or delete it first[/dim]")
@@ -144,6 +149,8 @@ def review(ctx, date_str):
 
         console.print("[green]✅ Review complete![/green]")
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "During review")
     except DailyNoteNotFoundError as e:
         console.print(f"[red]❌ No daily note found for {e.date}[/red]")
         console.print("[dim]💡 Run 'plorp start' first[/dim]")
@@ -303,6 +310,8 @@ def inbox_process(ctx):
 
         console.print("[green]✅ Inbox processing complete![/green]")
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Processing inbox")
     except InboxNotFoundError as e:
         console.print(f"[red]❌ Inbox not found:[/red] {e.inbox_path}")
         console.print("[dim]💡 Create inbox file first[/dim]")
@@ -511,6 +520,8 @@ def note(ctx, title, task, type):
             result = create_note_standalone(vault_path, title, note_type=type)
             console.print(f"[green]✅ Created note:[/green] {result['note_path']}")
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Creating note")
     except TaskNotFoundError as e:
         console.print(f"[red]❌ Task not found:[/red] {e.uuid}")
         ctx.exit(1)
@@ -543,6 +554,8 @@ def link(ctx, task_uuid, note_path):
         console.print(f"[dim]📝 Note:[/dim] {note}")
         console.print(f"[dim]📋 Task:[/dim] {task_uuid}")
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Linking note")
     except TaskNotFoundError as e:
         console.print(f"[red]❌ Task not found:[/red] {e.uuid}")
         ctx.exit(1)
@@ -683,6 +696,8 @@ def process(ctx, date_str):
             console.print("  3. Mark [Y] to approve or [N] to reject")
             console.print("  4. Run 'plorp process' again to create tasks")
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Processing daily note")
     except DailyNoteNotFoundError as e:
         console.print(f"[red]❌ Daily note not found for {e.date}[/red]")
         console.print(f"[dim]💡 Run 'plorp start --date {e.date}' first[/dim]")
@@ -775,6 +790,8 @@ def tasks(ctx, urgent, important, project, due, limit, output_format):
 
             console.print(table)
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Listing tasks")
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}", err=True)
         ctx.exit(1)
@@ -813,6 +830,8 @@ def project_create(ctx, name, domain, workstream, state, description):
         )
         click.echo(f"✓ Created project: {project['full_path']}")
         click.echo(f"  Note: {project['note_path']}")
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Creating project")
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         ctx.exit(1)
@@ -890,6 +909,8 @@ def project_sync_all(ctx):
                 console.print(f"  {project_path}: {error_msg}")
             ctx.exit(1)
 
+    except (TaskWarriorTimeoutError, TaskWarriorError) as e:
+        handle_taskwarrior_error(e, "Syncing projects")
     except Exception as e:
         console.print(f"[red]❌ Error syncing projects:[/red] {e}")
         ctx.exit(1)
@@ -922,6 +943,9 @@ def focus_get(ctx):
     domain = get_focused_domain_cli()
     click.echo(f"Current focus: {domain}")
 
+
+# Register diagnostic command
+cli.add_command(doctor)
 
 # Register setup command
 cli.add_command(setup)

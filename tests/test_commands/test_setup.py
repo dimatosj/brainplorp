@@ -122,27 +122,28 @@ class TestSetupCommand:
 
         with patch('brainplorp.commands.setup.Path.home', return_value=tmp_path):
             with patch('brainplorp.commands.setup.detect_obsidian_vault', return_value=None):
-                with patch('brainplorp.commands.setup.configure_mcp'):
-                    # Simulate user inputs
-                    result = runner.invoke(setup, input=(
-                        '/Users/test/vault\n'  # vault path
-                        'n\n'  # skip TaskWarrior sync
-                        'vim\n'  # editor
-                        'n\n'  # skip email
-                        'n\n'  # skip MCP
-                    ))
+                with patch('brainplorp.commands.setup.check_taskwarrior', return_value={'passed': True, 'message': 'TaskWarrior OK'}):
+                    with patch('brainplorp.commands.setup.configure_mcp'):
+                        # Simulate user inputs
+                        result = runner.invoke(setup, input=(
+                            '/Users/test/vault\n'  # vault path
+                            'n\n'  # skip TaskWarrior sync
+                            'vim\n'  # editor
+                            'n\n'  # skip email
+                            'n\n'  # skip MCP
+                        ))
 
-                    assert result.exit_code == 0
-                    assert '✅ Setup complete!' in result.output
+                        assert result.exit_code == 0
+                        assert '✅ Setup complete!' in result.output
 
-                    # Verify config created
-                    config_path = tmp_path / '.config' / 'brainplorp' / 'config.yaml'
-                    assert config_path.exists()
+                        # Verify config created
+                        config_path = tmp_path / '.config' / 'brainplorp' / 'config.yaml'
+                        assert config_path.exists()
 
-                    config = yaml.safe_load(config_path.read_text())
-                    assert config['vault_path'] == '/Users/test/vault'
-                    assert config['default_editor'] == 'vim'
-                    assert config['email']['enabled'] is False
+                        config = yaml.safe_load(config_path.read_text())
+                        assert config['vault_path'] == '/Users/test/vault'
+                        assert config['default_editor'] == 'vim'
+                        assert config['email']['enabled'] is False
 
     def test_setup_accepts_detected_vault(self, tmp_path):
         """Should use detected vault when user confirms."""
@@ -151,19 +152,20 @@ class TestSetupCommand:
 
         with patch('brainplorp.commands.setup.Path.home', return_value=tmp_path):
             with patch('brainplorp.commands.setup.detect_obsidian_vault', return_value=detected_vault):
-                with patch('brainplorp.commands.setup.configure_mcp'):
-                    result = runner.invoke(setup, input=(
-                        'y\n'  # use detected vault
-                        'n\n'  # skip TaskWarrior sync
-                        'vim\n'  # editor
-                        'n\n'  # skip email
-                        'n\n'  # skip MCP
-                    ))
+                with patch('brainplorp.commands.setup.check_taskwarrior', return_value={'passed': True, 'message': 'TaskWarrior OK'}):
+                    with patch('brainplorp.commands.setup.configure_mcp'):
+                        result = runner.invoke(setup, input=(
+                            'y\n'  # use detected vault
+                            'n\n'  # skip TaskWarrior sync
+                            'vim\n'  # editor
+                            'n\n'  # skip email
+                            'n\n'  # skip MCP
+                        ))
 
-                    assert result.exit_code == 0
-                    config_path = tmp_path / '.config' / 'brainplorp' / 'config.yaml'
-                    config = yaml.safe_load(config_path.read_text())
-                    assert config['vault_path'] == str(detected_vault)
+                        assert result.exit_code == 0
+                        config_path = tmp_path / '.config' / 'brainplorp' / 'config.yaml'
+                        config = yaml.safe_load(config_path.read_text())
+                        assert config['vault_path'] == str(detected_vault)
 
     def test_setup_configures_email(self, tmp_path):
         """Should configure email when user opts in."""
@@ -171,21 +173,22 @@ class TestSetupCommand:
 
         with patch('brainplorp.commands.setup.Path.home', return_value=tmp_path):
             with patch('brainplorp.commands.setup.detect_obsidian_vault', return_value=None):
-                with patch('brainplorp.commands.setup.configure_mcp'):
-                    result = runner.invoke(setup, input=(
-                        '/Users/test/vault\n'  # vault path
-                        'n\n'  # skip TaskWarrior sync
-                        'vim\n'  # editor
-                        'y\n'  # configure email
-                        'user@gmail.com\n'  # email
-                        'app-password-here\n'  # password
-                        'work\n'  # label
-                        'n\n'  # skip MCP
-                    ))
+                with patch('brainplorp.commands.setup.check_taskwarrior', return_value={'passed': True, 'message': 'TaskWarrior OK'}):
+                    with patch('brainplorp.commands.setup.configure_mcp'):
+                        result = runner.invoke(setup, input=(
+                            '/Users/test/vault\n'  # vault path
+                            'n\n'  # skip TaskWarrior sync
+                            'vim\n'  # editor
+                            'y\n'  # configure email
+                            'user@gmail.com\n'  # email
+                            'app-password-here\n'  # password
+                            'work\n'  # label
+                            'n\n'  # skip MCP
+                        ))
 
-                    assert result.exit_code == 0
-                    config_path = tmp_path / '.config' / 'brainplorp' / 'config.yaml'
-                    config = yaml.safe_load(config_path.read_text())
-                    assert config['email']['enabled'] is True
-                    assert config['email']['username'] == 'user@gmail.com'
-                    assert config['email']['inbox_label'] == 'work'
+                        assert result.exit_code == 0
+                        config_path = tmp_path / '.config' / 'brainplorp' / 'config.yaml'
+                        config = yaml.safe_load(config_path.read_text())
+                        assert config['email']['enabled'] is True
+                        assert config['email']['username'] == 'user@gmail.com'
+                        assert config['email']['inbox_label'] == 'work'

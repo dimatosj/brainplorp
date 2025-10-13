@@ -3,10 +3,13 @@
 
 import click
 import os
+import sys
 from pathlib import Path
 import json
 import yaml
 import shutil
+
+from brainplorp.utils.diagnostics import check_taskwarrior
 
 
 @click.command()
@@ -33,6 +36,36 @@ def setup():
     else:
         click.echo("  ℹ No Obsidian vault detected")
         config['vault_path'] = click.prompt("  Enter vault path (or press Enter to skip)", default="", show_default=False)
+
+    click.echo()
+
+    # Step 1.5: TaskWarrior Validation (NEW - Sprint 10.1.1)
+    click.echo("Step 1.5: Checking TaskWarrior...")
+
+    tw_check = check_taskwarrior(verbose=False)
+
+    if not tw_check['passed']:
+        click.echo()
+        click.secho(f"  ✗ TaskWarrior issue detected:", fg='red', bold=True)
+        click.echo(f"     {tw_check['message']}")
+        click.echo()
+        click.secho(f"  Fix:", fg='yellow', bold=True)
+        click.echo(f"     {tw_check['fix']}")
+        click.echo()
+
+        # Check if it's the known 3.4.1 issue
+        if '3.4.1' in tw_check.get('message', ''):
+            click.secho("  ⚠ Known Issue: TaskWarrior 3.4.1 hang bug", fg='yellow', bold=True)
+            click.echo("     This is an upstream TaskWarrior bug, not a brainplorp issue.")
+            click.echo("     See: https://github.com/dimatosj/brainplorp#known-issues")
+
+        click.echo()
+        click.secho("  Setup cannot continue until TaskWarrior is working.", fg='red')
+        click.echo("  Run 'brainplorp setup' again after fixing TaskWarrior.")
+        click.echo()
+        sys.exit(1)
+    else:
+        click.echo(f"  ✓ {tw_check['message']}")
 
     click.echo()
 

@@ -10,7 +10,7 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 
 ---
 
-## CURRENT STATE (Updated: 2025-10-11 - Session 20)
+## CURRENT STATE (Updated: 2025-10-12 - Session 21)
 
 **Active Sprints:**
 - Sprint 6: ✅ COMPLETE (2025-10-06)
@@ -23,15 +23,23 @@ This document is the SOURCE OF TRUTH for project state across PM/Architect insta
 - Sprint 9.2: ✅ COMPLETE & SIGNED OFF (2025-10-10) - Email inbox capture (Gmail IMAP), 522/522 tests passing (21 new), version 1.5.2, PM approved, production-ready
 - Sprint 9.3: ✅ COMPLETE & SIGNED OFF (2025-10-10) - Quick add to inbox (macOS), 526/526 tests passing (4 new), version 1.5.3, PM approved, production-ready
 - Sprint 10: ✅ COMPLETE & RELEASED (2025-10-11) - Mac Installation & Multi-Computer Sync, 561/561 tests passing (24 new), version 1.6.0, Homebrew installation working
+- Sprint 10.1 (Wheel Distribution): ✅ COMPLETE & RELEASED (2025-10-11) - Homebrew wheel-based install, version 1.6.1, 12s install time
+- Sprint 10.1.1 (Installation Hardening): ✅ CODE COMPLETE (2025-10-12) - TaskWarrior 3.4.0 pinned, doctor command, timeout protection, 532/537 tests passing, committed, waiting for v1.7.0 release
 
 **Repository:**
 - GitHub: https://github.com/dimatosj/brainplorp
 - Branch: master
-- Version: v1.6.0 (Sprint 10 complete, released)
+- Version: v1.6.2 in code (not released - will be part of v1.7.0)
+- Latest Release: v1.6.1
 - Homebrew Tap: https://github.com/dimatosj/homebrew-brainplorp
 
 **Blocking Issues:**
 - None
+
+**Release Plan:**
+- Sprint 10.1.1 code complete and committed (v1.6.2 in code)
+- Sprint 10.3 (Vault Sync) spec complete, ready for implementation
+- Will release v1.7.0 combining Sprint 10.1.1 + Sprint 10.3 (avoiding release churn)
 
 **Documentation Status:**
 - Sprint 6 spec: ✅ Complete with handoff notes
@@ -1890,3 +1898,130 @@ def _strip_html_tags(html: str) -> str:
 
 ---
 
+
+### Session 21 - 2025-10-12 (PM/Architect)
+**Participant:** PM/Architect (Sprint 10.1.1 code review, Sprint 10.3 architecture decision, commit & release planning)
+
+**What Happened:**
+
+**Context:**
+- Continued from previous summarized session
+- Sprint 10.3 spec finalized with pure CouchDB architecture
+- Architecture decision document created (VAULT_SYNC_ARCHITECTURE_DECISION.md)
+- User asked: "what are we doing about Sprint 10.1.1 status?"
+
+**Phase 1: Sprint 10.1.1 Code Review (00:00-00:20)**
+- User question: "is the work done for 10.1.1 good work?"
+- Reviewed all Sprint 10.1.1 implementation files:
+  - `src/brainplorp/commands/doctor.py` (107 lines) - diagnostic command
+  - `src/brainplorp/utils/diagnostics.py` (349 lines) - reusable check functions
+  - `src/brainplorp/integrations/taskwarrior.py` - timeout protection added
+  - `scripts/test_taskwarrior_version.sh` (166 lines) - systematic version testing
+  - `/private/tmp/homebrew-brainplorp/Formula/taskwarrior-pinned.rb` - pinned to v3.4.0
+  - `Docs/INSTALLATION_TROUBLESHOOTING.md` (457 lines) - comprehensive guide
+
+**Code Quality Assessment:**
+- **Overall Grade: A (92/100)** - High quality, production-ready
+- ✅ Excellent separation of concerns (doctor.py delegates to diagnostics.py)
+- ✅ Comprehensive checks (TaskWarrior, Python deps, config, vault, MCP)
+- ✅ User-friendly output (color-coded ✓/✗/⚠, actionable fix instructions)
+- ✅ Proper timeout handling (5s version check, 10s operations, 60s sync)
+- ✅ Custom exceptions (TaskWarriorTimeoutError)
+- ✅ Systematic test infrastructure (6 tests with timeout protection)
+- ✅ Clear documentation (troubleshooting guide, testing procedures)
+- ⚠️ Minor: No unit tests for doctor command (acceptable, can add later)
+- ⚠️ Minor: Not multi-Mac tested (acceptable for initial release)
+
+**Test Results:**
+- 532/537 tests passing (99.1% pass rate)
+- 5 failures: All `FileNotFoundError: 'task'` (TaskWarrior not in test env)
+- NOT code bugs - test environment issue only
+
+**Verification:**
+- TaskWarrior pinned formula EXISTS (contrary to earlier summary)
+- Version bump to 1.6.2 complete (pyproject.toml + __init__.py match)
+- All critical requirements met (version pinning, doctor, timeouts, docs)
+- No TODO/FIXME/HACK comments found
+- Doctor command integrated into CLI (src/brainplorp/cli.py:47, 948)
+- Setup wizard uses diagnostics (src/brainplorp/commands/setup.py:12, 45)
+
+**Phase 2: Release Planning Decision (00:20-00:25)**
+- User selected: "Option 2 - Commit now, release with Sprint 10.3"
+- Rationale:
+  - Avoids releasing v1.6.2 only to replace it days later with v1.7.0
+  - Sprint 10.3 (vault sync) is the bigger feature users want
+  - Combined release cleaner (one upgrade, not two)
+  - Preserves Sprint 10.1.1 work in git immediately
+
+**Phase 3: Commit Sprint 10.1.1 (00:25-00:30)**
+- Reviewed uncommitted files (16 total):
+  - 6 new files (doctor.py, diagnostics.py, taskwarrior_errors.py, test script, 2 docs)
+  - 10 modified files (cli.py, taskwarrior.py, setup.py, README.md, tests, versions)
+- Staged all Sprint 10.1.1 changes: `git add -A`
+- Created comprehensive commit message (commit 1e0a909):
+  - Critical bug fix (TaskWarrior 3.4.0 pinning)
+  - New features (doctor command, diagnostics, test infrastructure)
+  - Code improvements (timeout support, error handling)
+  - Documentation (troubleshooting guide, testing procedures)
+  - Impact statement (production-ready, unblocks Sprint 10.2 & 10.3)
+  - Release plan note (will be part of v1.7.0, no separate v1.6.2 release)
+- Files added: 2,021 insertions, 67 deletions
+
+**Phase 4: Update PM_HANDOFF.md (00:30-00:35)**
+- Updated CURRENT STATE section:
+  - Added Sprint 10.1.1 status: "CODE COMPLETE (committed, waiting for v1.7.0)"
+  - Updated repository version: "v1.6.2 in code (not released)"
+  - Added release plan: "v1.7.0 will combine Sprint 10.1.1 + Sprint 10.3"
+- Created Session 21 entry (this entry)
+
+**Sprint Status Changes:**
+- Sprint 10.1.1: "75% complete" → "CODE COMPLETE (committed)" (00:30)
+- Sprint 10.3: "Spec finalized" (previous session) → "Ready for implementation" (00:30)
+
+**Commits Made:**
+- `1e0a909` - "Sprint 10.1.1: Installation Hardening & TaskWarrior Fix (v1.6.2)"
+  - 16 files changed: 2,021 insertions, 67 deletions
+  - New files: 6 (doctor.py, diagnostics.py, taskwarrior_errors.py, test script, 2 docs)
+  - Modified files: 10 (versions, integration, CLI, setup, tests, README)
+
+**Files Created/Modified:**
+- Sprint 10.1.1 implementation (committed):
+  - `src/brainplorp/commands/doctor.py` (new)
+  - `src/brainplorp/utils/diagnostics.py` (new)
+  - `src/brainplorp/utils/taskwarrior_errors.py` (new)
+  - `scripts/test_taskwarrior_version.sh` (new, executable)
+  - `scripts/TASKWARRIOR_TESTING.md` (new)
+  - `Docs/INSTALLATION_TROUBLESHOOTING.md` (new, 457 lines)
+  - `src/brainplorp/integrations/taskwarrior.py` (modified - timeout support)
+  - `src/brainplorp/cli.py` (modified - doctor command)
+  - `src/brainplorp/commands/setup.py` (modified - diagnostics integration)
+  - `README.md` (modified - Known Issues section)
+  - `pyproject.toml` (modified - v1.6.2)
+  - `src/brainplorp/__init__.py` (modified - v1.6.2)
+  - `tests/*` (modified - timeout behavior updates)
+- PM handoff:
+  - `Docs/PM_HANDOFF.md` (updated - CURRENT STATE + Session 21)
+
+**Key Decisions:**
+1. **Sprint 10.1.1 code quality approved** - High quality (Grade A), production-ready
+2. **Release strategy: Option 2** - Commit now, release with Sprint 10.3 as v1.7.0
+3. **Avoiding release churn** - No separate v1.6.2 release, combined v1.7.0 better for users
+
+**Notes for Next PM:**
+- Sprint 10.1.1 code complete and committed (commit 1e0a909)
+- Sprint 10.3 spec finalized, ready for Lead Engineer implementation
+- v1.7.0 release plan: Sprint 10.1.1 (installation hardening) + Sprint 10.3 (vault sync)
+- When Sprint 10.3 implementation complete:
+  1. Bump version from 1.6.2 → 1.7.0 (MINOR increment for Sprint 10.3 major feature)
+  2. Build v1.7.0 wheel
+  3. Create GitHub v1.7.0 release with wheel
+  4. Update Homebrew formula to v1.7.0
+  5. Test installation
+  6. PM sign-off
+
+**Next Steps:**
+- Implement Sprint 10.3 (Vault Sync via CouchDB + LiveSync)
+- Estimated effort: 9 hours (5 phases documented in spec)
+- After Sprint 10.3 complete: Release v1.7.0
+
+---

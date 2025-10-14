@@ -9,6 +9,9 @@ import json
 import yaml
 import shutil
 import keyring
+import uuid
+import secrets
+import subprocess
 
 from brainplorp.utils.diagnostics import check_taskwarrior
 from brainplorp.utils.livesync_config import (
@@ -20,6 +23,32 @@ from brainplorp.utils.livesync_config import (
     LIVESYNC_PLUGIN_NAME
 )
 from brainplorp.integrations.couchdb import CouchDBClient, CouchDBError, CouchDBAuthError
+
+
+def generate_sync_credentials() -> dict:
+    """Generate TaskChampion sync credentials."""
+    return {
+        'client_id': str(uuid.uuid4()),
+        'encryption_secret': secrets.token_hex(32)
+    }
+
+
+def configure_taskwarrior_sync(server_url: str, client_id: str, secret: str) -> bool:
+    """
+    Configure TaskWarrior sync settings.
+    Returns True if successful, False if error.
+    """
+    try:
+        # Use rc.confirmation=off to avoid interactive prompts
+        subprocess.run(['task', 'rc.confirmation=off', 'config', 'sync.server.url', server_url],
+                      check=True, capture_output=True, timeout=10)
+        subprocess.run(['task', 'rc.confirmation=off', 'config', 'sync.server.client_id', client_id],
+                      check=True, capture_output=True, timeout=10)
+        subprocess.run(['task', 'rc.confirmation=off', 'config', 'sync.encryption_secret', secret],
+                      check=True, capture_output=True, timeout=10)
+        return True
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return False
 
 
 @click.command()
@@ -79,31 +108,147 @@ def setup():
 
     click.echo()
 
-    # Step 2: TaskWarrior sync configuration
+    # Step 2: TaskWarrior Cloud Sync
     click.echo("Step 2: TaskWarrior Sync")
-    click.echo("  For multi-computer sync, TaskWarrior needs a TaskChampion server.")
-    setup_sync = click.confirm("  Configure TaskWarrior sync now?", default=True)
+    click.echo("  Configuring brainplorp Cloud Sync...")
+    click.echo()
 
-    if setup_sync:
+    # Check if already configured
+    try:
+        existing = subprocess.run(['task', 'config', 'sync.server.url'],
+                                 capture_output=True, text=True, timeout=5)
+        if existing.stdout.strip():
+            click.echo(f"  ⚠ TaskWarrior sync already configured: {existing.stdout.strip()}")
+            overwrite = click.confirm("  Overwrite with brainplorp cloud sync?", default=False)
+            if not overwrite:
+                click.echo("  Keeping existing sync configuration.")
+                config['taskwarrior_sync'] = {'enabled': True, 'type': 'existing'}
+                click.echo()
+                # Continue to next step
+            else:
+                # User wants to overwrite, continue with cloud sync setup
+                pass
+        else:
+            # No existing sync config, proceed
+            pass
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+        # TaskWarrior not responding or error, proceed anyway
+        pass
+
+    # Only proceed with sync setup if we haven't kept existing config
+    if config.get('taskwarrior_sync', {}).get('type') != 'existing':
+        # Ask: new or existing credentials
+        use_existing = click.confirm("  Do you have sync credentials from another computer?",
+                                     default=False)
+
+        server_url = "https://brainplorp-sync.fly.dev"
+
+        if use_existing:
+            # Enter existing credentials
+            click.echo()
+            click.echo("  Enter credentials from your other computer:")
+            client_id = click.prompt("  Client ID")
+            encryption_secret = click.prompt("  Encryption Secret", hide_input=True)
+        else:
+            # Generate new credentials
+            click.echo()
+            click.echo("  Generating new sync credentials...")
+            creds = generate_sync_credentials()
+            client_id = creds['client_id']
+            encryption_secret = creds['encryption_secret']
+
+        # Configure TaskWarrior
         click.echo()
-        click.echo("  TaskChampion Server Options:")
-        click.echo("    1. Self-hosted (you run the server)")
-        click.echo("    2. Cloud-hosted (recommended for testing)")
-        click.echo("    3. Skip for now")
+        click.echo("  Configuring TaskWarrior...")
+        success = configure_taskwarrior_sync(server_url, client_id, encryption_secret)
 
-        choice = click.prompt("  Choose option", type=click.IntRange(1, 3), default=2)
-
-        if choice == 1:
-            config['taskwarrior_sync'] = {
-                'enabled': True,
-                'server_url': click.prompt("  Enter server URL")
-            }
-        elif choice == 2:
-            # TODO: Provide default cloud server once we have one
-            click.echo("  ℹ Cloud server setup will be available in next release")
+        if not success:
+            click.echo("  ✗ Failed to configure TaskWarrior")
             config['taskwarrior_sync'] = {'enabled': False}
         else:
-            config['taskwarrior_sync'] = {'enabled': False}
+            # Save to brainplorp config
+            config['taskwarrior_sync'] = {
+                'enabled': True,
+                'type': 'cloud',
+                'server_url': server_url,
+                'client_id': client_id,
+                'encryption_secret': encryption_secret
+            }
+
+            # Test connection and perform first sync
+            click.echo()
+            click.echo("  Testing connection...")
+
+            try:
+                sync_result = subprocess.run(['task', 'sync'],
+                                             capture_output=True,
+                                             text=True,
+                                             timeout=30)
+
+                if sync_result.returncode == 0:
+                    # Successful sync - check task count
+                    try:
+                        task_count_result = subprocess.run(['task', 'count'],
+                                                          capture_output=True,
+                                                          text=True,
+                                                          timeout=5)
+                        task_count = int(task_count_result.stdout.strip()) if task_count_result.returncode == 0 else 0
+                    except (ValueError, subprocess.TimeoutExpired):
+                        task_count = 0
+
+                    if use_existing and task_count > 0:
+                        # Computer 2+ downloading existing tasks
+                        click.echo(f"  ✓ Sync successful! Downloaded {task_count} tasks from server.")
+                        click.echo()
+                        click.secho("  🎉 Your tasks are now available on this computer!",
+                                   fg='green', bold=True)
+                        click.echo(f"     Run 'task list' to see your {task_count} tasks.")
+                    elif not use_existing and task_count > 0:
+                        # Computer 1 uploading existing tasks
+                        click.echo(f"  ✓ Sync successful! Uploaded {task_count} tasks to server.")
+                        click.echo()
+                        click.echo("  Your tasks are now synced to the cloud.")
+                    else:
+                        # Fresh start on both sides
+                        click.echo("  ✓ Sync successful!")
+                else:
+                    # Sync failed
+                    click.echo("  ⚠ Couldn't reach server, but config saved.")
+                    click.echo("    Try 'task sync' later to verify.")
+                    if use_existing:
+                        click.echo()
+                        click.secho("  💡 First sync will download your tasks from the server.",
+                                   fg='cyan')
+                        click.echo("     Your tasks from Computer 1 will appear after first successful sync.")
+
+            except subprocess.TimeoutExpired:
+                click.echo("  ⚠ Sync timed out, but config saved.")
+                click.echo("    Try 'task sync' later to verify.")
+
+            # Display credentials (for Computer 2 setup)
+            if not use_existing:
+                click.echo()
+                click.secho("  📋 IMPORTANT: Save these credentials for your other computers:",
+                           fg='yellow', bold=True)
+                click.echo(f"     Client ID: {client_id}")
+                click.echo(f"     Secret: {encryption_secret}")
+                click.echo()
+                click.echo("  On your other Mac:")
+                click.echo("    1. Install brainplorp: brew install dimatosj/brainplorp/brainplorp")
+                click.echo("    2. Run: brainplorp setup")
+                click.echo("    3. Answer 'Yes' when asked about existing credentials")
+                click.echo("    4. Enter the credentials above")
+                click.echo("    5. First sync will download all your tasks automatically")
+                click.echo()
+                click.echo("  (Credentials also saved to: ~/.config/brainplorp/config.yaml)")
+            else:
+                # Computer 2+ just finished first sync
+                if 'sync_result' in locals() and sync_result.returncode == 0 and task_count > 0:
+                    click.echo()
+                    click.echo("  Next steps:")
+                    click.echo("    • Run 'brainplorp start' to generate today's daily note")
+                    click.echo("    • Add/complete tasks on either computer")
+                    click.echo("    • Run 'task sync' periodically to keep computers in sync")
 
     click.echo()
 

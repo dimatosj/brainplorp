@@ -63,6 +63,8 @@ config.yaml
 *.credentials
 secrets.yaml
 secrets.json
+COUCHDB_CREDENTIALS.md
+couchdb_admin.yaml
 
 # User-specific config (allow example configs)
 !config.example.yaml

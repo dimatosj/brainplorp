@@ -173,6 +173,21 @@ brainplorp works seamlessly across multiple Macs. See [MULTI_COMPUTER_SETUP.md](
 - ✅ Obsidian vault → iCloud Drive (or your choice)
 - ✅ brainplorp config → Git repository (optional)
 
+## ⚠️ Security Warning: Personal Use Only
+
+**This is a personal-use deployment.** The vault sync feature requires CouchDB admin credentials to be configured locally. These credentials grant full access to all user vaults on the server.
+
+**Do NOT distribute this publicly** without implementing the secure registration API described in [VAULT_SYNC_SECURITY_SPEC.md](Docs/VAULT_SYNC_SECURITY_SPEC.md).
+
+**For personal use:**
+1. Deploy your own CouchDB instance
+2. Create `~/.config/brainplorp/couchdb_admin.yaml` with your admin credentials
+3. Run `brainplorp setup` to configure vault sync
+
+**For public distribution:**
+- Implement the registration API (see spec)
+- Never hardcode or share admin credentials
+
 ## Architecture
 
 brainplorp v1.1 uses a layered architecture:

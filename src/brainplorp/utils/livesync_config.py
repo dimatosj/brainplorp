@@ -144,6 +144,8 @@ def write_livesync_config(vault_path: Path, config: Dict) -> None:
     """
     Write LiveSync plugin configuration to vault.
 
+    Merges provided config into existing config to preserve plugin settings.
+
     Args:
         vault_path: Path to Obsidian vault
         config: Configuration dict from generate_livesync_config()
@@ -158,7 +160,20 @@ def write_livesync_config(vault_path: Path, config: Dict) -> None:
         raise FileNotFoundError(f"LiveSync plugin not installed at {plugin_dir}")
 
     config_file = plugin_dir / "data.json"
-    config_file.write_text(json.dumps(config, indent=2))
+
+    # Read existing config if it exists
+    existing_config = {}
+    if config_file.exists():
+        try:
+            existing_config = json.loads(config_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            # If config is corrupted, start fresh
+            existing_config = {}
+
+    # Merge new config into existing (new values override)
+    existing_config.update(config)
+
+    config_file.write_text(json.dumps(existing_config, indent=2))
 
 
 def get_plugin_path(vault_path: Path) -> Path:

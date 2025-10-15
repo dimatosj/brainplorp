@@ -414,8 +414,32 @@ def configure_vault_sync(vault_path_str: str | None) -> dict | None:
     """
     # Constants
     COUCHDB_SERVER_URL = "https://couch-brainplorp-sync.fly.dev"
-    COUCHDB_ADMIN_USER = "admin"
-    COUCHDB_ADMIN_PASSWORD = "CZzAQ7wnpPHY-tL0dYu20VY9-vcQHWdvENs0rLkye_0"
+
+    # Admin credentials must be configured locally
+    # See: COUCHDB_CREDENTIALS.md (git-ignored file)
+    credentials_file = Path.home() / '.config' / 'brainplorp' / 'couchdb_admin.yaml'
+
+    if not credentials_file.exists():
+        click.echo("  ✗ CouchDB admin credentials not configured")
+        click.echo()
+        click.echo("  This is a personal-use deployment.")
+        click.echo("  You must configure admin credentials locally.")
+        click.echo()
+        click.echo("  Create: ~/.config/brainplorp/couchdb_admin.yaml")
+        click.echo("  Content:")
+        click.echo("    admin_user: your_admin_username")
+        click.echo("    admin_password: your_admin_password")
+        click.echo()
+        return None
+
+    try:
+        with open(credentials_file) as f:
+            creds = yaml.load(f, Loader=yaml.SafeLoader)
+            COUCHDB_ADMIN_USER = creds['admin_user']
+            COUCHDB_ADMIN_PASSWORD = creds['admin_password']
+    except Exception as e:
+        click.echo(f"  ✗ Failed to load admin credentials: {e}")
+        return None
 
     # Validate vault path
     if not vault_path_str:

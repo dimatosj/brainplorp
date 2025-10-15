@@ -64,12 +64,30 @@ class CouchDBClient:
             if 'couchdb' not in data:
                 raise CouchDBError(f"Server at {self.server_url} is not CouchDB")
 
+            # Ensure system databases exist
+            self._ensure_system_databases()
+
             return True
 
         except requests.exceptions.ConnectionError as e:
             raise CouchDBError(f"Cannot connect to CouchDB server: {e}")
         except RequestException as e:
             raise CouchDBError(f"CouchDB connection error: {e}")
+
+    def _ensure_system_databases(self) -> None:
+        """
+        Ensure required system databases exist.
+
+        CouchDB needs _users database for user management.
+        """
+        system_dbs = ['_users']
+        for db in system_dbs:
+            if not self.database_exists(db):
+                try:
+                    self.create_database(db)
+                except CouchDBError:
+                    # Non-fatal - admin might have restricted permissions
+                    pass
 
     def database_exists(self, database: str) -> bool:
         """
@@ -224,6 +242,24 @@ class CouchDBClient:
                     "admins": {"names": [], "roles": []},
                     "members": {"names": [], "roles": []}
                 }
+
+            # Ensure security_doc has proper structure
+            if "admins" not in security_doc:
+                security_doc["admins"] = {"names": [], "roles": []}
+            if "members" not in security_doc:
+                security_doc["members"] = {"names": [], "roles": []}
+
+            # Ensure members has names and roles keys
+            if "names" not in security_doc["members"]:
+                security_doc["members"]["names"] = []
+            if "roles" not in security_doc["members"]:
+                security_doc["members"]["roles"] = []
+
+            # Ensure admins has names and roles keys
+            if "names" not in security_doc["admins"]:
+                security_doc["admins"]["names"] = []
+            if "roles" not in security_doc["admins"]:
+                security_doc["admins"]["roles"] = []
 
             # Add user to members (can read/write)
             if username not in security_doc["members"]["names"]:
